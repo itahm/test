@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title></title>
+		
+		<style>
+
+body,
+h1 {
+	font-family: tahoma, arial, "맑은 고딕"; 
+}
+
+iframe {
+	position: fixed; width: 50%; height: 50%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+iframe.tl {
+	top: 0; left: 0;
+	background-color: #f00;
+}
+
+iframe.tr {
+	top: 0; right: 0;
+	background-color: #0f0;
+}
+
+iframe.bl {
+	bottom: 0; left: 0;
+	background-color: #00f;
+}
+
+iframe.br {
+	bottom: 0; right: 0;
+	background-color: #ff0;
+}
+
+		</style>
+		
+	</head>
+	
+	<body>
+	
+		<div class="iframe">
+			<iframe class="tl" src="event.html"></iframe>
+		</div>
+		<div class="iframe">
+			<iframe class="tr" src="map.html"></iframe>
+		</div>
+		<div class="iframe">
+			<iframe class="bl" src="device.html"></iframe>
+		</div>
+		<div class="iframe">
+			<iframe class="br"></iframe> 
+		</div>
+		
+		<div id="toolbar" class="minimized">
+			<img id="maximize" src="img/maximize.png">
+			<img id="minimize" src="img/minimize.png">
+		</div>
+		<script>
+
+var elements = {
+		toolbar: document.getElementById("toolbar"),
+		maximize: document.getElementById("maximize"),
+		minimize: document.getElementById("minimize")
+	};
+
+elements.maximize.addEventListener("click", function (e) {
+	/*var iframe = elements.toolbar.parentNode;
+	
+	document.body.classList.add("maximized");
+	document.body.classList.remove("minimized");
+	
+	iframe.classList.add("maximized");*/
+	
+	elements.toolbar.classList.add(maximized);
+}, false);
+
+elements.minimize.addEventListener("click", function (e) {
+	/*var iframe = elements.toolbar.parentNode;
+	
+	document.body.classList.remove("maximized");
+	document.body.classList.add("minimized");
+	
+	iframe.classList.remove("maximized");*/
+	elements.toolbar.classList.add(minimized);
+}, false);
+
+window.test= function(x) {
+	console.log(x);
+}
+
+function onFocus(frame) {
+	(frame && frame.document.body || document.createDocumentFragment()).appendChild(elements.toolbar);
+}
+
+		</script>
+	
+	</body>
+	
+</html>

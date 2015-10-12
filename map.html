@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title>ITAhM::Map</title>
+		<link rel="stylesheet" href ="frame.css ">
+		<style>
+#toolbar {
+	background-color: #ddd;
+}
+
+#toolbar.minimized #minimize {
+	display: none;
+}
+
+#container {
+	position: fixed; top: 10px; right: 10px; bottom: 10px; left: 10px;
+}
+		</style>
+	
+		<script src="js/Draggable.js"></script>
+		<script src="js/Canvas.js"></script>
+			
+	</head>
+	
+	<body>
+		<div id="container"></div>
+		<script>
+
+var elements = {
+		container: document.getElementById("container")
+	};
+	
+
+(function (window, root) {
+	
+	var canvas = new Canvas(elements.container);
+	canvas.ondraw = function (context, hitContext, data) {
+		context.fillRect(data.x, data.y, 100, 100);
+		hitContext.fillRect(data.x, data.y, 100, 100);
+	}
+	
+	var layer = canvas.add();
+	var node = layer.add({x: 0, y:0});
+	
+	
+}) (window, top);
+		</script>
+	
+	</body>
+	
+</html>

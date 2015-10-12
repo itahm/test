@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title>ITAhM::Device</title>
+		
+		<style>
+h1 {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#table ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+}
+
+#table li {
+	flex: 1;
+}
+
+
+		</style>
+		
+	</head>
+	
+	<body>
+		
+		<div id=table>
+			<ul>
+				<li>장비명
+				<li>ip address
+				<li>top cpu load
+				<li>memory usage
+				<li>top disk usage
+				<li>top interface throughput
+			</ul>
+		</div>
+		
+		<script>
+var xhr = new XMLHttpRequest();
+
+xhr.overrideMimeType("application/json");
+xhr.open("GET", "device.txt", false);
+xhr.send();
+
+console.log(xhr);
+console.log(JSON.parse(xhr.responseText));
+		</script>
+	
+	</body>
+	
+</html>

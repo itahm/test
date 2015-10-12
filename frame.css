@@ -1,0 +1,33 @@
+@CHARSET "UTF-8";
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+#toolbar {
+	position: fixed; top: 0; right: 0;
+}
+
+#toolbar img {
+	border: 1px solid transparent;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+#toolbar img:hover {
+	border-color: #0084ff;
+}
+
+body.maximized iframe:not(.maximized) {
+	display: none;
+}
+
+body.maximized iframe.maximized {
+	width: 100%; height: 100%;
+}
+
+#toolbar.minimized #minimize {
+	display: none;
+}
