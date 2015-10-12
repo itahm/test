@@ -19,33 +19,42 @@ function getPos(canvas, e) {
 
 (function(window, undefined) {
 	
-	function onDragStart() {
-		
-	}
-	
-	function onDragMove() {
-		
-	}
-
-	function onDragEnd() {
-		
-	}
-	
 	function onMouseMove(canvas, e) {
 		var rect = canvas.container.getBoundingClientRect(),
 			node = canvas.hitTest(e.clientX - rect.left, e.clientY - rect.top);
 		
 		if (node !== canvas.node) {
 			if (canvas.node) {
-				this.onleave(canvas.node.data);
+				this.onleave(canvas.node);
 			}
 		
 			if (node) {
-				this.onenter(node.data);
+				this.onenter(node);
 			}
 		}
 		
 		canvas.node = node;
+	}
+	
+	function onDragStart(canvas, e) {
+		canvas.dragEvent = {
+			node: canvas.node,
+		}
+		
+		canvas.ondragstart(canvas.dragEvent);
+	}
+	
+	function onDragMove(canvas, e) {
+		canvas.dragEvent.dragX = e.dragX / canvas.scale,
+		canvas.dragEvent.dragY = e.dragY / canvas.scale,
+		canvas.dragEvent.moveX = e.moveX / canvas.scale,
+		canvas.dragEvent.moveY = e.moveY / canvas.scale
+		
+		canvas.ondragmove(canvas.dragEvent);
+	}
+
+	function onDragEnd(canvas, e) {
+		canvas.ondragend(canvas.dragEvent);
 	}
 	
 	function onWheel(canvas, e) {
@@ -78,8 +87,11 @@ function getPos(canvas, e) {
 			this.eventHandler = {}
 			this.ondraw = function (context, hitContext, data) {}
 			this.node;
-			this.onenter = function (data) {console.log("enter", data);}
-			this.onleave = function (data) {console.log("leave", data);}
+			this.onenter = function (data) {}
+			this.onleave = function (data) {}
+			this.ondragstart = function (layer, x, y) {}
+			this.ondragmove = function (layer, x, y) {}
+			this.ondragend = function (layer, x, y) {}
 			
 			this.resize();
 			
@@ -95,9 +107,9 @@ function getPos(canvas, e) {
 			window.addEventListener("resize", onResize.bind(this, this), false);
 			
 			new Draggable(this.container)
-			.on("dragstart", onDragStart.bind(this))
-			.on("dragmove", onDragMove.bind(this))
-			.on("dragend", onDragEnd.bind(this));
+			.on("dragstart", onDragStart.bind(this, this))
+			.on("dragmove", onDragMove.bind(this, this))
+			.on("dragend", onDragEnd.bind(this, this));
 		},
 		
 		add: function () {
@@ -120,7 +132,21 @@ function getPos(canvas, e) {
 			this.invalidate();
 		},
 	
-		resize: function(e) {
+		translate: function (x, y) {
+			x *= this.scale;
+			y *= this.scale;
+			
+			this.context.save();
+			this.context.setTransform(1, 0, 0, 1, 0, 0);
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			this.context.restore();
+	
+			for (var i=0, length=this.layers.length; i<length; i++) {
+				this.context.drawImage(this.layers[i].canvas, -this.width + x, -this.height + y);
+			}
+		},
+		
+		resize: function (e) {
 			var rect = this.container.getBoundingClientRect(),
 				width = rect.width,
 				height = rect.height;
@@ -157,14 +183,7 @@ function getPos(canvas, e) {
 		},
 		
 		invalidate: function () {
-			this.context.save();
-			this.context.setTransform(1, 0, 0, 1, 0, 0);
-			this.context.clearRect(0, 0, this.width, this.height);
-			this.context.restore();
-	alert("!");
-			for (var i=0, length=this.layers.length; i<length; i++) {
-				this.context.drawImage(this.layers[i].canvas, -this.width, -this.height);
-			}
+			this.translate(0, 0);
 		},
 		
 		capture: function () {
@@ -248,7 +267,7 @@ function Layer() {
 		},
 		
 		/**
-		 * master에게 layer가 변경되었음을 알려야함
+		 * 추가 하고 다시 그리지는 않음
 		 * @param {Object} data
 		 * @returns {Node} node 생성된 node
 		 */
@@ -259,9 +278,9 @@ function Layer() {
 			
 			this.index[this.index.length] = node;
 			
-			this.invalidate();
+			//this.invalidate();
 			
-			this.master.invalidate();
+			//this.master.invalidate();
 			
 			return node;
 		},
@@ -357,7 +376,7 @@ function Layer() {
 			return this.index.length;
 		},
 		
-		transform: function () {console.log(this.scale);
+		transform: function () {
 			this.context.setTransform(this.scale, 0, 0, this.scale, Math.round(this.width *1.5), Math.round(this.height *1.5));
 			this.hitContext.setTransform(this.scale, 0, 0, this.scale, Math.round(this.width *.5), Math.round(this.height *.5));
 			
@@ -367,12 +386,12 @@ function Layer() {
 		clear: function () {
 			this.context.save();
 			this.context.setTransform(1, 0, 0, 1, 0, 0);
-			this.context.clearRect(0, 0, this.width, this.height);
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.context.restore();
 	
 			this.hitContext.save();
 			this.hitContext.setTransform(1, 0, 0, 1, 0, 0);
-			this.hitContext.clearRect(0, 0, this.width, this.height);
+			this.hitContext.clearRect(0, 0, this.hitCanvas.width, this.hitCanvas.height);
 			this.hitContext.restore();
 		},
 		
