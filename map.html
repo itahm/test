@@ -36,15 +36,31 @@ var elements = {
 
 (function (window, root) {
 	
-	var canvas = new Canvas(elements.container);
+	var canvas = new Canvas(elements.container),
+		layer = {
+			device: canvas.add()
+		},
+		deviceMap,
+		iconMap;
 	
 	canvas.ondraw = function (context, hitContext, data) {
-		context.save();
-		context.fillStyle = data.color;
-		context.fillRect(data.x, data.y, 50, 50);
-		context.restore();
+		var icon = iconMap[data.type],
+			width = icon.width,
+			height = icon.height,
+			x = data.x,
+			y = data.y;
 		
-		hitContext.fillRect(data.x, data.y, 50, 50);
+		if (x === undefined || y === undefined) {
+			return;
+		}
+		
+		x -= Math.round(width /2);
+		y -= Math.round(height /2);
+		
+		context.drawImage(icon, x, y, width, height);
+		//context.fillText(device.name, x, y)
+		
+		hitContext.fillRect(x, y, width, height);
 	}
 	
 	canvas.onenter = function (node) {
@@ -52,15 +68,6 @@ var elements = {
 	
 	canvas.onleave = function (node) {
 	}
-	
-	var layer = canvas.add();
-	var node1 = layer.add({x: Math.random() * 300 -150, y:Math.random() * 300 -150, color: "#f00"});
-	var node2 = layer.add({x: Math.random() * 300 -150, y:Math.random() * 300 -150, color: "#0f0"});
-	var node3 = layer.add({x: Math.random() * 300 -150, y:Math.random() * 300 -150, color: "#00f"});
-	
-	layer.invalidate();
-	
-	canvas.invalidate();
 	
 	function onSelect() {
 		var node = canvas.node;
@@ -88,24 +95,75 @@ var elements = {
 	}
 
 	canvas.ondragend = function (e) {
-		if (!e.node) {
-			node1.data.x += e.dragX;
-			node2.data.x += e.dragX;
-			node3.data.x += e.dragX;
+		if (e.node) {
+			return;
+		}
+		else {
+			var data;
 			
-			node1.data.y += e.dragY;
-			node2.data.y += e.dragY;
-			node3.data.y += e.dragY;
+			for (var id in deviceMap) {
+				data = deviceMap[id];
+				
+				data.x += e.dragX;
+				data.y += e.dragY;
+			}
 			
-			layer.invalidate();
+			layer.device.invalidate();
 			
 			canvas.invalidate();
 		}
 	}
 	
-	
-
 	elements.container.addEventListener("mousedown", onSelect, false);
+	
+	var thread = new Worker("worker/loader.js");
+	
+	thread.onmessage = function (e) {
+		var data = e.data;
+	
+		deviceMap = data.device;
+		
+		loadIcon(data.icon, function (map) {
+			iconMap = map;
+			
+			loadDevice();
+		});
+	}
+	
+	function loadDevice() {
+		for (var id in deviceMap) {
+			layer.device.add(deviceMap[id]);
+		}
+		
+		layer.device.invalidate();
+		
+		canvas.invalidate();
+	}
+	
+	function loadIcon(iconMap, complete) {
+		var names = Object.keys(iconMap),
+			length = names.length,
+			icon = new Image(),
+			index = 0,
+			map = {};
+		
+		icon.onload = onLoad;
+		icon.src = iconMap[names[index]].src;
+		
+		function onLoad() {
+			map[names[index]] = this;
+			
+			if (++index < length) {
+				icon = new Image();
+				icon.onload = onLoad;
+				icon.src = iconMap[names[index]].src;
+			}
+			else {
+				complete(map);
+			}
+		}
+	}
+	
 	
 }) (window, top);
 		</script>
