@@ -7,51 +7,323 @@
 		<title>ITAhM::Device</title>
 		
 		<style>
-h1 {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+body {
+	font-family: arial, tahoma, "맑은 고딕"
 }
 
-#table ul {
-	margin: 0;
-	padding: 0;
+li,
+select,
+input,
+span {
+	font-size: 13px;
+}
+
+aside {
+	position: fixed; top: 0; bottom: 0; left: 0; width: 300px;
+	box-sizing: border-box;
+	padding: 10px;
+	overflow-y: auto;
+}
+
+section {
+	position: fixed; top: 0; right: 0px; bottom: 0; left: 300px;
+	box-sizing: border-box;
+	padding: 10px;
+	background-color: #ddd;
+}
+
+.tbody input[type=text],
+.tbody select {
+	padding: .5em;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.tbody ul {
 	list-style: none;
+	padding: 0;
+	margin: 0;
 	display: flex;
 }
 
-#table li {
+.tbody li:first-child {
 	flex: 1;
+	text-align: right;
+	padding: .5em;
 }
 
+.tbody li:last-child {
+	flex: 2;
+}
 
+#save,
+#cancel,
+.hide *,
+#information.edit #edit,
+#information input[type=text],
+#information select {
+	display: none;
+}
+
+.snmp:not(body) {
+	/*display: none;*/
+	background-color: #ff0;
+}
+
+body.snmp .interface {
+	/*display: none;*/
+	background-color: #0ff;
+}
+
+body.snmp .snmp,
+#information.edit input[type=text],
+#information.edit select {
+	display: block;
+}
+
+#information.edit #save,
+#information.edit #cancel {
+	display: inline;
+}
+
+#port_list a:hover {
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+li {
+	margin: 0;
+	vertical-align: bottom;
+}
+
+ {
+}
 		</style>
 		
 	</head>
 	
-	<body>
+	<body class="snmp">
 		
-		<div id=table>
-			<ul>
-				<li>장비명
-				<li>ip address
-				<li>top cpu load
-				<li>memory usage
-				<li>top disk usage
-				<li>top interface throughput
-			</ul>
+		<aside>
+			<h3>device information</h3>
+			<div class="table" id="information">
+				<div class="thead">
+					<input type="button" value="edit information" id="edit">
+					<input type="button" value="save" id="save">
+					<input type="button" value="cancel" id="cancel">
+				</div>
+				<form class="tbody">
+					<ul>
+						<li>name
+						<li>
+							<span id="name"></span>
+							<input type="text" name="name">
+					</ul>
+					<ul>
+						<li>ip address
+						<li>
+							<span id="ip"></span>
+							<input type="text" name="ip">
+					</ul>
+					<ul>
+						<li>type
+						<li>
+							<span id="type"></span>
+							<select name="type"></select>
+					</ul>
+					<ul>
+						<li>label
+						<li>
+							<span id="label"></span>
+							<input type="text" name="label">
+					</ul>
+					<ul>
+						<li>snmp
+						<li>
+							<span id="snmp"></span>
+							<select name="snmp">
+								<option selected>disable
+								<option>public
+							</select>
+					</ul>
+				</form>
+				
+				<div class="tbody snmp">
+					<ul>
+						<li>status
+						<li><h4 id="txt_status"></h4>
+					</ul>
+					<ul>
+						<li>uptime
+						<li id="txt_uptime">
+					</ul>
+					<ul>
+						<li>description
+						<li id="txt_description">
+					</ul>
+					<ul>
+						<li>enterprise
+						<li id="txt_enterprise">
+					</ul>
+				</div>
+			</div>
+			
+			<div class="interface">
+				<h3>
+					interface
+				</h3>
+				<ul id="port_list">
+					<li>
+						<a onclick="onEditPort(event)">f0/2</a>
+					<li>
+						<input type="button" value="add new interface" id="port_add">
+				</ul>
+			</div>
+			
+			<div class="snmp">
+				<h3>
+					snmp response time
+				</h3>
+				<ul>
+					<li><input type="checkbox" id="check_delay">response time (ms)
+				</ul>
+				
+				<h3>
+					processor load
+				</h3>
+				<ul id="cpu_list"></ul>
+			
+				<h3>
+					physical memory
+				</h3>
+				<ul id="mem_list"></ul>
+				
+				<h3>
+					storage usage
+				</h3>
+				<ul id="disk_list"></ul>
+				
+				<h3>
+					interface throughput
+				</h3>
+				<ul id="disk_list"></ul>
+			</div>
+		</aside>
+		
+		<section>
+		</section>
+		
+		<div class="hide">
+			<form class="tbody" id="port_form">
+				<input type="button" value="save" id="port_save">
+				<input type="button" value="cancel" id="port_cancel">
+				<ul>
+					<li>name
+					<li>
+						<input type="text" name="name">
+				</ul>
+				<ul>
+					<li>peer
+					<li>
+						<select>
+							<option>select device
+						</select>
+						<select>
+							<option>select interface
+						</select>
+				</ul>
+			</form>
 		</div>
 		
 		<script>
-var xhr = new XMLHttpRequest();
 
-xhr.overrideMimeType("application/json");
-xhr.open("GET", "device.txt", false);
-xhr.send();
+var form = document.forms[0],
+	elements = {
+		body: document.body,
+		information: document.getElementById("information"),
+		edit: document.getElementById("edit"),
+		snmp: form.elements["snmp"],
+		port: {
+			list: document.getElementById("port_list"),
+			add: document.getElementById("port_add"),
+			save: document.getElementById("port_save"),
+			cancel: document.getElementById("port_cancel"),
+			form: document.getElementById("port_form")
+		}
+	},
+	fragment = document.createDocumentFragment();
 
-console.log(xhr);
-console.log(JSON.parse(xhr.responseText));
+elements.port.name = elements.port.form.elements["name"];
+
+//elements.snmp.addEventListener("change", onChangeSnmp, false);
+elements.edit.addEventListener("click", onEditInformation, false);
+elements.port.add.addEventListener("click", onAddPort, false);
+elements.port.cancel.addEventListener("click", onCancel, false);
+//onChangeSnmp();
+
+elements.port.list.firstChild.onclick = onEditPort;
+
+fragment.appendChild(elements.port.form);
+
+function onCancel(e) {
+	var li = elements.port.form.parentNode;
+	
+	// fragment에는 add 진행시 버튼이, edit 진행시 <a> 태그가 보관되어 있음
+	li.appendChild(fragment);
+	
+	fragment.appendChild(elements.port.form);	
+	
+	elements.port.form.reset();
+}
+
+function onAddPort(e) {	
+	// form이 보관되어 있지 않은 경우 (edit 진행시) 무시
+	if (elements.port.form.parentNode !== fragment) {
+		return;
+	}
+	
+	// li에 form 위치 
+	elements.port.add.parentNode.appendChild(elements.port.form);
+	
+	// add 버튼 보관
+	fragment.appendChild(elements.port.add);
+	
+	elements.port.name.focus();
+}
+
+function onEditInformation(e) {
+	elements.information.classList.add("edit");
+}
+
+function onEditPort(e) {
+	var a;
+	
+	// form이 보관되어 있지 않은 경우 (add 진행시) 무시
+	if (elements.port.form.parentNode !== fragment) {
+		return;
+	}
+	
+	a = e.currentTarget;
+	
+	// li에 form 위치 
+	a.parentNode.appendChild(elements.port.form);
+	
+	// a 태그 보관
+	fragment.appendChild(a);
+	
+	elements.port.name.value = a.textContent;
+	elements.port.name.select();
+}
+/*
+function onChangeSnmp(e) {
+	if (elements.snmp.value === "disable"){
+		elements.body.classList.add("snmp");
+	}
+	else {
+		elements.body.classList.remove("snmp");
+	}
+}
+*/	
 		</script>
 	
 	</body>
