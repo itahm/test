@@ -120,8 +120,6 @@ var elements = {
 	
 	thread.onmessage = function (e) {
 		var data = e.data;
-	
-		deviceMap = data.device;
 		
 		loadIcon(data.icon, function (map) {
 			iconMap = map;
@@ -131,6 +129,8 @@ var elements = {
 	}
 	
 	function loadDevice() {
+		deviceMap = top.getDeviceList();
+		
 		for (var id in deviceMap) {
 			layer.device.add(deviceMap[id]);
 		}

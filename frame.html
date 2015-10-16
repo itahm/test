@@ -7,7 +7,6 @@
 		<title></title>
 		
 		<style>
-
 body,
 h1 {
 	font-family: tahoma, arial, "맑은 고딕"; 
@@ -47,7 +46,7 @@ iframe.br {
 	<body>
 	
 		<div class="iframe">
-			<iframe class="tl" src="event.html"></iframe>
+			<iframe class="tl" src="list.html"></iframe>
 		</div>
 		<div class="iframe">
 			<iframe class="tr" src="map.html"></iframe>
@@ -56,13 +55,14 @@ iframe.br {
 			<iframe class="bl" src="device.html"></iframe>
 		</div>
 		<div class="iframe">
-			<iframe class="br"></iframe> 
+			<iframe class="br" src="event.html"></iframe> 
 		</div>
 		
 		<div id="toolbar" class="minimized">
 			<img id="maximize" src="img/maximize.png">
 			<img id="minimize" src="img/minimize.png">
 		</div>
+		<script src="json/device.json"></script>
 		<script>
 
 var elements = {
@@ -100,6 +100,13 @@ function onFocus(frame) {
 	(frame && frame.document.body || document.createDocumentFragment()).appendChild(elements.toolbar);
 }
 
+function x(wnd) {
+	console.log(wnd.load);
+}
+
+function getDeviceList() {
+	return deviceList;
+}
 		</script>
 	
 	</body>

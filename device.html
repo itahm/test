@@ -32,36 +32,44 @@ section {
 	background-color: #ddd;
 }
 
-.tbody input[type=text],
-.tbody select {
-	padding: .5em;
-	box-sizing: border-box;
-	width: 100%;
-}
-
-.tbody ul {
+.table ul {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 	display: flex;
+	border-bottom: 1px solid #ddd;
 }
 
-.tbody li:first-child {
+.table ul:first-child {
+	border-top: 1px solid #ddd;
+}
+
+.table li {
+	flex: 2;
+}
+
+.table li:first-child {
 	flex: 1;
 	text-align: right;
+}
+
+.table li >* {
+	display: block;
 	padding: .5em;
 }
 
-.tbody li:last-child {
-	flex: 2;
+.table input[type=text],
+.table select {
+	box-sizing: border-box;
+	width: 100%;
 }
 
 #save,
 #cancel,
 .hide *,
-#information.edit #edit,
-#information input[type=text],
-#information select {
+#information li:nth-child(3),
+#information.edit li:nth-child(2),
+#information.edit #edit {
 	display: none;
 }
 
@@ -76,8 +84,7 @@ body.snmp .interface {
 }
 
 body.snmp .snmp,
-#information.edit input[type=text],
-#information.edit select {
+#information.edit li:nth-child(3) {
 	display: block;
 }
 
@@ -106,66 +113,83 @@ li {
 		
 		<aside>
 			<h3>device information</h3>
-			<div class="table" id="information">
-				<div class="thead">
+			<div class="table information">
+				<div id="information">
 					<input type="button" value="edit information" id="edit">
 					<input type="button" value="save" id="save">
 					<input type="button" value="cancel" id="cancel">
-				</div>
-				<form class="tbody">
-					<ul>
-						<li>name
-						<li>
-							<span id="name"></span>
-							<input type="text" name="name">
-					</ul>
-					<ul>
-						<li>ip address
-						<li>
-							<span id="ip"></span>
-							<input type="text" name="ip">
-					</ul>
-					<ul>
-						<li>type
-						<li>
-							<span id="type"></span>
-							<select name="type"></select>
-					</ul>
-					<ul>
-						<li>label
-						<li>
-							<span id="label"></span>
-							<input type="text" name="label">
-					</ul>
-					<ul>
-						<li>snmp
-						<li>
-							<span id="snmp"></span>
-							<select name="snmp">
-								<option selected>disable
-								<option>public
-							</select>
-					</ul>
-				</form>
 				
-				<div class="tbody snmp">
-					<ul>
-						<li>status
-						<li><h4 id="txt_status"></h4>
-					</ul>
-					<ul>
-						<li>uptime
-						<li id="txt_uptime">
-					</ul>
-					<ul>
-						<li>description
-						<li id="txt_description">
-					</ul>
-					<ul>
-						<li>enterprise
-						<li id="txt_enterprise">
-					</ul>
+					<form id="form">
+						<ul>
+							<li>
+								<span>name</span>
+							<li>
+								<span id="name"></span>
+							<li>
+								<input type="text" name="name">
+						</ul>
+						<ul>
+							<li>
+								<span>ip address</span>
+							<li>
+								<span id="ip"></span>
+							<li>
+								<input type="text" name="ip">
+						</ul>
+						<ul>
+							<li>
+								<span>type</span>
+							<li>
+								<span id="type"></span>
+							<li>
+								<select name="type"></select>
+						</ul>
+						<ul>
+							<li>
+								<span>label</span>
+							<li>
+								<span id="label"></span>
+							<li>
+								<input type="text" name="label">
+						</ul>
+						<ul>
+							<li>
+								<span>snmp</span>
+							<li>
+								<span id="snmp"></span>
+							<li>
+								<select name="snmp">
+									<option selected>disable
+									<option>public
+								</select>
+						</ul>
+					</form>
 				</div>
+				
+				<ul>
+					<li>
+						<span>status</span>
+					<li id="txt_status">
+						<span id=""></span>
+				</ul>
+				<ul>
+					<li>
+						<span>uptime</span>
+					<li id="txt_uptime">
+						<span id=""></span>
+				</ul>
+				<ul>
+					<li>
+						<span>description</span>
+					<li id="txt_description">
+						<span id=""></span>
+				</ul>
+				<ul>
+					<li>
+						<span>enterprise</span>
+					<li id="txt_enterprise">
+						<span id=""></span>
+				</ul>
 			</div>
 			
 			<div class="interface">
@@ -214,16 +238,18 @@ li {
 		</section>
 		
 		<div class="hide">
-			<form class="tbody" id="port_form">
+			<form class="table" id="port_form">
 				<input type="button" value="save" id="port_save">
 				<input type="button" value="cancel" id="port_cancel">
 				<ul>
-					<li>name
+					<li>
+						<span>name</span>
 					<li>
 						<input type="text" name="name">
 				</ul>
 				<ul>
-					<li>peer
+					<li>
+						<span>peer</span>
 					<li>
 						<select>
 							<option>select device
@@ -237,12 +263,17 @@ li {
 		
 		<script>
 
-var form = document.forms[0],
-	elements = {
-		body: document.body,
-		information: document.getElementById("information"),
+var elements = {
+		form: document.getElementById("form"),
 		edit: document.getElementById("edit"),
-		snmp: form.elements["snmp"],
+		cancel: document.getElementById("cancel"),
+		save: document.getElementById("save"),
+		name: document.getElementById("name"),
+		ip: document.getElementById("ip"),
+		type: document.getElementById("type"),
+		label: document.getElementById("label"),
+		snmp: document.getElementById("snmp"),
+		information: document.getElementById("information"),
 		port: {
 			list: document.getElementById("port_list"),
 			add: document.getElementById("port_add"),
@@ -253,19 +284,51 @@ var form = document.forms[0],
 	},
 	fragment = document.createDocumentFragment();
 
-elements.port.name = elements.port.form.elements["name"];
-
-//elements.snmp.addEventListener("change", onChangeSnmp, false);
 elements.edit.addEventListener("click", onEditInformation, false);
+elements.save.addEventListener("click", onSaveInformation, false);
+elements.cancel.addEventListener("click", onCancelInformation, false);
 elements.port.add.addEventListener("click", onAddPort, false);
-elements.port.cancel.addEventListener("click", onCancel, false);
+elements.port.cancel.addEventListener("click", onCancelPort, false);
 //onChangeSnmp();
 
 elements.port.list.firstChild.onclick = onEditPort;
 
 fragment.appendChild(elements.port.form);
 
-function onCancel(e) {
+(top !== window && top.x || new Function())(window);
+
+function onCancelInformation() {
+	elements.information.classList.remove("edit");
+	
+	elements.form.reset();
+}
+
+
+function onEditInformation(e) {
+	elements.form.name.value = elements.name.textContent ;
+	elements.form.ip.value = elements.ip.textContent;
+	elements.form.type.value = elements.type.textContent;
+	elements.form.label.value = elements.label.textContent;
+	elements.form.snmp.value = elements.snmp.textContent;
+	
+	elements.information.classList.add("edit");
+}
+
+function onSaveInformation() {
+	saveInformation();
+}
+
+function saveInformation() {
+	elements.name.textContent = elements.form.name.value;
+	elements.ip.textContent = elements.form.ip.value;
+	elements.type.textContent = elements.form.type.value;
+	elements.label.textContent = elements.form.label.value;
+	elements.snmp.textContent = elements.form.snmp.value;
+	
+	onCancelInformation();
+}
+
+function onCancelPort() {
 	var li = elements.port.form.parentNode;
 	
 	// fragment에는 add 진행시 버튼이, edit 진행시 <a> 태그가 보관되어 있음
@@ -276,7 +339,7 @@ function onCancel(e) {
 	elements.port.form.reset();
 }
 
-function onAddPort(e) {	
+function onAddPort() {	
 	// form이 보관되어 있지 않은 경우 (edit 진행시) 무시
 	if (elements.port.form.parentNode !== fragment) {
 		return;
@@ -288,11 +351,7 @@ function onAddPort(e) {
 	// add 버튼 보관
 	fragment.appendChild(elements.port.add);
 	
-	elements.port.name.focus();
-}
-
-function onEditInformation(e) {
-	elements.information.classList.add("edit");
+	elements.port.form.elements.name.focus();
 }
 
 function onEditPort(e) {
@@ -311,19 +370,23 @@ function onEditPort(e) {
 	// a 태그 보관
 	fragment.appendChild(a);
 	
-	elements.port.name.value = a.textContent;
-	elements.port.name.select();
+	elements.port.form.elements.name.value = a.textContent;
+	elements.port.form.elements.name.select();
 }
 /*
 function onChangeSnmp(e) {
 	if (elements.snmp.value === "disable"){
-		elements.body.classList.add("snmp");
+		document.body.classList.add("snmp");
 	}
 	else {
-		elements.body.classList.remove("snmp");
+		document.body.classList.remove("snmp");
 	}
 }
-*/	
+*/
+
+function load() {
+	
+}
 		</script>
 	
 	</body>
