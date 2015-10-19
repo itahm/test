@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title>ITAhM::Event</title>
+		
+		<style>
+body {
+	font-family: tahoma, arial, "맑은 고딕";
+	padding: 10px;
+}
+
+li {
+	font-size: 12px;
+}
+
+header {
+	position: fixed; top: 10px; right: 10px; left: 10px; height: 29px;
+	border-bottom: 1px;
+}
+
+section {
+	position: fixed; top: 40px; right: 10px; bottom: 10px; left: 10px;
+}
+
+.table ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+}
+
+.table li {
+	flex: 1;
+}
+
+.table li:nth-child(1) {
+	flex: 2;
+}
+
+.table .thead {
+	position: absolute; top: 0; right: 0; left: 0;
+	height: 20px;
+	box-sizing: border-box;
+	background-color: #0084ff;
+	color: #fff;
+	padding: 2px;
+}
+
+.table .thead ul {
+}
+
+.table .thead li {
+	font-weight: bold;
+	text-align: center;
+}
+
+.table .thead li:not(:first-child) {
+	border-left: 1px solid #0af;
+}
+
+.table .thead li:last-child {
+	flex: none;
+	/* browser scrollbar의 너비에 따라 달라져야함*/ 
+	width: 17px;
+}
+
+
+.table .tbody {
+	position: absolute; top: 20px; right: 0; bottom: 0; left: 0;
+	background-color: #fff;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.table .tbody ul:nth-child(odd) {
+	background-color: #fafafa;
+}
+
+.table .tbody li {
+	padding: 3px;
+}
+		</style>
+		
+	</head>
+	
+	<body>
+		<header>
+		</header>
+		
+		<section class="table">
+			<div class="thead device" id="htead">
+				<ul>
+					<li>time stamp
+					<li>device name
+					<li>ip address
+					<li>resource
+					<li>last status
+					<li>current status
+					<li>notes
+					<li>
+				</ul>
+			</div>
+			<div class="tbody" id="tbody"></div>
+		</section>
+		
+		<script>
+(function (window, top) {
+
+	var elements = {
+			tbody: document.getElementById("tbody")
+		},
+		top = {
+			getDeviceList: top && top.getDeviceList || function () {return {}}
+		}
+	
+	
+	console.log(top.getDeviceList());
+	
+	function addItem(data) {
+		var row = document.createElement("ul");
+		
+		row.appendChild(document.createElement("li")).textContent = data["timeStamp"];
+		row.appendChild(document.createElement("li")).textContent = data["sysName"];
+		row.appendChild(document.createElement("li")).textContent = data["ipAddr"];
+		row.appendChild(document.createElement("li")).textContent = data["resource"] +" "+ data["index"];
+		row.appendChild(document.createElement("li")).textContent = data["lastStatus"];
+		row.appendChild(document.createElement("li")).textContent = data["currentStatus"];
+		row.appendChild(document.createElement("li")).textContent = data["text"];
+		
+		elements.tbody.appendChild(row);
+		
+		elements.tbody.scrollTop = elements.list.scrollHeight;
+	}
+
+})(window, top);
+		</script>
+	
+	</body>
+	
+</html>

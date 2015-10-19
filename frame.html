@@ -13,30 +13,31 @@ h1 {
 }
 
 iframe {
-	position: fixed; width: 50%; height: 50%;
+	/*position: absolute; top: 0; right: 0; bottom: 0; left: 0;*/
+	width: 100%; height: 100%;
 	margin: 0;
 	padding: 0;
 	border: 0;
 }
 
-iframe.tl {
+.iframe {
+	position: fixed; width: 50%; height: 50%;
+}
+
+.iframe.tl {
 	top: 0; left: 0;
-	background-color: #f00;
 }
 
-iframe.tr {
+.iframe.tr {
 	top: 0; right: 0;
-	background-color: #0f0;
 }
 
-iframe.bl {
+.iframe.bl {
 	bottom: 0; left: 0;
-	background-color: #00f;
 }
 
-iframe.br {
+.iframe.br {
 	bottom: 0; right: 0;
-	background-color: #ff0;
 }
 
 		</style>
@@ -45,68 +46,135 @@ iframe.br {
 	
 	<body>
 	
-		<div class="iframe">
-			<iframe class="tl" src="list.html"></iframe>
+		<div class="iframe tl">
+			<iframe id="frame_list"></iframe>
 		</div>
-		<div class="iframe">
-			<iframe class="tr" src="map.html"></iframe>
+		<div class="iframe tr">
+			<iframe id="frame_map"></iframe>
 		</div>
-		<div class="iframe">
-			<iframe class="bl" src="device.html"></iframe>
+		<div class="iframe bl">
+			<iframe id="frame_device"></iframe>
 		</div>
-		<div class="iframe">
-			<iframe class="br" src="event.html"></iframe> 
+		<div class="iframe br">
+			<iframe id="frame_event"></iframe> 
 		</div>
 		
 		<div id="toolbar" class="minimized">
 			<img id="maximize" src="img/maximize.png">
 			<img id="minimize" src="img/minimize.png">
 		</div>
-		<script src="json/device.json"></script>
+		
 		<script>
 
-var elements = {
-		toolbar: document.getElementById("toolbar"),
-		maximize: document.getElementById("maximize"),
-		minimize: document.getElementById("minimize")
+(function (window, undefined){
+	
+	var elements = {
+			toolbar: document.getElementById("toolbar"),
+			maximize: document.getElementById("maximize"),
+			minimize: document.getElementById("minimize"),
+			frame: {
+				list: document.getElementById("frame_list"),
+				map : document.getElementById("frame_map"),
+				device: document.getElementById("frame_device"),
+				event: document.getElementById("frame_event")
+			}
+		},
+		loader = new Worker("worker/loader.js"),
+		deviceList,
+		iconMap;
+	
+	loader.onmessage = function (e) {
+		deviceList = e.data.device;
+		
+		loadIcon(e.data.icon, function (map) {
+			iconMap = map;
+			
+			/**
+			 * icon 모두 load 된 후 페이지 시작
+			 */
+			load();
+		});
+	}
+	
+	/**
+	 * 페이지 시작점
+	 */
+	function load() {
+		elements.maximize.addEventListener("click", function (e) {
+			/*var iframe = elements.toolbar.parentNode;
+			
+			document.body.classList.add("maximized");
+			document.body.classList.remove("minimized");
+			
+			iframe.classList.add("maximized");*/
+			
+			elements.toolbar.classList.add(maximized);
+		}, false);
+		
+		elements.minimize.addEventListener("click", function (e) {
+			/*var iframe = elements.toolbar.parentNode;
+			
+			document.body.classList.remove("maximized");
+			document.body.classList.add("minimized");
+			
+			iframe.classList.remove("maximized");*/
+			elements.toolbar.classList.add(minimized);
+		}, false);
+		
+		elements.frame.list.src = "list.html";
+		elements.frame.map.src = "map.html";
+		elements.frame.device.src = "device.html";
+		elements.frame.event.src = "event.html";
+	}
+	
+	function loadIcon(iconMap, complete) {
+		var names = Object.keys(iconMap),
+			length = names.length,
+			icon = new Image(),
+			index = 0,
+			map = {};
+		
+		icon.onload = onLoad;
+		icon.src = iconMap[names[index]].src;
+		
+		function onLoad() {
+			map[names[index]] = this;
+			
+			if (++index < length) {
+				icon = new Image();
+				icon.onload = onLoad;
+				icon.src = iconMap[names[index]].src;
+			}
+			else {
+				complete(map);
+			}
+		}
+	}
+	
+	window.getDeviceList = function () {
+		return deviceList;
 	};
-
-elements.maximize.addEventListener("click", function (e) {
-	/*var iframe = elements.toolbar.parentNode;
 	
-	document.body.classList.add("maximized");
-	document.body.classList.remove("minimized");
+	window.getDevice = function (id) {
+		return deviceList[id];
+	};
 	
-	iframe.classList.add("maximized");*/
 	
-	elements.toolbar.classList.add(maximized);
-}, false);
-
-elements.minimize.addEventListener("click", function (e) {
-	/*var iframe = elements.toolbar.parentNode;
+	window.selectDevice = function (id) {
+		elements.frame.device.contentWindow.resetDevice(id);
+		elements.frame.map.contentWindow.selectDevice(id);
+	};
 	
-	document.body.classList.remove("maximized");
-	document.body.classList.add("minimized");
+	window.getIconMap = function () {
+		return iconMap;
+	};
 	
-	iframe.classList.remove("maximized");*/
-	elements.toolbar.classList.add(minimized);
-}, false);
+	window.removeDevice = function (id) {
+		console.log("remove >> "+ id);
+	};
+	
+}) (window);
 
-window.test= function(x) {
-	console.log(x);
-}
-
-function onFocus(frame) {
-	(frame && frame.document.body || document.createDocumentFragment()).appendChild(elements.toolbar);
-}
-
-function x(wnd) {
-	console.log(wnd.load);
-}
-
-function getDeviceList() {
-	return deviceList;
-}
 		</script>
 	
 	</body>

@@ -27,21 +27,23 @@
 	
 	<body>
 		<div id="container"></div>
-		<script>
+		<script>	
 
-var elements = {
-		container: document.getElementById("container")
-	};
+(function (window, top) {
 	
-
-(function (window, root) {
+	if (window === top) {
+		throw "";
+	}
 	
-	var canvas = new Canvas(elements.container),
+	var elements = {
+			container: document.getElementById("container")
+		},
+		canvas = new Canvas(elements.container),
 		layer = {
 			device: canvas.add()
 		},
-		deviceMap,
-		iconMap;
+		deviceList = top.getDeviceList(),
+		iconMap = top.getIconMap();
 	
 	canvas.ondraw = function (context, hitContext, data) {
 		var icon = iconMap[data.type],
@@ -61,24 +63,16 @@ var elements = {
 		//context.fillText(device.name, x, y)
 		
 		hitContext.fillRect(x, y, width, height);
-	}
+	};
 	
 	canvas.onenter = function (node) {
-	}
+	};
 	
 	canvas.onleave = function (node) {
-	}
-	
-	function onSelect() {
-		var node = canvas.node;
-		
-		if (node) {
-			node.layer.top(node);
-		}
-	}
+	};
 	
 	canvas.ondragstart = function (e) {
-	}
+	};
 	
 	canvas.ondragmove = function (e) {
 		if (e.node) {
@@ -92,80 +86,68 @@ var elements = {
 		else {
 			canvas.translate(e.dragX, e.dragY);
 		}
-	}
+	};
 
 	canvas.ondragend = function (e) {
 		if (e.node) {
 			return;
 		}
 		else {
-			var data;
-			
-			for (var id in deviceMap) {
-				data = deviceMap[id];
-				
-				data.x += e.dragX;
-				data.y += e.dragY;
-			}
+			moveMap(e.dragX, e.dragY);
 			
 			layer.device.invalidate();
 			
 			canvas.invalidate();
 		}
-	}
+	};
 	
-	elements.container.addEventListener("mousedown", onSelect, false);
-	
-	var thread = new Worker("worker/loader.js");
-	
-	thread.onmessage = function (e) {
-		var data = e.data;
-		
-		loadIcon(data.icon, function (map) {
-			iconMap = map;
-			
-			loadDevice();
-		});
-	}
-	
-	function loadDevice() {
-		deviceMap = top.getDeviceList();
-		
-		for (var id in deviceMap) {
-			layer.device.add(deviceMap[id]);
+	(function () {
+		for (var id in deviceList) {
+			layer.device.add(deviceList[id]);
 		}
 		
 		layer.device.invalidate();
 		
 		canvas.invalidate();
-	}
+	}) ();
 	
-	function loadIcon(iconMap, complete) {
-		var names = Object.keys(iconMap),
-			length = names.length,
-			icon = new Image(),
-			index = 0,
-			map = {};
+	elements.container.addEventListener("mousedown", onSelect, false);
+	
+	function onSelect() {
+		var node = canvas.node;
 		
-		icon.onload = onLoad;
-		icon.src = iconMap[names[index]].src;
-		
-		function onLoad() {
-			map[names[index]] = this;
-			
-			if (++index < length) {
-				icon = new Image();
-				icon.onload = onLoad;
-				icon.src = iconMap[names[index]].src;
-			}
-			else {
-				complete(map);
-			}
+		if (node) {
+			node.layer.top(node);
 		}
 	}
 	
+	function moveMap(x, y) {
+		var device;
+		
+		for (var id in deviceList) {
+			device = deviceList[id];
+			
+			device.x += x;
+			device.y += y;
+		}
+	}
+	
+	/**
+	 * public method
+	 */
+	 
+	window.selectDevice = function (id) {
+		var device = deviceList[id];
+		
+		moveMap(-device.x, -device.y);
+		
+		layer.device.invalidate();
+		
+		canvas.invalidate();
+	};
 	
 }) (window, top);
+
 		</script>
 	
 	</body>

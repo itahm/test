@@ -27,6 +27,15 @@ span:after {
 	</div>
 	
 <script>
+var o = {
+		a: 1,
+		b: 2,
+		c: 3
+	};
+	
+o.map(function (key) {
+	console.log(key, this);
+});
 </script>
 
 </body>

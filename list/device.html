@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title>ITAhM::device list</title>
+		
+		<style>
+body {
+	font-family: tahoma, arial, "맑은 고딕";
+	padding: 0;
+	margin: 0;
+}
+
+input,
+li {
+	font-size: 12px;
+}
+
+header {
+	position: fixed; top: 0; right: 0; left: 0;
+	padding: 5px;
+	box-sizing: border-box;
+	height: 39px;
+	border-bottom: 1px;
+}
+
+section {
+	position: fixed; top: 40px; right: 0; bottom: 0; left: 0;
+}
+
+ul {
+	margin: 0;
+	padding: 3px 0;
+	list-style: none;
+	display: flex;
+}
+
+li {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+li:first-child {
+	flex: none;
+	width: 20px;
+}
+
+.thead {
+	position: absolute; top: 0; right: 0; left: 0;
+	height: 26px;
+	box-sizing: border-box;
+	background-color: #0084ff;
+	color: #fff;
+	padding: 2px;
+}
+
+.thead li {
+	font-weight: bold;
+	text-align: center;
+}
+
+.thead li:not(:first-child) {
+	border-left: 1px solid #0af;
+}
+
+.thead li:last-child {
+	flex: none;
+	/* browser scrollbar의 너비에 따라 달라져야함*/ 
+	width: 17px;
+}
+
+
+.tbody {
+	position: absolute; top: 26px; right: 0; bottom: 0; left: 0;
+	background-color: #fff;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.tbody ul {
+	cursor: pointer;
+}
+
+.tbody ul:hover li:nth-child(2) {
+	text-decoration: underline;
+}
+
+.tbody ul:nth-child(odd) {
+	background-color: #fafafa;
+}
+
+.tbody li {
+	padding: 3px;
+}
+
+input[type=button],
+input[type=submit],
+input[type=text],
+select {
+	padding: .5em;
+}
+
+form {
+	white-space: nowrap;
+}
+		</style>
+		
+	</head>
+	
+	<body>
+		<header>
+			<form id="form">
+				<input type="button" value="add device" name="add">
+				<input type="button" value="remove device" name="remove">
+				<select name="label"></select>
+				<input type="text" name="keyword">
+				<input type="submit" value="search">
+			</form>
+		</header>
+		
+		<section class="table">
+			<div class="thead" id="htead">
+				<ul>
+					<li>
+					<li>name
+					<li>type
+					<li>ip address
+					<li>processor load
+					<li>memory usage
+					<li>disk usage
+					<li>interface throughput
+					<li>
+				</ul>
+			</div>
+			<div class="tbody" id="tbody"></div>
+		</section>
+		
+		<script>
+
+(function (window, top) {
+	
+	if (window === top) {
+		throw "";
+	}
+	
+	var elements = {
+			form: document.getElementById("form"),
+			tbody: document.getElementById("tbody")
+		},
+		list = new List(top.getDeviceList(), onSelect);
+	
+	elements.form.elements.remove.addEventListener("click", onRemove, false);
+	elements.form.elements.label.addEventListener("change", onChangeLabel, false);
+	elements.form.addEventListener("submit", onSearch, false);
+	
+	(function (select) {
+		var array = list.getLabels(),
+			option = document.createElement("option");
+		
+		select.length = 0;
+		
+		option.value = "";
+		option.text = "all labels";
+		
+		select.add(option);
+		
+		for (var i=0, length=array.length; i<length; i++) {
+			option = document.createElement("option");
+			
+			option.text = array[i];
+			
+			select.add(option);
+		}
+		
+		onChangeLabel.call(select);
+		
+	})(elements.form.elements.label);
+	
+	function onSearch(e) {
+		e.preventDefault();
+		
+		console.log(elements.form.keyword.value);
+	}
+	
+	function onSelect(id) {
+		top.selectDevice(id);
+	}
+	
+	function onRemove() {
+		for(var i=0, length=list.selected.length; i<length; i++) {			
+			top.removeDevice(list.selected[i].dataset.id);
+		}
+	}
+	
+	function onChangeLabel() {
+		elements.tbody.appendChild(list.get(this.value));
+	}
+	
+	function List(deviceList, onselect) {
+		var list = this,
+			map = {},
+			label = {},
+			selected = [];
+		
+		(function () {
+			var row, device, checkbox;
+			
+			for (var id in deviceList) {
+				row = document.createElement("ul");
+				device = deviceList[id];
+				
+				checkbox = document.createElement("input");
+				checkbox.type = "checkbox";
+				checkbox.onclick = onCheckItem;
+				
+				row.appendChild(checkbox);
+				row.appendChild(document.createElement("li")).textContent = device.name;
+				row.appendChild(document.createElement("li")).textContent = device.address;
+				row.appendChild(document.createElement("li")).textContent = device.type;
+				row.appendChild(document.createElement("li")).textContent = "";
+				row.appendChild(document.createElement("li")).textContent = "";
+				row.appendChild(document.createElement("li")).textContent = "";
+				row.appendChild(document.createElement("li")).textContent = "";
+				
+				row.dataset.id = id;
+				
+				row.onclick = onSelectItem;
+				
+				map[id] = row;
+				
+				parse(row, device);
+			}
+		})();
+		
+		
+		this.select = function (item, select) {
+			var index = selected.indexOf(item);
+			
+			if (select) {
+				if (index === -1) {
+					selected[selected.length] = item;
+				}
+			}
+			else {
+				if (index !== -1) {
+					selected.splice(index, 1);
+				}
+			}
+			
+		};
+		
+		this.selected = function () {
+			return selected;
+		};
+		
+		this.get = function (labelName) {
+			var fragment = document.createDocumentFragment(),
+				tmp = document.createDocumentFragment();
+			
+			for (var id in map) {
+				fragment.appendChild(map[id]);
+			}
+			
+			if (labelName) {
+				var array = label[labelName];
+				
+				fragment = document.createDocumentFragment();
+				
+				if (array) {
+					for (var i=0, length=array.length; i<length; i++) {
+						fragment.appendChild(array[i]);
+					}
+				}
+			}
+			
+			return fragment;
+		};
+		
+
+		this.getLabels = function() {
+			return Object.keys(label);
+		};
+		
+		function onCheckItem(e) {
+			e.stopPropagation();
+			
+			list.select(this.parentNode, this.checked);
+		}
+		
+		function onSelectItem() {
+			onselect(this.dataset.id);
+		}
+		
+		function parse(item, device) {
+			if (!device.label) {
+				return;
+			}
+			
+			var array = device.label.split(","),
+				labelName;
+			
+			for (var i=0, length=array.length; i<length; i++) {
+				labelName = array[i];
+				
+				if (!label[labelName]) {
+					label[labelName] = [];
+				}
+				
+				label[labelName].push(item);
+			}
+		}
+		
+	}
+	
+})(window, top);
+
+		</script>
+	
+	</body>
+	
+</html>

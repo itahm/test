@@ -4,126 +4,110 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Script-Type" content="text/javascript">
 		<meta http-equiv="Content-Style-Type" content="text/css">
-		<title>ITAhM::Event</title>
+		<title>ITAhM::list</title>
 		
 		<style>
 body {
-	font-family: tahoma,
-	padding: 10px;
+	font-family: tahoma, arial, "맑은 고딕";
+}
+
+header {
+	position: fixed; top: 0; right: 0; left: 0;
+	height: 35px;
+}
+
+section {
+	position: fixed; top: 35px; right: 0; bottom: 0; left: 0;
+}
+
+iframe {
+	border: 0;
+	width: 100%;
+	height: 100%;
+}
+
+a {
+	font-size: 15px;
+}
+
+a:link,
+a:visited,
+a:active {
+	text-decoration: none;
+	color: #555;
+}
+
+nav {
+	height: 35px;
+	background-color: #ddd;
+}
+
+ul {
+	margin: 0;
+	padding: 5px 0 0 10px;
+	height: 35px;
+	box-sizing: border-box;
+	list-style: none;
+	vertical-align: bottom;
 }
 
 li {
-	font-size: 12px;
-}
-
-.table ul {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-	display: flex;
-}
-
-.table li {
-	flex: 1;
-}
-
-.table li:nth-child(1) {
-	flex: 2;
-}
-
-.table .thead {
-	position: fixed; top: 10px; right: 10px; left: 10px;
-	background-color: #0084ff;
-	color: #fff;
-	padding: 2px;
-	height: 16px;
-	line-height: 16px;
-}
-
-.table .thead ul {
-}
-
-.table .thead li {
-	font-weight: bold;
+	display: inline-block;
+	width: 80px;
+	height: 30px;
+	line-height: 30px;
 	text-align: center;
+	background-color: #ddd;
+	border-radius: 5px 5px 0 0;
 }
 
-.table .thead li:not(:first-child) {
-	border-left: 1px solid #0af;
-}
-
-.table .thead li:last-child {
-	flex: none;
-	/* browser scrollbar의 너비에 따라 달라져야함*/ 
-	width: 17px;
-}
-
-
-.table .tbody {
-	position: fixed; top: 30px; right: 10px; bottom: 10px; left: 10px;
+ul.device .device,
+ul.line .line {
 	background-color: #fff;
-	overflow-y: scroll;
-	overflow-x: hidden;
-}
-
-.table .tbody ul:nth-child(odd) {
-	background-color: #fafafa;
-}
-
-.table .tbody li {
-	padding: 3px;
 }
 		</style>
 		
 	</head>
 	
 	<body>
-		<div class="table">
-			<div class="thead device" id="htead">
-				<ul>
-					<li>time stamp
-					<li>device name
-					<li>ip address
-					<li>resource
-					<li>last status
-					<li>current status
-					<li>notes
-					<li>
+		<header>
+		
+			<nav>
+				<ul id="tab" class="device">
+					<li class="device"><a href="list/device.html" id="device" target="list">device</a>
+					<li class="line"><a href="list/line.html" id="line" target="list">line</a>
+					<!--li><a href="list/address.html" target="list">address</a-->
 				</ul>
-			</div>
-			<div class="tbody" id="tbody"></div>
-		</div>
+			</nav>
+		
+		</header>
+		
+		<section>
+		
+			<iframe name="list" src="list/device.html"></iframe>
+		
+		</section>
 		
 		<script>
+
+var elements = {
+		tab: document.getElementById("tab")
+	};
+	
 (function (window, top) {
 
-	var elements = {
-			tbody: document.getElementById("tbody")
-		},
-		top = {
-			getDeviceList: top && top.getDeviceList || function () {return {}}
+	elements.tab.addEventListener("click", onTab, false);
+	
+	function onTab(e) {
+		var a = e.target;
+		
+		if (a.href) {
+			this.className = a.id;
 		}
-	
-	
-	console.log(top.getDeviceList());
-	
-	function addItem(data) {
-		var row = document.createElement("ul");
-		
-		row.appendChild(document.createElement("li")).textContent = data["timeStamp"];
-		row.appendChild(document.createElement("li")).textContent = data["sysName"];
-		row.appendChild(document.createElement("li")).textContent = data["ipAddr"];
-		row.appendChild(document.createElement("li")).textContent = data["resource"] +" "+ data["index"];
-		row.appendChild(document.createElement("li")).textContent = data["lastStatus"];
-		row.appendChild(document.createElement("li")).textContent = data["currentStatus"];
-		row.appendChild(document.createElement("li")).textContent = data["text"];
-		
-		elements.tbody.appendChild(row);
-		
-		elements.tbody.scrollTop = elements.list.scrollHeight;
 	}
-
+	
 })(window, top);
+	
 		</script>
 	
 	</body>
