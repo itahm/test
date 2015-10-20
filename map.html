@@ -7,17 +7,86 @@
 		<title>ITAhM::Map</title>
 		<link rel="stylesheet" href ="frame.css ">
 		<style>
-#toolbar {
-	background-color: #ddd;
+
+body {
+	font-family: arial, tahoma, "맑은 고딕";
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	display: flex;
 }
 
-#toolbar.minimized #minimize {
+div,
+input,
+select {
+	font-size: 12px;
+}
+
+aside {
+	flex: none;
+	width: 200px;
+}
+
+section {
+	flex: 1;
+}
+
+.target {
+	margin: 10px;
+	padding: 0 10px;
+	line-height: 30px;
+	
+}
+
+.title {
+	border-radius: 5px 5px 0 0;
+	background-color: #0084ff;
+	color: #ddf;
+	border: 1px solid #88f;
+	border-bottom: 0;
+	padding: 5px;
+}
+
+.body {
+	border: 1px solid #88f;
+	border-top: 0;
+	padding: 5px;
+	position: relative;
+}
+
+.body div,
+.body input,
+.body select {
+	padding: 5px;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.body div {
+	height: 30px;
+	line-height: 20px;
+	padding: 5px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.body a {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	cursor: pointer;
+}
+
+.body div:empty +a {
 	display: none;
 }
 
-#container {
-	position: fixed; top: 10px; right: 10px; bottom: 10px; left: 10px;
+.body.empty :not(div),
+.body.snmp input,
+.body:not(.snmp) select {
+	display: none;
 }
+
+
 		</style>
 	
 		<script src="js/Draggable.js"></script>
@@ -26,9 +95,37 @@
 	</head>
 	
 	<body>
-		<div id="container"></div>
+		<aside>
+			<div>
+				<div class="title">peer1</div>
+				<div class="body empty" id="peer1">
+					<div id="peer1_name"></div>
+					<a id="peer1_reset">x</a>
+					<input type="text">
+					<select></select>
+				</div>
+			</div>
+			<div>
+				<div class="title">peer2</div>
+				<div class="body empty" id="peer2">
+					<div id="peer2_name"></div>
+					<a id="peer2_reset">x</a>
+					<input type="text">
+					<select></select>
+				</div>
+			</div>
+			
+		</aside>
+			
+		<section id="map"></section>
+		
 		<script>	
 
+		function allowDrag(e) {
+			e.preventDefault();
+			
+		}
+		
 (function (window, top) {
 	
 	if (window === top) {
@@ -36,16 +133,46 @@
 	}
 	
 	var elements = {
-			container: document.getElementById("container")
+			map: document.getElementById("map"),
+			peer1: {
+				body: document.getElementById("peer1"),
+				name: document.getElementById("peer1_name"),
+				reset: document.getElementById("peer1_reset")
+			},
+			peer2: {
+				body: document.getElementById("peer2"),
+				name: document.getElementById("peer2_name"),
+				reset: document.getElementById("peer2_reset")
+			}
 		},
-		canvas = new Canvas(elements.container),
+		canvas = new Canvas(elements.map),
 		layer = {
 			device: canvas.add()
 		},
 		deviceList = top.getDeviceList(),
 		iconMap = top.getIconMap();
 	
-	canvas.ondraw = function (context, hitContext, data) {
+	/** event */
+	elements.map.addEventListener("mousedown", onSelect, false);
+	
+	canvas.ondraw = onDraw;
+	canvas.ondragmove = onDragMove;
+	canvas.ondragend = onDragEnd;
+	canvas.onenter;
+	canvas.onleave;
+	canvas.ondragstart;
+	
+	/** constructor */
+	for (var id in deviceList) {
+		layer.device.add(deviceList[id]);
+	}
+	
+	layer.device.invalidate();
+	
+	canvas.invalidate();
+	
+	/** method */
+	function onDraw(context, hitContext, data) {
 		var icon = iconMap[data.type],
 			width = icon.width,
 			height = icon.height,
@@ -56,25 +183,16 @@
 			return;
 		}
 		
-		x -= Math.round(width /2);
-		y -= Math.round(height /2);
+		//x -= Math.round(width /2);
+		//y -= Math.round(height /2);
 		
 		context.drawImage(icon, x, y, width, height);
 		//context.fillText(device.name, x, y)
 		
 		hitContext.fillRect(x, y, width, height);
-	};
+	}
 	
-	canvas.onenter = function (node) {
-	};
-	
-	canvas.onleave = function (node) {
-	};
-	
-	canvas.ondragstart = function (e) {
-	};
-	
-	canvas.ondragmove = function (e) {
+	function onDragMove(e) {
 		if (e.node) {
 			e.node.data.x += e.moveX;
 			e.node.data.y += e.moveY;
@@ -86,9 +204,9 @@
 		else {
 			canvas.translate(e.dragX, e.dragY);
 		}
-	};
-
-	canvas.ondragend = function (e) {
+	}
+	
+	function onDragEnd(e) {
 		if (e.node) {
 			return;
 		}
@@ -99,25 +217,22 @@
 			
 			canvas.invalidate();
 		}
-	};
-	
-	(function () {
-		for (var id in deviceList) {
-			layer.device.add(deviceList[id]);
-		}
-		
-		layer.device.invalidate();
-		
-		canvas.invalidate();
-	}) ();
-	
-	elements.container.addEventListener("mousedown", onSelect, false);
+	}
 	
 	function onSelect() {
 		var node = canvas.node;
 		
 		if (node) {
 			node.layer.top(node);
+		}
+		
+		/** link 모드 이면 */
+		var target = elements.peer1.body.classList.contains("empty")? elements.peer1.name
+			: elements.peer2.body.classList.contains("empty")? elements.peer2.name
+			: undefined;
+		
+		if (target) {
+			target.textContent = node.data.name;
 		}
 	}
 	
@@ -134,8 +249,7 @@
 	
 	/**
 	 * public method
-	 */
-	 
+	 */ 
 	window.selectDevice = function (id) {
 		var device = deviceList[id];
 		
@@ -145,6 +259,11 @@
 		
 		canvas.invalidate();
 	};
+	
+	/** 내부 class */
+	function Target() {
+		var target = this;
+	}
 	
 }) (window, top);
 

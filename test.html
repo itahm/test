@@ -6,36 +6,55 @@
 
 	<style>
 
-div {
-
+.c {
+    position: fixed; top: 20px; right: 20px; bottom: 20px; left: 20px;
+    background-color: green;
+    display: flex;
 }
 
-span:after {
-	content: "a ";
-	display: inline-block;
-	width:100px;
-	background-color: red;
+.d1 {
+    background-color: red;
+    flex: 1;
+}
+
+.d2 {
+    background-color: blue;
+    flex: 1;
 }
 	</style>
 </head>
 
 
 <body>
-
-	<div>
-		<span>abc</span>
-	</div>
-	
+	<div class="c">
+    <div class="d1">123</div>
+    <div class="d2">
+    	<img src="http://www.w3schools.com/html/img_logo.gif" draggable="true">
+    </div>
+</div>
 <script>
-var o = {
-		a: 1,
-		b: 2,
-		c: 3
-	};
+
+var d1 = document.querySelector(".d1");
+var d2 = document.querySelector(".d2");
+var i = document.querySelector("img");
+var r = d1.getBoundingClientRect();
+
+console.log(r.width, r.height);
+
+i.addEventListener("dragstart", function (e) {
+	console.log("start");
+}, false);
+
+d1.addEventListener("drop", function (e) {
+	e.preventDefault();
 	
-o.map(function (key) {
-	console.log(key, this);
-});
+	console.log("drop");
+}, false);
+
+d1.addEventListener("dragover", function (e) {
+	e.preventDefault();
+}, false);
+
 </script>
 
 </body>

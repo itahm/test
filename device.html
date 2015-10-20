@@ -29,7 +29,8 @@ section {
 	position: fixed; top: 0; right: 0px; bottom: 0; left: 300px;
 	box-sizing: border-box;
 	padding: 10px;
-	background-color: #ddd;
+	background: #ddd url(img/chart.png) no-repeat center;
+	background-image: 
 }
 
 .table ul {
@@ -51,6 +52,9 @@ section {
 .table li:first-child {
 	flex: 1;
 	text-align: right;
+	background-color: #0084ff;
+	color: #ddf;
+	font-weight: bold;
 }
 
 .table li >* {
@@ -74,13 +78,13 @@ section {
 }
 
 .snmp:not(body) {
-	/*display: none;*/
-	background-color: #ff0;
+	display: none;
+	/*background-color: #ff0;*/
 }
 
 body.snmp .interface {
-	/*display: none;*/
-	background-color: #0ff;
+	display: none;
+	/*background-color: #0ff;*/
 }
 
 body.snmp .snmp,
@@ -103,13 +107,11 @@ li {
 	vertical-align: bottom;
 }
 
- {
-}
 		</style>
 		
 	</head>
 	
-	<body class="snmp">
+	<body>
 		
 		<aside>
 			<h3>device information</h3>
@@ -166,30 +168,33 @@ li {
 					</form>
 				</div>
 				
-				<ul>
-					<li>
-						<span>status</span>
-					<li id="txt_status">
-						<span id=""></span>
-				</ul>
-				<ul>
-					<li>
-						<span>uptime</span>
-					<li id="txt_uptime">
-						<span id=""></span>
-				</ul>
-				<ul>
-					<li>
-						<span>description</span>
-					<li id="txt_description">
-						<span id=""></span>
-				</ul>
-				<ul>
-					<li>
-						<span>enterprise</span>
-					<li id="txt_enterprise">
-						<span id=""></span>
-				</ul>
+				<div class="snmp">
+					<ul>
+						<li>
+							<span>status</span>
+						<li id="txt_status">
+							<span id=""></span>
+					</ul>
+					<ul>
+						<li>
+							<span>uptime</span>
+						<li id="txt_uptime">
+							<span id=""></span>
+					</ul>
+					<ul>
+						<li>
+							<span>description</span>
+						<li id="txt_description">
+							<span id=""></span>
+					</ul>
+					<ul>
+						<li>
+							<span>enterprise</span>
+						<li id="txt_enterprise">
+							<span id=""></span>
+					</ul>
+				</div>
+				
 			</div>
 			
 			<div class="interface">
@@ -270,6 +275,7 @@ li {
 	}
 	
 	var elements = {
+			aside: document.querySelector("aside"),
 			form: document.getElementById("form"),
 			edit: document.getElementById("edit"),
 			cancel: document.getElementById("cancel"),
@@ -385,7 +391,18 @@ li {
 		elements.ip.textContent = device.address;
 		elements.type.textContent = device.type;
 		elements.label.textContent = device.label && (device.label.split(",")).join(", ") || "";
-		elements.snmp.textContent = device.snmp || "disabled";
+		
+		if (device.snmp) {
+			document.body.classList.add("snmp");
+			
+			elements.snmp.textContent = device.snmp;
+		}
+		else {
+			document.body.classList.remove("snmp");
+			
+			elements.snmp.textContent = "disabled";
+		}
+		
 	}
 	
 	/*
@@ -404,6 +421,8 @@ li {
 	 */
 	window.resetDevice = function (id) {
 		initDevice(top.getDevice(id));
+		
+		elements.aside.scrollTop = 0;
 	}
 	
 })(window, top);

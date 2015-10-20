@@ -80,13 +80,14 @@ iframe {
 			}
 		},
 		loader = new Worker("worker/loader.js"),
-		deviceList,
+		deviceList, iconList,
 		iconMap;
 	
 	loader.onmessage = function (e) {
 		deviceList = e.data.device;
+		iconList = e.data.icon;
 		
-		loadIcon(e.data.icon, function (map) {
+		loadIcon(function (map) {
 			iconMap = map;
 			
 			/**
@@ -127,15 +128,15 @@ iframe {
 		elements.frame.event.src = "event.html";
 	}
 	
-	function loadIcon(iconMap, complete) {
-		var names = Object.keys(iconMap),
+	function loadIcon(complete) {
+		var names = Object.keys(iconList),
 			length = names.length,
 			icon = new Image(),
 			index = 0,
 			map = {};
 		
 		icon.onload = onLoad;
-		icon.src = iconMap[names[index]].src;
+		icon.src = iconList[names[index]].src;
 		
 		function onLoad() {
 			map[names[index]] = this;
@@ -143,7 +144,7 @@ iframe {
 			if (++index < length) {
 				icon = new Image();
 				icon.onload = onLoad;
-				icon.src = iconMap[names[index]].src;
+				icon.src = iconList[names[index]].src;
 			}
 			else {
 				complete(map);
@@ -159,6 +160,9 @@ iframe {
 		return deviceList[id];
 	};
 	
+	window.getIconData = function (type) {
+		return iconList[type];
+	};
 	
 	window.selectDevice = function (id) {
 		elements.frame.device.contentWindow.resetDevice(id);
