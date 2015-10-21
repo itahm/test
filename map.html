@@ -23,17 +23,20 @@ select {
 aside {
 	flex: none;
 	width: 200px;
+	padding: 10px;
+	box-sizing: border-box;
 }
 
 section {
 	flex: 1;
 }
 
-.target {
-	margin: 10px;
-	padding: 0 10px;
-	line-height: 30px;
-	
+aside input[type=button] {
+	padding: .5em;
+}
+
+.peer {
+	margin: 0 0 10px 0;
 }
 
 .title {
@@ -96,25 +99,28 @@ section {
 	
 	<body>
 		<aside>
-			<div>
-				<div class="title">peer1</div>
-				<div class="body empty" id="peer1">
-					<div id="peer1_name"></div>
-					<a id="peer1_reset">x</a>
-					<input type="text">
-					<select></select>
+			<form>
+				<div class="peer">
+					<div class="title">peer1</div>
+					<div class="body empty" id="peer1">
+						<div id="peer1_name"></div>
+						<a id="peer1_reset">x</a>
+						<input type="text" placeholder="interface name">
+						<select></select>
+					</div>
 				</div>
-			</div>
-			<div>
-				<div class="title">peer2</div>
-				<div class="body empty" id="peer2">
-					<div id="peer2_name"></div>
-					<a id="peer2_reset">x</a>
-					<input type="text">
-					<select></select>
+				<div class="peer">
+					<div class="title">peer2</div>
+					<div class="body empty" id="peer2">
+						<div id="peer2_name"></div>
+						<a id="peer2_reset">x</a>
+						<input type="text" placeholder="interface name">
+						<select></select>
+					</div>
 				</div>
-			</div>
-			
+			</form>
+			<input type="button" value="save" id="save">
+			<input type="button" value="cancel" id="cancel">
 		</aside>
 			
 		<section id="map"></section>
@@ -134,6 +140,8 @@ section {
 	
 	var elements = {
 			map: document.getElementById("map"),
+			save: document.getElementById("save"),
+			cancel: document.getElementById("cancel"),
 			peer1: {
 				body: document.getElementById("peer1"),
 				name: document.getElementById("peer1_name"),
@@ -154,6 +162,10 @@ section {
 	
 	/** event */
 	elements.map.addEventListener("mousedown", onSelect, false);
+	elements.save.addEventListener("click", onSave, false);
+	elements.cancel.addEventListener("click", onCancel, false);
+	elements.peer1.reset.addEventListener("click", onReset.bind(elements.peer1), false);
+	elements.peer2.reset.addEventListener("click", onReset.bind(elements.peer2), false);
 	
 	canvas.ondraw = onDraw;
 	canvas.ondragmove = onDragMove;
@@ -219,20 +231,64 @@ section {
 		}
 	}
 	
+	function onSave() {
+		
+	}
+	
+	function onCancel() {
+		
+	}
+	
+	function onReset() {
+		var peer = this;
+		
+		peer.body.classList.add("empty");
+		peer.name.textContent = "";
+		peer.device = undefined;
+	}
+	
 	function onSelect() {
 		var node = canvas.node;
 		
-		if (node) {
-			node.layer.top(node);
+		if (!node) {
+			return;
 		}
 		
-		/** link 모드 이면 */
-		var target = elements.peer1.body.classList.contains("empty")? elements.peer1.name
-			: elements.peer2.body.classList.contains("empty")? elements.peer2.name
-			: undefined;
+		node.layer.top(node);
 		
-		if (target) {
-			target.textContent = node.data.name;
+		/** link 모드 이면 */
+		if (false) {
+			return;
+		}
+		
+		var peer;
+		
+		if (elements.peer1.device) {
+			peer = elements.peer2;
+			
+			/** 중복 선택 방지 */
+			if (elements.peer1.device === node.data) {
+				return;
+			}
+		}
+		else {
+			peer = elements.peer1;
+		
+			/** 중복 선택 방지 */
+			if (elements.peer2.device === node.data) {
+				return;
+			}
+		}		
+		
+		peer.device = node.data;
+		peer.name.textContent = node.data.name;
+		peer.body.classList.remove("empty");
+		
+		if (node.data.snmp) {
+			peer.body.classList.add("snmp");
+		}
+		else {
+			peer.body.classList.remove("snmp");
 		}
 	}
 	
@@ -259,11 +315,6 @@ section {
 		
 		canvas.invalidate();
 	};
-	
-	/** 내부 class */
-	function Target() {
-		var target = this;
-	}
 	
 }) (window, top);
 
