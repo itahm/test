@@ -7,7 +7,8 @@
         "id": "11",
         "label": "",
         "type": "server",
-        "community": ""
+        "community": "",
+        "iface": {}
     },
     "46": {
         "address": "172.16.0.10",
@@ -16,7 +17,8 @@
         "y": -285,
         "id": "46",
         "label": "idc,public",
-        "type": "router"
+        "type": "router",
+        "iface": {}
     },
     "57": {
         "address": "",
@@ -24,7 +26,8 @@
         "name": "server farm (A)",
         "y": 75,
         "id": "57",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "68": {
         "address": "",
@@ -33,7 +36,8 @@
         "y": -85,
         "id": "68",
         "label": "idc,dmz",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "14": {
         "address": "10.8.241.8",
@@ -41,7 +45,8 @@
         "name": "firewall",
         "y": 185,
         "id": "14",
-        "type": "firewall"
+        "type": "firewall",
+        "iface": {}
     },
     "47": {
         "address": "172.16.0.20",
@@ -50,7 +55,8 @@
         "y": -275,
         "id": "47",
         "label": "public,idc",
-        "type": "router"
+        "type": "router",
+        "iface": {}
     },
     "58": {
         "address": "",
@@ -58,7 +64,10 @@
         "name": "server farm (S)",
         "y": 75,
         "id": "58",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {
+            "f0/1": "62"
+        }
     },
     "69": {
         "address": "",
@@ -66,7 +75,8 @@
         "name": "dmz (S)",
         "y": -85,
         "id": "69",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "15": {
         "address": "192.168.100.100",
@@ -74,7 +84,8 @@
         "x": 255,
         "y": -225,
         "id": "15",
-        "type": "concentrator"
+        "type": "concentrator",
+        "iface": {}
     },
     "4": {
         "address": "10.5.100.99",
@@ -84,7 +95,8 @@
         "id": "4",
         "label": "",
         "community": "",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "5": {
         "address": "1.2.3.47",
@@ -93,7 +105,8 @@
         "y": 360,
         "id": "5",
         "community": "",
-        "type": "router"
+        "type": "router",
+        "iface": {}
     },
     "80": {
         "address": "",
@@ -101,7 +114,8 @@
         "name": "isp KT",
         "y": -405,
         "id": "80",
-        "type": "cloud"
+        "type": "cloud",
+        "iface": {}
     },
     "40": {
         "address": "1.0.0.100",
@@ -109,7 +123,8 @@
         "name": "firewall(active)",
         "y": -165,
         "id": "40",
-        "type": "firewall"
+        "type": "firewall",
+        "iface": {}
     },
     "62": {
         "address": "",
@@ -117,7 +132,10 @@
         "name": "workgroup 1",
         "y": 215,
         "id": "62",
-        "type": "workgroup"
+        "type": "workgroup",
+        "iface": {
+            "f0/24": "58"
+        }
     },
     "73": {
         "address": "",
@@ -125,7 +143,8 @@
         "name": "user (A)",
         "y": 115,
         "id": "73",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "41": {
         "address": "10.0.0.200",
@@ -133,7 +152,8 @@
         "name": "firewall(standby)",
         "y": -165,
         "id": "41",
-        "type": "firewall"
+        "type": "firewall",
+        "iface": {}
     },
     "52": {
         "address": "",
@@ -141,7 +161,8 @@
         "name": "backbone switch",
         "y": -40,
         "id": "52",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "74": {
         "address": "",
@@ -149,7 +170,8 @@
         "name": "user (S)",
         "y": 115,
         "id": "74",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "53": {
         "address": "",
@@ -157,7 +179,8 @@
         "name": "backbone switch",
         "y": -40,
         "id": "53",
-        "type": "l3switch"
+        "type": "l3switch",
+        "iface": {}
     },
     "86": {
         "address": "",
@@ -166,7 +189,8 @@
         "y": 20,
         "label": "",
         "id": "86",
-        "type": "server"
+        "type": "server",
+        "iface": {}
     },
     "10": {
         "address": "192.168.0.250",
@@ -175,7 +199,8 @@
         "y": 320,
         "id": "10",
         "type": "storage",
-        "community": ""
+        "community": "",
+        "iface": {}
     },
     "0": {
         "address": "127.0.0.1",

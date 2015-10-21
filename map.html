@@ -79,16 +79,23 @@ aside input[type=button] {
 	cursor: pointer;
 }
 
-.body div:empty +a {
-	display: none;
+#link {
+	position: absolute; top: 0; left: 0;
+	border: 1px solid transparent;
+	cursor: pointer;
 }
 
-.body.empty :not(div),
+#link:hover {
+	border-color: #ddf;
+}
+
 .body.snmp input,
-.body:not(.snmp) select {
+.body div:empty ~*,
+.body:not(.snmp) select,
+body:not(.link) aside,
+body.link #link {
 	display: none;
 }
-
 
 		</style>
 	
@@ -98,24 +105,25 @@ aside input[type=button] {
 	</head>
 	
 	<body>
+		<img src="img/link.png" id="link">
 		<aside>
 			<form>
 				<div class="peer">
 					<div class="title">peer1</div>
-					<div class="body empty" id="peer1">
+					<div class="body" id="peer1">
 						<div id="peer1_name"></div>
 						<a id="peer1_reset">x</a>
-						<input type="text" placeholder="interface name">
-						<select></select>
+						<input id="peer1_ifname" type="text" placeholder="interface name">
+						<select id="peer1_iflist"></select>
 					</div>
 				</div>
 				<div class="peer">
 					<div class="title">peer2</div>
-					<div class="body empty" id="peer2">
+					<div class="body" id="peer2">
 						<div id="peer2_name"></div>
 						<a id="peer2_reset">x</a>
-						<input type="text" placeholder="interface name">
-						<select></select>
+						<input id="peer2_ifname" type="text" placeholder="interface name">
+						<select id="peer2_iflist"></select>
 					</div>
 				</div>
 			</form>
@@ -140,68 +148,116 @@ aside input[type=button] {
 	
 	var elements = {
 			map: document.getElementById("map"),
+			link: document.getElementById("link"),
 			save: document.getElementById("save"),
 			cancel: document.getElementById("cancel"),
 			peer1: {
 				body: document.getElementById("peer1"),
 				name: document.getElementById("peer1_name"),
+				ifname: document.getElementById("peer1_ifname"),
+				iflist: document.getElementById("peer1_iflist"),
 				reset: document.getElementById("peer1_reset")
 			},
 			peer2: {
 				body: document.getElementById("peer2"),
 				name: document.getElementById("peer2_name"),
+				ifname: document.getElementById("peer2_ifname"),
+				iflist: document.getElementById("peer2_iflist"),
 				reset: document.getElementById("peer2_reset")
 			}
 		},
 		canvas = new Canvas(elements.map),
 		layer = {
+			line: canvas.add(),
 			device: canvas.add()
 		},
 		deviceList = top.getDeviceList(),
 		iconMap = top.getIconMap();
 	
 	/** event */
-	elements.map.addEventListener("mousedown", onSelect, false);
+	elements.link.addEventListener("click", onLink, false);
 	elements.save.addEventListener("click", onSave, false);
 	elements.cancel.addEventListener("click", onCancel, false);
 	elements.peer1.reset.addEventListener("click", onReset.bind(elements.peer1), false);
 	elements.peer2.reset.addEventListener("click", onReset.bind(elements.peer2), false);
 	
-	canvas.ondraw = onDraw;
 	canvas.ondragmove = onDragMove;
 	canvas.ondragend = onDragEnd;
+	canvas.onselect = onSelect;
 	canvas.onenter;
 	canvas.onleave;
 	canvas.ondragstart;
 	
+	layer.device.ondraw = onDrawDevice;
+	layer.line.ondraw = onDrawLine;
+	
 	/** constructor */
-	for (var id in deviceList) {
-		layer.device.add(deviceList[id]);
-	}
+	(function () {		
+		var device;
+		
+		for (var id in deviceList) {
+			device = deviceList[id];
+			
+			layer.device.add(device);
+			layer.line.add(device);
+		}
+		
+		layer.device.context.font = "12px arial, tahoma, '맑은 고딕'";
+		layer.device.context.textBaseline = "top";
+		layer.device.context.textAlign = "center";
+		
+		layer.line.context.font = "12px arial, tahoma, '맑은 고딕'";
+		layer.line.context.textBaseline = "top";
+		layer.line.context.textAlign = "center";
+		
+		layer.device.invalidate();
+		layer.line.invalidate();
+		
+		canvas.invalidate();
+	}) ();
 	
-	layer.device.invalidate();
+	/**
+	 * callback
+	 */
 	
-	canvas.invalidate();
-	
-	/** method */
-	function onDraw(context, hitContext, data) {
-		var icon = iconMap[data.type],
+	function onDrawDevice(context, hitContext, device) {
+		var icon = iconMap[device.type],
 			width = icon.width,
 			height = icon.height,
-			x = data.x,
-			y = data.y;
+			x, y;
 		
-		if (x === undefined || y === undefined) {
+		if (device.x === undefined || device.y === undefined) {
 			return;
 		}
 		
-		//x -= Math.round(width /2);
-		//y -= Math.round(height /2);
+		x = Math.round(width /2);
+		y = Math.round(height /2);
 		
-		context.drawImage(icon, x, y, width, height);
-		//context.fillText(device.name, x, y)
+		context.drawImage(icon, device.x - x, device.y - y, width, height);
+		context.fillText(device.name, device.x, device.y + y);
 		
-		hitContext.fillRect(x, y, width, height);
+		hitContext.fillRect(device.x - x, device.y - y, width, height);
+	}
+	
+
+	function onDrawLine(context, hitContext, device) {
+		if (!device.iface) {
+			return;
+		}
+		
+		var iface = device.iface,
+			peer;
+		
+		for (var ifname in iface) {
+			peer = deviceList[iface[ifname]];
+			
+			context.beginPath();
+			context.moveTo(device.x, device.y);
+			context.lineTo(peer.x, peer.y);
+			context.stroke();
+			
+			context.fillText("test", (device.x *2 + peer.x) /3, (device.y *2 + peer.y) /3);
+		}
 	}
 	
 	function onDragMove(e) {
@@ -210,6 +266,7 @@ aside input[type=button] {
 			e.node.data.y += e.moveY;
 			
 			e.node.layer.invalidate();
+			layer.line.invalidate();
 			
 			canvas.invalidate();
 		}
@@ -226,63 +283,70 @@ aside input[type=button] {
 			moveMap(e.dragX, e.dragY);
 			
 			layer.device.invalidate();
+			layer.line.invalidate();
 			
 			canvas.invalidate();
 		}
 	}
 	
+	function onLink() {
+		document.body.classList.add("link");
+	}
+	
 	function onSave() {
+		var ifname1 = getPeerIFace(elements.peer1),
+		ifname2 = getPeerIFace(elements.peer2);
 		
+		if (!ifname1 || !ifname2) {
+			return;
+		}
+		
+		elements.peer1.device.iface[ifname1] = elements.peer2.device.id;
+		elements.peer2.device.iface[ifname2] = elements.peer1.device.id;
+		
+		hideDialog();
 	}
 	
 	function onCancel() {
-		
+		hideDialog();
 	}
 	
 	function onReset() {
 		var peer = this;
 		
-		peer.body.classList.add("empty");
 		peer.name.textContent = "";
 		peer.device = undefined;
 	}
 	
-	function onSelect() {
-		var node = canvas.node;
-		
-		if (!node) {
-			return;
-		}
-		
-		node.layer.top(node);
-		
-		/** link 모드 이면 */
-		if (false) {
-			return;
-		}
-		
+	function onSelect(node) {
 		var peer;
 		
-		if (elements.peer1.device) {
-			peer = elements.peer2;
+		/** link 모드 이면 */
+		if (document.body.classList.contains("link")) {
+			if (elements.peer1.device) {
+				peer = elements.peer2;
+				
+				/** 중복 선택 방지 */
+				if (elements.peer1.device === node.data) {
+					return;
+				}
+			}
+			else {
+				peer = elements.peer1;
 			
-			/** 중복 선택 방지 */
-			if (elements.peer1.device === node.data) {
-				return;
+				/** 중복 선택 방지 */
+				if (elements.peer2.device === node.data) {
+					return;
+				}
 			}
 		}
+		/** link 모드 아닐때는 항상 peer1 */
 		else {
 			peer = elements.peer1;
-		
-			/** 중복 선택 방지 */
-			if (elements.peer2.device === node.data) {
-				return;
-			}
 		}		
 		
 		peer.device = node.data;
 		peer.name.textContent = node.data.name;
-		peer.body.classList.remove("empty");
 		
 		if (node.data.snmp) {
 			peer.body.classList.add("snmp");
@@ -290,6 +354,45 @@ aside input[type=button] {
 		else {
 			peer.body.classList.remove("snmp");
 		}
+	}
+	
+	/**
+	 * method
+	 */
+	
+	function getPeerIFace(peer) {
+		if (!peer.device) {
+			return;
+		}
+		
+		/** snmp disable인 경우 iface가 있음 */
+		if ("iface" in peer.device) {
+			var ifname = peer.ifname.value;
+			
+			if (ifname === "") {
+				return;
+			}
+			
+			if (ifname in peer.device.iface) {
+				alert("interface name is already in use");
+			}
+			else {				
+				return ifname;
+			}
+		}
+		else {
+			
+		}
+	}
+	
+	function hideDialog() {
+		elements.peer1.device = undefined;
+		elements.peer2.device = undefined;
+		
+		elements.peer1.name.textContent = "";
+		elements.peer2.name.textContent = "";
+		
+		document.body.classList.remove("link");
 	}
 	
 	function moveMap(x, y) {
@@ -312,6 +415,7 @@ aside input[type=button] {
 		moveMap(-device.x, -device.y);
 		
 		layer.device.invalidate();
+		layer.line.invalidate();
 		
 		canvas.invalidate();
 	};

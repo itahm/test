@@ -19,17 +19,29 @@ function getPos(canvas, e) {
 
 (function(window, undefined) {
 	
+	function onMouseDown(canvas, e) {
+		var node = canvas.node;
+		
+		if (!node) {
+			return;
+		}
+		
+		node.layer.top(node);
+		
+		canvas.onselect(node);
+	}
+	
 	function onMouseMove(canvas, e) {
 		var rect = canvas.container.getBoundingClientRect(),
 			node = canvas.hitTest(e.clientX - rect.left, e.clientY - rect.top);
 		
 		if (node !== canvas.node) {
 			if (canvas.node) {
-				this.onleave(canvas.node);
+				canvas.onleave(canvas.node);
 			}
 		
 			if (node) {
-				this.onenter(node);
+				canvas.onenter(node);
 			}
 		}
 		
@@ -84,21 +96,20 @@ function getPos(canvas, e) {
 			
 			this.scale = 1;
 			this.layers = [];
-			this.eventHandler = {}
-			this.ondraw = function (context, hitContext, data) {}
+			this.eventHandler = {};
 			this.node;
-			this.onenter = function (data) {}
-			this.onleave = function (data) {}
-			this.ondragstart = function (layer, x, y) {}
-			this.ondragmove = function (layer, x, y) {}
-			this.ondragend = function (layer, x, y) {}
+			this.onenter = function (node) {};
+			this.onleave = function (node) {};
+			this.onselect = function (node) {};
+			this.ondragstart = function (layer, x, y) {};
+			this.ondragmove = function (layer, x, y) {};
+			this.ondragend = function (layer, x, y) {};
 			
 			this.resize();
 			
 			this.container.appendChild(this.canvas);
 			this.container.addEventListener("mousemove", onMouseMove.bind(this, this), false);
-			
-			//this.container.addEventListener("mousedown", onMouseDown.bind(this), false);
+			this.container.addEventListener("mousedown", onMouseDown.bind(this, this), false);
 			//this.container.addEventListener("mouseup", onMouseUp.bind(this), false);
 			//this.canvas.addEventListener("mouseout", onMouseUp.bind(this), false);
 			
@@ -182,6 +193,11 @@ function getPos(canvas, e) {
 			}
 		},
 		
+		/**
+		 * 
+		 * @function
+		 * @memberOf Canvas
+		 */
 		invalidate: function () {
 			this.translate(0, 0);
 		},
@@ -243,6 +259,13 @@ function Layer() {
 			this.hitCanvas = document.createElement("canvas");
 			this.context = this.canvas.getContext("2d");
 			this.hitContext = this.hitCanvas.getContext("2d");
+			
+			/**
+			 * 
+			 * @function
+			 * @memberOf Layer
+			 */
+			this.ondraw = function (context, hitContext, data) {};
 			/**
 			 * rgb string과 node 매핑
 			 */
@@ -268,6 +291,8 @@ function Layer() {
 		
 		/**
 		 * 추가 하고 다시 그리지는 않음
+		 * @function
+		 * @memberOf Layer
 		 * @param {Object} data
 		 * @returns {Node} node 생성된 node
 		 */
@@ -278,8 +303,7 @@ function Layer() {
 			
 			this.index[this.index.length] = node;
 			
-			//this.invalidate();
-			
+			//this.invalidate();			
 			//this.master.invalidate();
 			
 			return node;
@@ -287,6 +311,8 @@ function Layer() {
 		
 		/**
 		 * master에게 layer가 변경되었음을 알려야함
+		 * @function
+		 * @memberOf Layer
 		 * @param {Node} node
 		 * @returns {Node} node 삭제된 node
 		 */
@@ -308,6 +334,8 @@ function Layer() {
 		
 		/**
 		 * master로부터 호출 받으므로 알릴 필요 없음
+		 * @function
+		 * @memberOf Layer
 		 * @param {Number} width
 		 * @param {Number} height
 		 */
@@ -353,6 +381,11 @@ function Layer() {
 			this.master.invalidate();
 		},
 		
+		/**
+		 * 
+		 * @function
+		 * @memberOf Layer
+		 */
 		invalidate: function () {
 			var nodes = this.index,
 				length = nodes.length,
@@ -364,7 +397,7 @@ function Layer() {
 				node = nodes[i];
 				
 				this.hitContext.fillStyle = node.id;
-				this.master.ondraw(this.context, this.hitContext, node.data);
+				this.ondraw(this.context, this.hitContext, node.data);
 			}
 		},
 		
