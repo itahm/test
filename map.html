@@ -11,30 +11,34 @@
 body {
 	font-family: arial, tahoma, "맑은 고딕";
 	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	display: flex;
+	/*display: flex;*/
 }
 
 div,
 input,
-select {
+select,
+span {
 	font-size: 12px;
 }
 
 aside {
-	flex: none;
-	width: 200px;
+	position: fixed; top: 0; bottom: 0; left: 0; width: 199px;
+	border-right: 1px solid #0084ff;
 	padding: 10px;
 	box-sizing: border-box;
+	background-color: #fff;
 }
 
 section {
-	flex: 1;
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 }
 
 aside input[type=button] {
 	padding: .5em;
 }
 
+form {z-index: 9;
+}
 .peer {
 	margin: 0 0 10px 0;
 }
@@ -53,23 +57,14 @@ aside input[type=button] {
 	border-top: 0;
 	padding: 5px;
 	position: relative;
+	min-height: 20px;
 }
 
-.body div,
 .body input,
 .body select {
 	padding: 5px;
 	box-sizing: border-box;
 	width: 100%;
-}
-
-.body div {
-	height: 30px;
-	line-height: 20px;
-	padding: 5px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .body a {
@@ -79,22 +74,39 @@ aside input[type=button] {
 	cursor: pointer;
 }
 
-#link {
+.body li {
+	cursor: pointer;
+}
+
+.body li:hover:after {
+	content: "x";
+	float: right;
+}
+
+header {
 	position: absolute; top: 0; left: 0;
+}
+
+header img {
 	border: 1px solid transparent;
 	cursor: pointer;
 }
 
-#link:hover {
+header img:hover {
 	border-color: #ddf;
 }
 
-.body.snmp input,
-.body div:empty ~*,
-.body:not(.snmp) select,
+.body:not(.selected) :not(first-child),
+.body:not(.snmp) .snmp,
+.body.snmp .nosnmp,
 body:not(.link) aside,
-body.link #link {
+body.link header {
 	display: none;
+}
+
+input[disabled] {
+	background-color: transparent;
+	border: 0;
 }
 
 		</style>
@@ -104,34 +116,50 @@ body.link #link {
 			
 	</head>
 	
-	<body>
-		<img src="img/link.png" id="link">
+	<body class="link">
+	
+		<section id="map"></section>
+		
+		<header>
+			<img src="img/link.png" id="show">
+			<img src="img/save.png" id="save">
+			<button id="test">test</button>
+		</header>
+		
 		<aside>
-			<form>
+			<form id="form">
 				<div class="peer">
 					<div class="title">peer1</div>
 					<div class="body" id="peer1">
-						<div id="peer1_name"></div>
+						<input id="peer1_name" disabled>
 						<a id="peer1_reset">x</a>
-						<input id="peer1_ifname" type="text" placeholder="interface name">
-						<select id="peer1_iflist"></select>
+						<div class="nosnmp">
+							<input id="peer1_ifname" type="text" placeholder="interface name">
+							<ul id="peer1_iflink"></ul>
+						</div>
+						<select id="peer1_iflist" class="snmp">
+							<option value="" selected>select interface
+						</select>
 					</div>
 				</div>
 				<div class="peer">
 					<div class="title">peer2</div>
 					<div class="body" id="peer2">
-						<div id="peer2_name"></div>
+						<input id="peer2_name" disabled>
 						<a id="peer2_reset">x</a>
-						<input id="peer2_ifname" type="text" placeholder="interface name">
-						<select id="peer2_iflist"></select>
+						<div class="nosnmp">
+							<input id="peer2_ifname" type="text" placeholder="interface name">
+							<ul id="peer2_iflink"></ul>
+						</div>
+						<select id="peer2_iflist" class="snmp">
+							<option value="" selected>select interface
+						</select>
 					</div>
 				</div>
 			</form>
-			<input type="button" value="save" id="save">
+			<input type="button" value="link" id="link">
 			<input type="button" value="cancel" id="cancel">
 		</aside>
-			
-		<section id="map"></section>
 		
 		<script>	
 
@@ -148,21 +176,25 @@ body.link #link {
 	
 	var elements = {
 			map: document.getElementById("map"),
-			link: document.getElementById("link"),
+			form: document.getElementById("form"),
 			save: document.getElementById("save"),
+			show: document.getElementById("show"),
+			link: document.getElementById("link"),
 			cancel: document.getElementById("cancel"),
 			peer1: {
 				body: document.getElementById("peer1"),
 				name: document.getElementById("peer1_name"),
-				ifname: document.getElementById("peer1_ifname"),
-				iflist: document.getElementById("peer1_iflist"),
+				ifName: document.getElementById("peer1_ifname"),
+				ifList: document.getElementById("peer1_iflist"),
+				ifLink: document.getElementById("peer1_iflink"),
 				reset: document.getElementById("peer1_reset")
 			},
 			peer2: {
 				body: document.getElementById("peer2"),
 				name: document.getElementById("peer2_name"),
-				ifname: document.getElementById("peer2_ifname"),
-				iflist: document.getElementById("peer2_iflist"),
+				ifName: document.getElementById("peer2_ifname"),
+				ifList: document.getElementById("peer2_iflist"),
+				ifLink: document.getElementById("peer2_iflink"),
 				reset: document.getElementById("peer2_reset")
 			}
 		},
@@ -175,11 +207,17 @@ body.link #link {
 		iconMap = top.getIconMap();
 	
 	/** event */
-	elements.link.addEventListener("click", onLink, false);
+	elements.show.addEventListener("click", onShowDialog, false);
 	elements.save.addEventListener("click", onSave, false);
+	elements.link.addEventListener("click", onLink, false);
 	elements.cancel.addEventListener("click", onCancel, false);
-	elements.peer1.reset.addEventListener("click", onReset.bind(elements.peer1), false);
-	elements.peer2.reset.addEventListener("click", onReset.bind(elements.peer2), false);
+	elements.peer1.reset.addEventListener("click", resetPeer.bind(undefined, elements.peer1), false);
+	elements.peer2.reset.addEventListener("click", resetPeer.bind(undefined, elements.peer2), false);
+	
+	/** test */
+	document.getElementById("test").addEventListener("click", function () {
+		window.open().document.write(JSON.stringify(deviceList));
+	}, false);
 	
 	canvas.ondragmove = onDragMove;
 	canvas.ondragend = onDragEnd;
@@ -202,13 +240,20 @@ body.link #link {
 			layer.line.add(device);
 		}
 		
-		layer.device.context.font = "12px arial, tahoma, '맑은 고딕'";
-		layer.device.context.textBaseline = "top";
-		layer.device.context.textAlign = "center";
+		(function (context) {
+			context.font = "12px arial, tahoma, '맑은 고딕'";
+			context.textBaseline = "top";
+			context.textAlign = "center";
+		}) (layer.device.context);
 		
-		layer.line.context.font = "12px arial, tahoma, '맑은 고딕'";
-		layer.line.context.textBaseline = "top";
-		layer.line.context.textAlign = "center";
+		(function (context) {
+			context.font = "12px arial, tahoma, '맑은 고딕'";
+			context.textBaseline = "top";
+			context.textAlign = "center";
+			context.lineWidth = .5;
+			context.strokeStyle = "#888";
+		}) (layer.line.context);
+		
 		
 		layer.device.invalidate();
 		layer.line.invalidate();
@@ -241,22 +286,18 @@ body.link #link {
 	
 
 	function onDrawLine(context, hitContext, device) {
-		if (!device.iface) {
-			return;
-		}
+		var iFace = device.iFace,
+			peer;		
 		
-		var iface = device.iface,
-			peer;
-		
-		for (var ifname in iface) {
-			peer = deviceList[iface[ifname]];
+		for (var ifName in iFace) {
+			peer = deviceList[iFace[ifName]];
 			
 			context.beginPath();
 			context.moveTo(device.x, device.y);
 			context.lineTo(peer.x, peer.y);
 			context.stroke();
 			
-			context.fillText("test", (device.x *2 + peer.x) /3, (device.y *2 + peer.y) /3);
+			context.fillText(ifName, (device.x *2 + peer.x) /3, (device.y *2 + peer.y) /3);
 		}
 	}
 	
@@ -289,20 +330,28 @@ body.link #link {
 		}
 	}
 	
-	function onLink() {
+	function onSave() {
+		
+	}
+	
+	function onShowDialog() {
 		document.body.classList.add("link");
 	}
 	
-	function onSave() {
-		var ifname1 = getPeerIFace(elements.peer1),
-		ifname2 = getPeerIFace(elements.peer2);
+	function onLink() {
+		var ifName1 = getIFName(elements.peer1),
+			ifName2 = getIFName(elements.peer2);
 		
-		if (!ifname1 || !ifname2) {
+		if (!ifName1 || !ifName2) {
 			return;
 		}
 		
-		elements.peer1.device.iface[ifname1] = elements.peer2.device.id;
-		elements.peer2.device.iface[ifname2] = elements.peer1.device.id;
+		elements.peer1.device.iFace[ifName1] = elements.peer2.device.id;
+		elements.peer2.device.iFace[ifName2] = elements.peer1.device.id;
+		
+		layer.line.invalidate();
+		
+		canvas.invalidate();
 		
 		hideDialog();
 	}
@@ -311,15 +360,9 @@ body.link #link {
 		hideDialog();
 	}
 	
-	function onReset() {
-		var peer = this;
-		
-		peer.name.textContent = "";
-		peer.device = undefined;
-	}
-	
 	function onSelect(node) {
-		var peer;
+		var device = node.data,
+			peer;
 		
 		/** link 모드 이면 */
 		if (document.body.classList.contains("link")) {
@@ -327,7 +370,7 @@ body.link #link {
 				peer = elements.peer2;
 				
 				/** 중복 선택 방지 */
-				if (elements.peer1.device === node.data) {
+				if (elements.peer1.device === device) {
 					return;
 				}
 			}
@@ -335,7 +378,7 @@ body.link #link {
 				peer = elements.peer1;
 			
 				/** 중복 선택 방지 */
-				if (elements.peer2.device === node.data) {
+				if (elements.peer2.device === device) {
 					return;
 				}
 			}
@@ -343,56 +386,115 @@ body.link #link {
 		/** link 모드 아닐때는 항상 peer1 */
 		else {
 			peer = elements.peer1;
-		}		
+		}
 		
-		peer.device = node.data;
-		peer.name.textContent = node.data.name;
+		resetPeer(peer);
 		
-		if (node.data.snmp) {
+		peer.device = device;
+		peer.name.value = device.name;
+		peer.body.classList.add("selected");
+		
+		if (device.snmp) {
 			peer.body.classList.add("snmp");
+			
+			var list = peer.ifList,
+				iFace = device.iFace,
+				option;
+			
+			for (var name in iFace) {
+				option = document.createElement("optioin");
+				option.text = name;
+				
+				list.add(option);
+			}
 		}
 		else {
 			peer.body.classList.remove("snmp");
+			
+			var list = peer.ifLink,
+				iFace = device.iFace,
+				li;
+			
+			for (var name in iFace) {
+				li = document.createElement("li");
+				li.textContent = name;
+				li.onclick = onRemoveLink.bind(li, device, name);
+				list.appendChild(li);
+			}
 		}
+	}
+	
+	function onRemoveLink(device, name) {
+		if (!confirm("remove selected link?")) {
+			return;
+		}
+		
+		var iFace = device.iFace;
+		
+		this.parentNode.removeChild(this);
+		
+		(function (iFace) {
+			for (var name in iFace) {
+				if (iFace[name] == device.id) {
+					delete iFace[name];
+				}
+			}
+		}) (deviceList[iFace[name]].iFace);
+		
+		delete iFace[name];
+		
+		layer.line.invalidate();
+		
+		canvas.invalidate();
 	}
 	
 	/**
 	 * method
 	 */
 	
-	function getPeerIFace(peer) {
-		if (!peer.device) {
+	function hideDialog() {
+		resetPeer(elements.peer1);
+		resetPeer(elements.peer2);
+		
+		elements.form.reset();
+		
+		document.body.classList.remove("link");
+	}
+	
+	function resetPeer(peer) {
+		peer.name.value = "";
+		peer.device = undefined;
+		
+		var child;
+		while (child = peer.ifLink.firstChild) {
+			peer.ifLink.removeChild(child);
+		}
+		
+		peer.body.classList.remove("selected");
+	}
+	
+	function getIFName(peer) {
+		var device = peer.device,
+			ifName;
+		
+		if (!device) {
 			return;
 		}
 		
-		/** snmp disable인 경우 iface가 있음 */
-		if ("iface" in peer.device) {
-			var ifname = peer.ifname.value;
-			
-			if (ifname === "") {
-				return;
-			}
-			
-			if (ifname in peer.device.iface) {
-				alert("interface name is already in use");
-			}
-			else {				
-				return ifname;
-			}
+		/** interface가 입력되거나 선택 되지 않은 경우 취소 */
+		ifName = device.snmp? peer.ifList.value: peer.ifName.value;
+		if (!ifName) {
+			return;
 		}
-		else {
+		
+		/** 이미 link에 사용된 interface name 입력시 취소 */
+		if (ifName in device.iFace) {
+			alert("interface name is already in use");
 			
+			return ;
 		}
-	}
-	
-	function hideDialog() {
-		elements.peer1.device = undefined;
-		elements.peer2.device = undefined;
-		
-		elements.peer1.name.textContent = "";
-		elements.peer2.name.textContent = "";
-		
-		document.body.classList.remove("link");
+
+		return ifName;
 	}
 	
 	function moveMap(x, y) {
@@ -404,6 +506,10 @@ body.link #link {
 			device.x += x;
 			device.y += y;
 		}
+	}
+	
+	function setPeer() {
+		
 	}
 	
 	/**

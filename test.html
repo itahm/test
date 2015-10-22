@@ -5,28 +5,27 @@
 <title>Insert title here</title>
 
 	<style>
-div.test ~* {
-	background-color: #00f;
+li {
+	cursor: pointer;
+}
+
+li:hover:after {
+	content: "x";
+	float: right;
+	
 }
 	</style>
 </head>
 
 
 <body>
-	<div class="test">abc</div>
-    <div>123</div>
-    <span>456</span>
-    <p>789</p>
+	<ul>
+		<li>a
+		<li>b
+	</ul>
   
 <script>
-var o = {
-		1: "a",
-		2: "b"
-	};
-	
-console.log(1 in o);
-console.log("1" in o);
-console.log("a" in o);
+
 </script>
 
 </body>

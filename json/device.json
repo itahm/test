@@ -1,214 +1,256 @@
 {
-    "11": {
-        "address": "8.8.8.88",
-        "x": -590,
-        "name": "web server",
-        "y": 325,
-        "id": "11",
-        "label": "",
+    "0": {
+        "address": "127.0.0.1",
+        "x": 67.27999999999992,
+        "name": "itahm",
+        "snmp": "public",
+        "y": 130.4400000000001,
+        "id": "0",
         "type": "server",
-        "community": "",
-        "iface": {}
-    },
-    "46": {
-        "address": "172.16.0.10",
-        "x": -120,
-        "name": "internet router 1",
-        "y": -285,
-        "id": "46",
-        "label": "idc,public",
-        "type": "router",
-        "iface": {}
-    },
-    "57": {
-        "address": "",
-        "x": -430,
-        "name": "server farm (A)",
-        "y": 75,
-        "id": "57",
-        "type": "l3switch",
-        "iface": {}
-    },
-    "68": {
-        "address": "",
-        "x": 225,
-        "name": "dmz (A)",
-        "y": -85,
-        "id": "68",
-        "label": "idc,dmz",
-        "type": "l3switch",
-        "iface": {}
-    },
-    "14": {
-        "address": "10.8.241.8",
-        "x": 390,
-        "name": "firewall",
-        "y": 185,
-        "id": "14",
-        "type": "firewall",
-        "iface": {}
-    },
-    "47": {
-        "address": "172.16.0.20",
-        "x": 80,
-        "name": "internet router 2",
-        "y": -275,
-        "id": "47",
-        "label": "public,idc",
-        "type": "router",
-        "iface": {}
-    },
-    "58": {
-        "address": "",
-        "x": -185,
-        "name": "server farm (S)",
-        "y": 75,
-        "id": "58",
-        "type": "l3switch",
-        "iface": {
-            "f0/1": "62"
-        }
-    },
-    "69": {
-        "address": "",
-        "x": 410,
-        "name": "dmz (S)",
-        "y": -85,
-        "id": "69",
-        "type": "l3switch",
-        "iface": {}
-    },
-    "15": {
-        "address": "192.168.100.100",
-        "name": "vpn main(A)",
-        "x": 255,
-        "y": -225,
-        "id": "15",
-        "type": "concentrator",
-        "iface": {}
+        "iFace": {}
     },
     "4": {
         "address": "10.5.100.99",
         "name": "2nd floor",
-        "x": 110,
-        "y": 250,
+        "x": 159.67999999999995,
+        "y": 62.64000000000004,
         "id": "4",
         "label": "",
         "community": "",
         "type": "l3switch",
-        "iface": {}
+        "iFace": {
+            "eth1": "73"
+        }
     },
     "5": {
         "address": "1.2.3.47",
         "name": "router",
-        "x": 390,
-        "y": 360,
+        "x": 402.24,
+        "y": 220.16000000000003,
         "id": "5",
         "community": "",
         "type": "router",
-        "iface": {}
+        "iFace": {}
     },
-    "80": {
-        "address": "",
-        "x": -120,
-        "name": "isp KT",
-        "y": -405,
-        "id": "80",
-        "type": "cloud",
-        "iface": {}
+    "10": {
+        "address": "192.168.0.250",
+        "x": -33.68000000000002,
+        "name": "server",
+        "y": 198.20000000000007,
+        "id": "10",
+        "type": "storage",
+        "community": "",
+        "iFace": {
+            "eth2": "62"
+        }
+    },
+    "11": {
+        "address": "8.8.8.88",
+        "x": -150.08000000000004,
+        "name": "web server",
+        "y": 140.52000000000012,
+        "id": "11",
+        "label": "",
+        "type": "server",
+        "community": "",
+        "iFace": {
+            "eth0": "62"
+        }
+    },
+    "15": {
+        "address": "192.168.100.100",
+        "name": "vpn main(A)",
+        "x": 267.24,
+        "y": -364.84000000000003,
+        "id": "15",
+        "type": "concentrator",
+        "iFace": {
+            "eth7": "47",
+            "eth8": "46"
+        }
     },
     "40": {
         "address": "1.0.0.100",
-        "x": -120,
+        "x": -107.76,
         "name": "firewall(active)",
-        "y": -165,
+        "y": -304.84000000000003,
         "id": "40",
         "type": "firewall",
-        "iface": {}
+        "iFace": {
+            "eth1": "53",
+            "eth2": "46",
+            "eth3": "68",
+            "eth4": "69"
+        }
+    },
+    "41": {
+        "address": "10.0.0.200",
+        "x": 92.24000000000001,
+        "name": "firewall(standby)",
+        "y": -304.84000000000003,
+        "id": "41",
+        "type": "firewall",
+        "iFace": {
+            "eth1": "52",
+            "eth2": "47",
+            "eth3": "68",
+            "eth4": "69"
+        }
+    },
+    "46": {
+        "address": "172.16.0.10",
+        "x": -107.76,
+        "name": "internet router 1",
+        "y": -424.84000000000003,
+        "id": "46",
+        "label": "idc,public",
+        "type": "router",
+        "iFace": {
+            "g2/21": "40",
+            "g0/8": "80",
+            "g1/1": "47",
+            "g1/11": "15"
+        }
+    },
+    "47": {
+        "address": "172.16.0.20",
+        "x": 91.24000000000001,
+        "name": "internet router 2",
+        "y": -424.84000000000003,
+        "id": "47",
+        "label": "public,idc",
+        "type": "router",
+        "iFace": {
+            "g2/21": "41",
+            "g1/2": "46",
+            "g1/11": "15"
+        }
+    },
+    "52": {
+        "address": "",
+        "x": 92.24000000000001,
+        "name": "backbone switch",
+        "y": -179.83999999999997,
+        "id": "52",
+        "type": "l3switch",
+        "iFace": {
+            "g0/1": "41",
+            "g0/2": "58",
+            "g0/3": "73",
+            "g0/4": "74"
+        }
+    },
+    "53": {
+        "address": "",
+        "x": -107.76,
+        "name": "backbone switch",
+        "y": -179.83999999999997,
+        "id": "53",
+        "type": "l3switch",
+        "iFace": {
+            "g0/1": "40",
+            "g0/2": "58",
+            "g0/3": "73",
+            "g0/4": "74",
+            "g0/5": "57"
+        }
+    },
+    "57": {
+        "address": "",
+        "x": -220.48000000000002,
+        "name": "server farm (A)",
+        "y": -18.760000000000005,
+        "id": "57",
+        "type": "l3switch",
+        "iFace": {
+            "ge3": "53"
+        }
+    },
+    "58": {
+        "address": "",
+        "x": -48.920000000000044,
+        "name": "server farm (S)",
+        "y": -23.08000000000001,
+        "id": "58",
+        "type": "l3switch",
+        "iFace": {
+            "f0/2": "53",
+            "f0/3": "52"
+        }
     },
     "62": {
         "address": "",
-        "x": -430,
+        "x": -34.160000000000124,
         "name": "workgroup 1",
-        "y": 215,
+        "y": 70.80000000000005,
         "id": "62",
         "type": "workgroup",
-        "iface": {
-            "f0/24": "58"
+        "iFace": {
+            "fe24": "73",
+            "fe1": "11",
+            "fe23": "10"
+        }
+    },
+    "68": {
+        "address": "",
+        "x": 242.24,
+        "name": "dmz (A)",
+        "y": -166.83999999999997,
+        "id": "68",
+        "label": "idc,dmz",
+        "type": "l3switch",
+        "iFace": {
+            "g2/47": "40",
+            "g2/48": "41"
+        }
+    },
+    "69": {
+        "address": "",
+        "x": 320.24,
+        "name": "dmz (S)",
+        "y": -262.84,
+        "id": "69",
+        "type": "l3switch",
+        "iFace": {
+            "g2/47": "40",
+            "g2/48": "41"
         }
     },
     "73": {
         "address": "",
-        "x": 30,
+        "x": 42.24000000000001,
         "name": "user (A)",
-        "y": 115,
+        "y": -24.839999999999996,
         "id": "73",
         "type": "l3switch",
-        "iface": {}
-    },
-    "41": {
-        "address": "10.0.0.200",
-        "x": 80,
-        "name": "firewall(standby)",
-        "y": -165,
-        "id": "41",
-        "type": "firewall",
-        "iface": {}
-    },
-    "52": {
-        "address": "",
-        "x": 80,
-        "name": "backbone switch",
-        "y": -40,
-        "id": "52",
-        "type": "l3switch",
-        "iface": {}
+        "iFace": {
+            "g3/1": "53",
+            "g3/2": "52",
+            "f1/1": "62",
+            "f1/2": "4"
+        }
     },
     "74": {
         "address": "",
-        "x": 245,
+        "x": 257.24,
         "name": "user (S)",
-        "y": 115,
+        "y": -24.839999999999996,
         "id": "74",
         "type": "l3switch",
-        "iface": {}
+        "iFace": {
+            "g2/1": "53",
+            "g2/2": "52"
+        }
     },
-    "53": {
+    "80": {
         "address": "",
-        "x": -120,
-        "name": "backbone switch",
-        "y": -40,
-        "id": "53",
-        "type": "l3switch",
-        "iface": {}
-    },
-    "86": {
-        "address": "",
-        "name": "테스트",
-        "x": 330,
-        "y": 20,
-        "label": "",
-        "id": "86",
-        "type": "server",
-        "iface": {}
-    },
-    "10": {
-        "address": "192.168.0.250",
-        "x": -505,
-        "name": "server",
-        "y": 320,
-        "id": "10",
-        "type": "storage",
-        "community": "",
-        "iface": {}
-    },
-    "0": {
-        "address": "127.0.0.1",
-        "x": -400,
-        "name": "itahm",
-        "snmp": "public",
-        "y": 325,
-        "id": "0",
-        "type": "server"
+        "x": -107.76,
+        "name": "isp KT",
+        "y": -544.84,
+        "id": "80",
+        "type": "cloud",
+        "iFace": {
+            "kt": "46"
+        }
     }
 }
