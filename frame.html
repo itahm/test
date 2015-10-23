@@ -40,6 +40,14 @@ iframe {
 	bottom: 0; right: 0;
 }
 
+#toolbar {
+	float: right;
+}
+
+.hide {
+	dislay: none;
+}
+
 		</style>
 		
 	</head>
@@ -59,9 +67,11 @@ iframe {
 			<iframe id="frame_event"></iframe> 
 		</div>
 		
-		<div id="toolbar" class="minimized">
-			<img id="maximize" src="img/maximize.png">
-			<img id="minimize" src="img/minimize.png">
+		<div class="hide">
+			<div id="toolbar" class="minimized">
+				<img id="maximize" src="img/maximize.png">
+				<img id="minimize" src="img/minimize.png">
+			</div>
 		</div>
 		
 		<script>
@@ -122,10 +132,22 @@ iframe {
 			elements.toolbar.classList.add(minimized);
 		}, false);
 		
+		(function (frame) {
+			for (var id in frame) {
+				frame[id].addEventListener("mouseenter", onFocus, false);
+			}
+			
+		}) (elements.frame);
+		
+		
 		elements.frame.list.src = "list.html";
 		elements.frame.map.src = "map.html";
 		elements.frame.device.src = "device.html";
 		elements.frame.event.src = "event.html";
+	}
+	
+	function onFocus() {
+		console.log(this);		
 	}
 	
 	function loadIcon(complete) {

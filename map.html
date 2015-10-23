@@ -17,7 +17,8 @@ body {
 div,
 input,
 select,
-span {
+span,
+button {
 	font-size: 12px;
 }
 
@@ -83,30 +84,52 @@ form {z-index: 9;
 	float: right;
 }
 
-header {
-	position: absolute; top: 0; left: 0;
-}
-
-header img {
-	border: 1px solid transparent;
-	cursor: pointer;
-}
-
-header img:hover {
-	border-color: #ddf;
-}
-
 .body:not(.selected) :not(first-child),
 .body:not(.snmp) .snmp,
 .body.snmp .nosnmp,
-body:not(.link) aside,
-body.link header {
+body:not(.link) aside {
 	display: none;
 }
 
 input[disabled] {
 	background-color: transparent;
 	border: 0;
+}
+
+.hide {
+	display: none;
+}
+
+#menu {
+	position: absolute; top: 0; left: 0;
+	width: 100px;
+}
+
+#menu button {
+	padding: 5px 5px 5px 21px ;
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+#menu_name {
+	height: 20px;
+	line-height: 20px;
+	padding: 5px;
+	border-radius: 5px 5px 0 0;
+	background-color: #0084ff;
+	color: #ddf;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+#menu_link {
+	background: #fff url("img/link.png") no-repeat 5px center;
+}
+
+#menu_select {
+	background: #fff url("img/select.png") no-repeat 5px center;
 }
 
 		</style>
@@ -116,15 +139,9 @@ input[disabled] {
 			
 	</head>
 	
-	<body class="link">
+	<body>
 	
 		<section id="map"></section>
-		
-		<header>
-			<img src="img/link.png" id="show">
-			<img src="img/save.png" id="save">
-			<button id="test">test</button>
-		</header>
 		
 		<aside>
 			<form id="form">
@@ -161,6 +178,14 @@ input[disabled] {
 			<input type="button" value="cancel" id="cancel">
 		</aside>
 		
+		<div class="hide">
+			<div id="menu">
+				<div id="menu_name"></div>
+				<button id="menu_link">link</button>
+				<button id="menu_select">select</button>
+			</div>
+		</div>
+		
 		<script>	
 
 		function allowDrag(e) {
@@ -177,10 +202,15 @@ input[disabled] {
 	var elements = {
 			map: document.getElementById("map"),
 			form: document.getElementById("form"),
-			save: document.getElementById("save"),
 			show: document.getElementById("show"),
 			link: document.getElementById("link"),
 			cancel: document.getElementById("cancel"),
+			menu: {
+				balloon: document.getElementById("menu"),
+				name: document.getElementById("menu_name"),
+				link: document.getElementById("menu_link"),
+				select: document.getElementById("menu_select")
+			},
 			peer1: {
 				body: document.getElementById("peer1"),
 				name: document.getElementById("peer1_name"),
@@ -199,30 +229,38 @@ input[disabled] {
 			}
 		},
 		canvas = new Canvas(elements.map),
+		menu = new Menu(elements.map, elements.menu.balloon),
 		layer = {
 			line: canvas.add(),
 			device: canvas.add()
 		},
 		deviceList = top.getDeviceList(),
-		iconMap = top.getIconMap();
+		iconMap = top.getIconMap(),
+		isDragging = false;
 	
 	/** event */
-	elements.show.addEventListener("click", onShowDialog, false);
-	elements.save.addEventListener("click", onSave, false);
+	elements.map.addEventListener("mousedown", menu.hide, false);
+	//elements.map.addEventListener("mouseout", menu.hide, false);
+	elements.menu.link.addEventListener("click", onSelectPeer, false);
+	elements.menu.select.addEventListener("click", onSelectDevice, false);
+	elements.menu.balloon.addEventListener("mousedown", onStopPropagation, false);
+	elements.menu.balloon.addEventListener("click", menu.hide, false);
 	elements.link.addEventListener("click", onLink, false);
 	elements.cancel.addEventListener("click", onCancel, false);
 	elements.peer1.reset.addEventListener("click", resetPeer.bind(undefined, elements.peer1), false);
 	elements.peer2.reset.addEventListener("click", resetPeer.bind(undefined, elements.peer2), false);
 	
-	/** test */
+	/** test 
 	document.getElementById("test").addEventListener("click", function () {
 		window.open().document.write(JSON.stringify(deviceList));
 	}, false);
+	*/
 	
+	canvas.ondragstart = onDragStart;
 	canvas.ondragmove = onDragMove;
 	canvas.ondragend = onDragEnd;
-	canvas.onselect = onSelect;
-	canvas.onenter;
+	//canvas.onselect = onSelect;
+	canvas.onenter = onEnter;
 	canvas.onleave;
 	canvas.ondragstart;
 	
@@ -301,6 +339,10 @@ input[disabled] {
 		}
 	}
 	
+	function onDragStart() {
+		isDragging = true;
+	}
+	
 	function onDragMove(e) {
 		if (e.node) {
 			e.node.data.x += e.moveX;
@@ -317,6 +359,8 @@ input[disabled] {
 	}
 	
 	function onDragEnd(e) {
+		isDragging = false;
+		
 		if (e.node) {
 			return;
 		}
@@ -328,14 +372,6 @@ input[disabled] {
 			
 			canvas.invalidate();
 		}
-	}
-	
-	function onSave() {
-		
-	}
-	
-	function onShowDialog() {
-		document.body.classList.add("link");
 	}
 	
 	function onLink() {
@@ -360,35 +396,50 @@ input[disabled] {
 		hideDialog();
 	}
 	
-	function onSelect(node) {
-		var device = node.data,
-			peer;
+	function onEnter(node) {
+		if (isDragging) {
+			return;
+		}
 		
-		/** link 모드 이면 */
+		elements.menu.name.textContent = node.data.name;
+		
+		menu.node = node;
+		menu.show();
+	}
+	
+	function onSelectPeer() {
+		var device = menu.node.data
+			, peer;
+		
+		/** 이미 link 모드 이면 empty peer */
 		if (document.body.classList.contains("link")) {
-			if (elements.peer1.device) {
-				peer = elements.peer2;
-				
-				/** 중복 선택 방지 */
-				if (elements.peer1.device === device) {
-					return;
-				}
-			}
-			else {
-				peer = elements.peer1;
-			
-				/** 중복 선택 방지 */
+			if (!elements.peer1.device) {
+				/** 중복 */
 				if (elements.peer2.device === device) {
 					return;
 				}
+				
+				peer = elements.peer1;
+			}
+			else if (!elements.peer2.device) {
+				/** 중복 */
+				if (elements.peer1.device === device) {
+					return;
+				}
+				
+				peer = elements.peer2;
+			}
+			else {
+				return;
 			}
 		}
-		/** link 모드 아닐때는 항상 peer1 */
+		
+		/** link모드가 아니었다면 항상 peer1 */
 		else {
 			peer = elements.peer1;
+			
+			document.body.classList.add("link");
 		}
-		
-		resetPeer(peer);
 		
 		peer.device = device;
 		peer.name.value = device.name;
@@ -424,6 +475,10 @@ input[disabled] {
 		}
 	}
 	
+	function onSelectDevice() {console.log(menu.node);
+		top.selectDevice(menu.node.data.id);
+	}
+	
 	function onRemoveLink(device, name) {
 		if (!confirm("remove selected link?")) {
 			return;
@@ -446,6 +501,10 @@ input[disabled] {
 		layer.line.invalidate();
 		
 		canvas.invalidate();
+	}
+	
+	function onStopPropagation(e) {
+		e.stopPropagation();
 	}
 	
 	/**
@@ -525,6 +584,56 @@ input[disabled] {
 		
 		canvas.invalidate();
 	};
+	
+	/** inner class */
+	function Menu(container, balloon) {
+		var menu = this,
+			fragment = document.createDocumentFragment(),
+			x, y, cX, cY;
+		
+		container.addEventListener("mousemove", function (e) {
+			var rect = container.getBoundingClientRect();
+			
+			x = e.clientX - rect.left;
+			y = e.clientY - rect.top;
+			cX = rect.width /2;
+			cY = rect.height /2;
+		}, false);
+		
+		fragment.appendChild(balloon);
+		
+		this.show = function () {
+			var rect,
+				offset = 5;
+			
+			container.appendChild(balloon);
+			
+			rect = balloon.getBoundingClientRect();
+			
+			if (x < cX) {
+				x += offset;
+			}
+			else {
+				x -= (rect.width + offset);
+			}
+			
+			if (y < cY) {
+				y += offset;
+			}
+			else {
+				y -= (rect.height + offset);
+			}
+			
+			balloon.style.top = y +"px";
+			balloon.style.left = x +"px";
+			
+			
+		};
+		
+		this.hide = function () {
+			fragment.appendChild(balloon);
+		};
+	}
 	
 }) (window, top);
 

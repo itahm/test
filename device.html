@@ -68,9 +68,9 @@ section {
 	width: 100%;
 }
 
+.hide,
 #save,
 #cancel,
-.hide *,
 #information li:nth-child(3),
 #information.edit li:nth-child(2),
 #information.edit #edit {
@@ -95,11 +95,6 @@ body.snmp .snmp,
 #information.edit #save,
 #information.edit #cancel {
 	display: inline;
-}
-
-#port_list a:hover {
-	text-decoration: underline;
-	cursor: pointer;
 }
 
 li {
@@ -197,18 +192,6 @@ li {
 				
 			</div>
 			
-			<div class="interface">
-				<h3>
-					interface
-				</h3>
-				<ul id="port_list">
-					<li>
-						<a onclick="onEditPort(event)">f0/2</a>
-					<li>
-						<input type="button" value="add new interface" id="port_add">
-				</ul>
-			</div>
-			
 			<div class="snmp">
 				<h3>
 					snmp response time
@@ -242,30 +225,6 @@ li {
 		<section>
 		</section>
 		
-		<div class="hide">
-			<form class="table" id="port_form">
-				<input type="button" value="save" id="port_save">
-				<input type="button" value="cancel" id="port_cancel">
-				<ul>
-					<li>
-						<span>name</span>
-					<li>
-						<input type="text" name="name">
-				</ul>
-				<ul>
-					<li>
-						<span>peer</span>
-					<li>
-						<select>
-							<option>select device
-						</select>
-						<select>
-							<option>select interface
-						</select>
-				</ul>
-			</form>
-		</div>
-		
 		<script>
 
 (function (window, top) {		
@@ -285,27 +244,13 @@ li {
 			type: document.getElementById("type"),
 			label: document.getElementById("label"),
 			snmp: document.getElementById("snmp"),
-			information: document.getElementById("information"),
-			port: {
-				list: document.getElementById("port_list"),
-				add: document.getElementById("port_add"),
-				save: document.getElementById("port_save"),
-				cancel: document.getElementById("port_cancel"),
-				form: document.getElementById("port_form")
-			}
-		},
-		fragment = document.createDocumentFragment();
+			information: document.getElementById("information")
+		};
 	
 	elements.edit.addEventListener("click", onEditInformation, false);
 	elements.save.addEventListener("click", onSaveInformation, false);
 	elements.cancel.addEventListener("click", onCancelInformation, false);
-	elements.port.add.addEventListener("click", onAddPort, false);
-	elements.port.cancel.addEventListener("click", onCancelPort, false);
 	//onChangeSnmp();
-	
-	elements.port.list.firstChild.onclick = onEditPort;
-	
-	fragment.appendChild(elements.port.form);
 	
 	initDevice(top.getDevice(0));
 	
@@ -338,52 +283,6 @@ li {
 		elements.snmp.textContent = elements.form.snmp.value;
 		
 		onCancelInformation();
-	}
-	
-	function onCancelPort() {
-		var li = elements.port.form.parentNode;
-		
-		// fragment에는 add 진행시 버튼이, edit 진행시 <a> 태그가 보관되어 있음
-		li.appendChild(fragment);
-		
-		fragment.appendChild(elements.port.form);	
-		
-		elements.port.form.reset();
-	}
-	
-	function onAddPort() {	
-		// form이 보관되어 있지 않은 경우 (edit 진행시) 무시
-		if (elements.port.form.parentNode !== fragment) {
-			return;
-		}
-		
-		// li에 form 위치 
-		elements.port.add.parentNode.appendChild(elements.port.form);
-		
-		// add 버튼 보관
-		fragment.appendChild(elements.port.add);
-		
-		elements.port.form.elements.name.focus();
-	}
-	
-	function onEditPort(e) {
-		var a;
-		
-		// form이 보관되어 있지 않은 경우 (add 진행시) 무시
-		if (elements.port.form.parentNode !== fragment) {
-			return;
-		}
-		
-		a = e.currentTarget;
-		
-		// li에 form 위치 
-		a.parentNode.appendChild(elements.port.form);
-		
-		// a 태그 보관
-		fragment.appendChild(a);
-		
-		elements.port.form.elements.name.value = a.textContent;
-		elements.port.form.elements.name.select();
 	}
 	
 	function initDevice (device) {
