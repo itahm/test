@@ -239,7 +239,7 @@ input[disabled] {
 		isDragging = false;
 	
 	/** event */
-	elements.map.addEventListener("mousedown", menu.hide, false);
+	elements.map.addEventListener("mousedown", onHideMenu, false);
 	//elements.map.addEventListener("mouseout", menu.hide, false);
 	elements.menu.link.addEventListener("click", onSelectPeer, false);
 	elements.menu.select.addEventListener("click", onSelectDevice, false);
@@ -358,7 +358,7 @@ input[disabled] {
 		}
 	}
 	
-	function onDragEnd(e) {
+	function onDragEnd(e) {//console.log("drag end");
 		isDragging = false;
 		
 		if (e.node) {
@@ -397,7 +397,7 @@ input[disabled] {
 	}
 	
 	function onEnter(node) {
-		if (isDragging) {
+		if (isDragging) {//console.log("ignore");
 			return;
 		}
 		
@@ -405,6 +405,15 @@ input[disabled] {
 		
 		menu.node = node;
 		menu.show();
+	}
+	
+	function onHideMenu(e) {//console.log(e.button);
+		if (e.button !== 0) {
+			e.preventDefault();
+		}
+		else {
+			menu.hide();
+		}
 	}
 	
 	function onSelectPeer() {
@@ -475,7 +484,7 @@ input[disabled] {
 		}
 	}
 	
-	function onSelectDevice() {console.log(menu.node);
+	function onSelectDevice() {
 		top.selectDevice(menu.node.data.id);
 	}
 	
@@ -579,6 +588,13 @@ input[disabled] {
 		
 		moveMap(-device.x, -device.y);
 		
+		layer.device.invalidate();
+		layer.line.invalidate();
+		
+		canvas.invalidate();
+	};
+	
+	window.resetDevice = function (id) {
 		layer.device.invalidate();
 		layer.line.invalidate();
 		

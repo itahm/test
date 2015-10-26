@@ -19,13 +19,20 @@ li:hover:after {
 
 
 <body>
-	<ul>
-		<li>a
-		<li>b
-	</ul>
+	<select>
+		<optgroup label="group1">
+			<option>test2
+		</optgroup>
+		<option selected>test1
+		
+	</select>
   
 <script>
-
+setTimeout(function () {
+	var s = document.querySelector("select");
+	
+	s.value = "test2";
+}, 3000);
 </script>
 
 </body>

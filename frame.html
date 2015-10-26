@@ -13,7 +13,6 @@ h1 {
 }
 
 iframe {
-	/*position: absolute; top: 0; right: 0; bottom: 0; left: 0;*/
 	width: 100%; height: 100%;
 	margin: 0;
 	padding: 0;
@@ -22,6 +21,11 @@ iframe {
 
 .iframe {
 	position: fixed; width: 50%; height: 50%;
+}
+
+body.maximized .iframe {
+	width: 100%;
+	height: 100%;
 }
 
 .iframe.tl {
@@ -41,11 +45,23 @@ iframe {
 }
 
 #toolbar {
-	float: right;
+	position: absolute; top: 0; right: 0;
 }
 
+#toolbar img {
+	vertical-align: middle;
+	border: 1px solid transparent;
+}
+
+#toolbar img:hover {
+	border-color: #ddf;
+	cursor: pointer;
+}
+
+body.maximized #maximize,
+body:not(.maximized) #minimize,
 .hide {
-	dislay: none;
+	display: none;
 }
 
 		</style>
@@ -91,7 +107,8 @@ iframe {
 		},
 		loader = new Worker("worker/loader.js"),
 		deviceList, iconList,
-		iconMap;
+		iconMap, typeMap,
+		tmpID = 1;
 	
 	loader.onmessage = function (e) {
 		deviceList = e.data.device;
@@ -111,26 +128,24 @@ iframe {
 	 * 페이지 시작점
 	 */
 	function load() {
-		elements.maximize.addEventListener("click", function (e) {
-			/*var iframe = elements.toolbar.parentNode;
-			
-			document.body.classList.add("maximized");
-			document.body.classList.remove("minimized");
-			
-			iframe.classList.add("maximized");*/
-			
-			elements.toolbar.classList.add(maximized);
-		}, false);
+		var data, group;
 		
-		elements.minimize.addEventListener("click", function (e) {
-			/*var iframe = elements.toolbar.parentNode;
+		typeMap = {};
+		
+		for (var type in iconList) {
+			data = iconList[type];
+			group = data.group;
 			
-			document.body.classList.remove("maximized");
-			document.body.classList.add("minimized");
+			if (!(group in typeMap)) {
+				typeMap[group] = [];
+			}
 			
-			iframe.classList.remove("maximized");*/
-			elements.toolbar.classList.add(minimized);
-		}, false);
+			typeMap[group].push(type);
+		}
+		
+		elements.maximize.addEventListener("click", onMaximized, false);
+		
+		elements.minimize.addEventListener("click", onMinimized, false);
 		
 		(function (frame) {
 			for (var id in frame) {
@@ -139,15 +154,44 @@ iframe {
 			
 		}) (elements.frame);
 		
-		
 		elements.frame.list.src = "list.html";
 		elements.frame.map.src = "map.html";
 		elements.frame.device.src = "device.html";
 		elements.frame.event.src = "event.html";
 	}
 	
+	function onMaximized(e) {
+		maximize(this.parentNode.parentNode);
+	}
+	
+	function onMinimized(e) {
+		minimize();
+	}
+	
 	function onFocus() {
-		console.log(this);		
+		var selected = this.parentNode;
+		
+		selected.appendChild(elements.toolbar);
+	}
+	
+	function maximize(frame) {
+		for (var id in elements.frame) {
+			elements.frame[id].parentNode.classList.add("hide");
+		}
+		
+		frame.classList.remove("hide");
+		
+		document.body.classList.add("maximized");
+	}
+	
+	function minimize() {
+		var frame = elements.frame;
+		
+		for (var id in frame) {
+			frame[id].parentNode.classList.remove("hide");
+		}
+		
+		document.body.classList.remove("maximized");
 	}
 	
 	function loadIcon(complete) {
@@ -187,16 +231,37 @@ iframe {
 	};
 	
 	window.selectDevice = function (id) {
+		if (document.body.classList.contains("maximized")) {
+			minimize();
+		}
+
+		if (id) {
+			elements.frame.map.contentWindow.selectDevice(id);
+		}
+		
 		elements.frame.device.contentWindow.resetDevice(id);
-		elements.frame.map.contentWindow.selectDevice(id);
 	};
 	
 	window.getIconMap = function () {
 		return iconMap;
 	};
 	
+	window.getTypeMap = function () {
+		return typeMap;
+	};
+	
 	window.removeDevice = function (id) {
 		console.log("remove >> "+ id);
+	};
+	
+	window.createDeviceID = function () {
+		return "-"+ tmpID++;
+	};
+	
+	window.resetDevice = function (id) {
+		elements.frame.list.contentWindow.document.location.reload();
+		elements.frame.map.contentWindow.document.location.reload();
+		elements.frame.device.contentWindow.resetDevice(id);
 	};
 	
 }) (window);

@@ -84,13 +84,14 @@ ul.line .line {
 		
 		<section>
 		
-			<iframe name="list" src="list/device.html"></iframe>
+			<iframe name="list" id="frame" src="list/device.html"></iframe>
 		
 		</section>
 		
 		<script>
 
 var elements = {
+		frame: document.getElementById("frame"),
 		tab: document.getElementById("tab")
 	};
 	
@@ -103,6 +104,12 @@ var elements = {
 		
 		if (a.href) {
 			this.className = a.id;
+		}
+	}
+	
+	window.resetDevice = function (id) {
+		if (elements.frame.getAttribute("src") === "list/device.html") {
+			elements.frame.contentWindow.resetDevice(id);
 		}
 	}
 	

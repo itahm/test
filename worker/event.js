@@ -15,7 +15,7 @@ var xhr = new XMLHttpRequest(),
 sendRequest();
 
 function sendRequest() {
-	setTimeout(sendRequest, (Math.random() *20) *1000);
+	setTimeout(sendRequest, (Math.random() *(20 + i)) *1000);
 	
 	onEvent();
 }

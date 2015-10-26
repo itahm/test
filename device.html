@@ -71,7 +71,7 @@ section {
 .hide,
 #save,
 #cancel,
-#information li:nth-child(3),
+#information:not(.edit) li:nth-child(3),
 #information.edit li:nth-child(2),
 #information.edit #edit {
 	display: none;
@@ -245,63 +245,122 @@ li {
 			label: document.getElementById("label"),
 			snmp: document.getElementById("snmp"),
 			information: document.getElementById("information")
-		};
+		},
+		id = 0,
+		device;
 	
-	elements.edit.addEventListener("click", onEditInformation, false);
-	elements.save.addEventListener("click", onSaveInformation, false);
-	elements.cancel.addEventListener("click", onCancelInformation, false);
+	elements.edit.addEventListener("click", onEdit, false);
+	elements.save.addEventListener("click", onSave, false);
+	elements.cancel.addEventListener("click", onCancel, false);
 	//onChangeSnmp();
 	
-	initDevice(top.getDevice(0));
+	parseType();
 	
-	function onCancelInformation() {
-		elements.information.classList.remove("edit");
+	resetDevice();
+	
+	function parseType() {
+		var type = elements.form.elements.type,
+			map = top.getTypeMap(),
+			group, option;
 		
-		elements.form.reset();
+		for (var name in map) {
+			group = map[name];
+			
+			option = document.createElement("optgroup");
+			option.setAttribute("label", name);
+			type.add(option);
+			
+			for (var i=0, length=group.length; i<length; i++) {
+				option.appendChild(document.createElement("option")).text = group[i];
+			}
+		}
 	}
 	
 	
-	function onEditInformation(e) {
-		elements.form.name.value = elements.name.textContent ;
-		elements.form.ip.value = elements.ip.textContent;
-		elements.form.type.value = elements.type.textContent;
-		elements.form.label.value = elements.label.textContent;
-		elements.form.snmp.value = elements.snmp.textContent;
+	
+	function onCancel() {
+		close();
+	}
+	
+	function close() {
+		elements.information.classList.remove("edit");
+	}
+	
+	function onEdit(e) {
+		edit();
+	}
+	
+	function onSave() {
+		save();
+	}
+	
+	function save() {
+		if (id === undefined) {
+			id = top.createDeviceID();
+			device.id = id;
+			
+			top.getDeviceList()[id] = device;
+			
+		}
+		
+		device.name = elements.form.name.value;
+		device.address = elements.form.ip.value;
+		device.type = elements.form.type.value;
+		
+		var array = [];
+		elements.form.label.value.split(",").forEach(function (label) {
+			array[array.length] = label.trim();
+		});
+		
+		device.label = array.join(",");
+		device.snmp = elements.form.snmp.value;
+		
+		top.resetDevice(id);
+		
+		close();
+	}
+	
+	function edit() {
+		restore();
 		
 		elements.information.classList.add("edit");
 	}
 	
-	function onSaveInformation() {
-		saveInformation();
+	function restore() {
+		elements.form.elements.name.value = elements.name.textContent;
+		elements.form.elements.ip.value = elements.ip.textContent;
+		elements.form.elements.type.value = elements.type.textContent;
+		elements.form.elements.label.value = elements.label.textContent; 
+		elements.form.elements.snmp.value = elements.snmp.textContent;
 	}
 	
-	function saveInformation() {
-		elements.name.textContent = elements.form.name.value;
-		elements.ip.textContent = elements.form.ip.value;
-		elements.type.textContent = elements.form.type.value;
-		elements.label.textContent = elements.form.label.value;
-		elements.snmp.textContent = elements.form.snmp.value;
+	function resetDevice () {
+		device = id !== undefined? top.getDevice(id): {
+			name: "",
+			address: "",
+			type: "",
+			label: "",
+			snmp: "",
+			x: 0,
+			y: 0
+		};
 		
-		onCancelInformation();
-	}
-	
-	function initDevice (device) {
 		elements.name.textContent = device.name;
 		elements.ip.textContent = device.address;
 		elements.type.textContent = device.type;
 		elements.label.textContent = device.label && (device.label.split(",")).join(", ") || "";
+		elements.snmp.textContent = device.snmp;
 		
 		if (device.snmp) {
-			document.body.classList.add("snmp");
-			
-			elements.snmp.textContent = device.snmp;
+			document.body.classList.add("snmp");	
 		}
 		else {
 			document.body.classList.remove("snmp");
-			
-			elements.snmp.textContent = "disabled";
 		}
 		
+		if (id === undefined) {
+			edit();
+		}
 	}
 	
 	/*
@@ -318,8 +377,10 @@ li {
 	/**
 	 * public method
 	 */
-	window.resetDevice = function (id) {
-		initDevice(top.getDevice(id));
+	window.resetDevice = function (deviceID) {
+		close();
+		
+		resetDevice(id = deviceID);
 		
 		elements.aside.scrollTop = 0;
 	}
