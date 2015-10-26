@@ -107,11 +107,12 @@ var elements = {
 		}
 	}
 	
-	window.resetDevice = function (id) {
-		if (elements.frame.getAttribute("src") === "list/device.html") {
-			elements.frame.contentWindow.resetDevice(id);
-		}
-	}
+	/**
+	 * public method
+	 */
+	window.reload = function (src) {
+		elements.frame.src = src;
+	};
 	
 })(window, top);
 	

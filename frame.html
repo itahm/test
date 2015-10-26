@@ -231,15 +231,22 @@ body:not(.maximized) #minimize,
 	};
 	
 	window.selectDevice = function (id) {
-		if (document.body.classList.contains("maximized")) {
-			minimize();
-		}
-
+		
 		if (id) {
 			elements.frame.map.contentWindow.selectDevice(id);
 		}
 		
 		elements.frame.device.contentWindow.resetDevice(id);
+	};
+	
+	window.minimize = function () {
+		if (document.body.classList.contains("maximized")) {
+			minimize();
+		}
+	};
+	
+	window.getFrame = function (frameName) {
+		return elements.frame[frameName].contentWindow;
 	};
 	
 	window.getIconMap = function () {
@@ -250,18 +257,8 @@ body:not(.maximized) #minimize,
 		return typeMap;
 	};
 	
-	window.removeDevice = function (id) {
-		console.log("remove >> "+ id);
-	};
-	
 	window.createDeviceID = function () {
 		return "-"+ tmpID++;
-	};
-	
-	window.resetDevice = function (id) {
-		elements.frame.list.contentWindow.document.location.reload();
-		elements.frame.map.contentWindow.document.location.reload();
-		elements.frame.device.contentWindow.resetDevice(id);
 	};
 	
 }) (window);

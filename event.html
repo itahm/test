@@ -8,8 +8,7 @@
 		
 		<style>
 body {
-	font-family: tahoma,
-	padding: 10px;
+	font-family: tahoma, arial, "맑은 고딕";
 }
 
 li {
@@ -25,6 +24,9 @@ li {
 
 .table li {
 	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .table li:nth-child(1) {
@@ -32,9 +34,9 @@ li {
 }
 
 .table .thead {
-	position: fixed; top: 10px; right: 10px; left: 10px;
+	position: fixed; top: 0; right: 0; left: 0;
 	background-color: #0084ff;
-	color: #fff;
+	color: #ddf;
 	padding: 2px;
 	height: 16px;
 	line-height: 16px;
@@ -58,7 +60,7 @@ li {
 }
 
 .table .tbody {
-	position: fixed; top: 30px; right: 10px; bottom: 10px; left: 10px;
+	position: fixed; top: 20px; right: 0; bottom: 0; left: 0;
 	background-color: #fff;
 	overflow-y: scroll;
 	overflow-x: hidden;

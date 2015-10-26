@@ -300,7 +300,6 @@ li {
 			device.id = id;
 			
 			top.getDeviceList()[id] = device;
-			
 		}
 		
 		device.name = elements.form.name.value;
@@ -315,7 +314,8 @@ li {
 		device.label = array.join(",");
 		device.snmp = elements.form.snmp.value;
 		
-		top.resetDevice(id);
+		top.getFrame("list").reload();
+		top.getFrame("map").reload();
 		
 		close();
 	}
@@ -363,26 +363,20 @@ li {
 		}
 	}
 	
-	/*
-	function onChangeSnmp(e) {
-		if (elements.snmp.value === "disable"){
-			document.body.classList.add("snmp");
-		}
-		else {
-			document.body.classList.remove("snmp");
-		}
-	}
-	*/
-	
 	/**
 	 * public method
 	 */
+	
 	window.resetDevice = function (deviceID) {
 		close();
 		
 		resetDevice(id = deviceID);
 		
 		elements.aside.scrollTop = 0;
+	};
+	
+	window.getDeviceID = function () {
+		return id;
 	}
 	
 })(window, top);

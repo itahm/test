@@ -485,7 +485,9 @@ input[disabled] {
 	}
 	
 	function onSelectDevice() {
-		top.selectDevice(menu.node.data.id);
+		top.getFrame("device").resetDevice(menu.node.data.id);
+		
+		top.minimize();
 	}
 	
 	function onRemoveLink(device, name) {
@@ -579,28 +581,7 @@ input[disabled] {
 	function setPeer() {
 		
 	}
-	
-	/**
-	 * public method
-	 */ 
-	window.selectDevice = function (id) {
-		var device = deviceList[id];
 		
-		moveMap(-device.x, -device.y);
-		
-		layer.device.invalidate();
-		layer.line.invalidate();
-		
-		canvas.invalidate();
-	};
-	
-	window.resetDevice = function (id) {
-		layer.device.invalidate();
-		layer.line.invalidate();
-		
-		canvas.invalidate();
-	};
-	
 	/** inner class */
 	function Menu(container, balloon) {
 		var menu = this,
@@ -650,6 +631,25 @@ input[disabled] {
 			fragment.appendChild(balloon);
 		};
 	}
+	
+
+	/**
+	 * public method
+	 */ 
+	window.selectDevice = function (id) {
+		var device = deviceList[id];
+		
+		moveMap(-device.x, -device.y);
+		
+		layer.device.invalidate();
+		layer.line.invalidate();
+		
+		canvas.invalidate();
+	};
+	
+	window.reload = function () {
+		document.location.reload();
+	};
 	
 }) (window, top);
 

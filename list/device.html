@@ -185,38 +185,108 @@ form {
 			select.add(option);
 		}
 		
-		onChangeLabel.call(select);
+		changeLabel("");
+	}
+	
+	function removeDevice(id) {
+		var device = deviceList[id],
+			iFace = device.iFace,
+			deviceFrame;
+		
+		for (var name in iFace) {
+			removeIFace(deviceList[iFace[name]], id);
+		}
+		
+		delete deviceList[id];
+		
+		deviceFrame = top.getFrame("device");
+		// 선택된 device가 삭제되는 경우
+		if (id == deviceFrame.getDeviceID()) {
+			deviceFrame.resetDevice(0);
+		}
+	}
+	
+	function removeIFace(peer, id) {
+		var iFace = peer.iFace;
+		
+		for (var name in iFace) {
+			if (iFace[name] == id) {
+				delete iFace[name];
+			}
+		}
 	}
 	
 	function onAdd(e) {
-		top.selectDevice();
+		top.getFrame("device").resetDevice();
 	}
 	
 	function onSearch(e) {
 		e.preventDefault();
 		
-		console.log(elements.form.keyword.value);
-	}
-	
-	function onSelect(id) {
-		top.selectDevice(id);
-	}
-	
-	function onRemove() {
-		for(var i=0, length=list.selected.length; i<length; i++) {			
-			top.removeDevice(list.selected[i].dataset.id);
+		var keyword = elements.form.elements.keyword.value;
+		
+		changeLabel(elements.form.elements.label.value);
+		
+		if (!keyword) {	
+			return;
+		}
+		
+		var row = elements.tbody.children,
+			fragment = document.createDocumentFragment(),
+			matched = [],
+			device;
+		
+		for (var i=0, length=row.length; i<length; i++) {
+			device = deviceList[row[i].dataset.id];
+			
+			if (device.name.indexOf(keyword) === -1 && device.address.indexOf(keyword) === -1 && device.type.indexOf(keyword) === -1) {
+				matched[matched.length] = row[i];
+			}
+		}
+		
+		for (var i=0, length=matched.length; i<length; i++) {
+			fragment.appendChild(matched[i]);
 		}
 	}
 	
-	function onChangeLabel() {
-		elements.tbody.appendChild(list.getRowsByLabel(this.value));
+	function onSelect(id) {
+		top.getFrame("map").selectDevice(id);
+		top.getFrame("device").resetDevice(id);
+		
+		top.minimize();
+	}
+	
+	function onRemove() {
+		var checked = list.checked,
+			length = checked.length;
+		
+		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
+			return;
+		}
+		
+		for(var i=0; i<length; i++) {
+			removeDevice(checked[i].dataset.id);
+		}
+		
+		top.getFrame("map").reload();
+	}
+	
+	function onChangeLabel(e) {
+		elements.form.elements.keyword.value = "";
+		
+		changeLabel(this.value);
+	}
+	
+	function changeLabel(label) {
+		elements.tbody.appendChild(list.getRowsByLabel(label));
 	}
 	
 	function List(onselect) {
 		var list = this,
 			rowMap = {},
-			label = {},
-			selected = [];
+			label = {};
+		
+		this.checked = [];
 		
 		(function () {
 			var row, device, checkbox;
@@ -240,34 +310,13 @@ form {
 				
 				row.dataset.id = id;
 				
-				row.onclick = onSelectItem;
+				row.onclick = onSelectRow;
 				
 				rowMap[id] = row;
 				
 				parseLabel(row, device);
 			}
 		})();
-		
-		
-		this.select = function (row, select) {
-			var index = selected.indexOf(row);
-			
-			if (select) {
-				if (index === -1) {
-					selected[selected.length] = item;
-				}
-			}
-			else {
-				if (index !== -1) {
-					selected.splice(index, 1);
-				}
-			}
-			
-		};
-		
-		this.selected = function () {
-			return selected;
-		};
 		
 		this.reset = function (id) {
 			var row = rowMap[id],
@@ -313,10 +362,25 @@ form {
 		function onCheckItem(e) {
 			e.stopPropagation();
 			
-			list.select(this.parentNode, this.checked);
+			var checked = list.checked,
+				row = this.parentNode,
+				index = checked.indexOf(row);
+			
+			if (this.checked) {
+				if (index === -1) {
+					checked[checked.length] = row;
+				}
+			}
+			else {
+				if (index !== -1) {
+					checked.splice(index, 1);
+				}
+			}
 		}
 		
-		function onSelectItem() {
+		function onSelectRow() {
+			list.selected = this;
+			
 			onselect(this.dataset.id);
 		}
 		
@@ -341,9 +405,8 @@ form {
 		
 	}
 	
-	window.resetDevice = function (id) {
-		// 그냥 모두 다시 그려버리자 (장비 하나 변경됐다고...)
-		resetList();
+	window.reload = function () {
+		document.location.reload();
 	};
 	
 })(window, top);
