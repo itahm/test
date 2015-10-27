@@ -7,9 +7,23 @@
 		<title></title>
 		
 		<style>
-body,
-h1 {
-	font-family: tahoma, arial, "맑은 고딕"; 
+body {
+	font-family: tahoma, arial, "맑은 고딕";
+	margin: 0;
+	padding: 0; 
+}
+
+header {
+	position: fixed; top: 0; right: 0; left: 0; height: 30px;
+	line-height: 20px;
+	padding: 5px;
+	box-sizing: border-box;
+	font-size: 12px;
+	background-color: #0084ff;
+}
+
+div[role="main"] {
+	position: fixed; top: 30px; right: 0; left: 0; bottom: 0;
 }
 
 iframe {
@@ -20,7 +34,7 @@ iframe {
 }
 
 .iframe {
-	position: fixed; width: 50%; height: 50%;
+	position: absolute; width: 50%; height: 50%;
 }
 
 body.maximized .iframe {
@@ -70,17 +84,25 @@ body:not(.maximized) #minimize,
 	
 	<body>
 	
-		<div class="iframe tl">
-			<iframe id="frame_list"></iframe>
-		</div>
-		<div class="iframe tr">
-			<iframe id="frame_map"></iframe>
-		</div>
-		<div class="iframe bl">
-			<iframe id="frame_device"></iframe>
-		</div>
-		<div class="iframe br">
-			<iframe id="frame_event"></iframe> 
+		<header>
+		</header>
+		
+		<div role="main">
+			<section class="iframe tl">
+				<iframe id="frame_list"></iframe>
+			</section>
+			
+			<section class="iframe tr">
+				<iframe id="frame_map"></iframe>
+			</section>
+			
+			<section class="iframe bl">
+				<iframe id="frame_device"></iframe>
+			</section>
+			
+			<section class="iframe br">
+				<iframe id="frame_event"></iframe> 
+			</section>
 		</div>
 		
 		<div class="hide">

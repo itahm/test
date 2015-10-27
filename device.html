@@ -7,15 +7,19 @@
 		<title>ITAhM::Device</title>
 		
 		<style>
-body {
+body,
+input,
+a {
 	font-family: arial, tahoma, "맑은 고딕"
 }
 
 li,
 select,
 input,
-span {
-	font-size: 13px;
+span,
+label,
+a {
+	font-size: 12px;
 }
 
 aside {
@@ -29,8 +33,7 @@ section {
 	position: fixed; top: 0; right: 0px; bottom: 0; left: 300px;
 	box-sizing: border-box;
 	padding: 10px;
-	background: #ddd url(img/chart.png) no-repeat center;
-	background-image: 
+	background: #fff url(img/chart.png) no-repeat center;
 }
 
 .table ul {
@@ -68,23 +71,15 @@ section {
 	width: 100%;
 }
 
+body.snmp .interface,
 .hide,
+.snmp:not(body),
 #save,
 #cancel,
 #information:not(.edit) li:nth-child(3),
 #information.edit li:nth-child(2),
 #information.edit #edit {
 	display: none;
-}
-
-.snmp:not(body) {
-	display: none;
-	/*background-color: #ff0;*/
-}
-
-body.snmp .interface {
-	display: none;
-	/*background-color: #0ff;*/
 }
 
 body.snmp .snmp,
@@ -102,6 +97,62 @@ li {
 	vertical-align: bottom;
 }
 
+/** chart */
+
+#chart {
+	display: flex;
+	flex-direction: column;
+}
+
+#chart> .chart {
+	-webkit-flex: 1;
+	flex: 1;
+	height: 0;
+	position: relative;
+}
+		
+#controller {
+	position: absolute; top: 5px; right: 10px; left: 0;
+}
+
+#controller > div.right {
+	float: right;
+}
+
+#controller > div.left {
+	float: left;
+}
+
+#controller #offline,
+#controller.realtime .right,
+#controller.realtime .left :not(#offline) {
+	display: none;
+}
+
+#controller.realtime #offline {
+	display: inline;
+}
+
+#controller img {
+	vertical-align: middle;
+	border: 1px solid transparent;
+}
+
+#controller img.button:hover {
+	border-color: #ddf;
+	cursor: pointer;
+}
+
+#controller a {
+	font-weight: bold;
+}
+
+#controller a:hover {
+	color: #73a4e6;
+	text-decoration: underline;
+	cursor: pointer;
+}
+		
 		</style>
 		
 	</head>
@@ -156,7 +207,6 @@ li {
 								<span id="snmp"></span>
 							<li>
 								<select name="snmp">
-									<option selected>disable
 									<option>public
 								</select>
 						</ul>
@@ -197,7 +247,7 @@ li {
 					snmp response time
 				</h3>
 				<ul>
-					<li><input type="checkbox" id="check_delay">response time (ms)
+					<li><input type="checkbox" id="resource">response time (ms)
 				</ul>
 				
 				<h3>
@@ -222,9 +272,39 @@ li {
 			</div>
 		</aside>
 		
-		<section>
+		<section id="chart">
+			<div id="controller">
+				<div class="right">
+					<img src="img/download.png" width="16px" height="16px">
+					<a id="down_csv" title="download chart data as chart.csv">csv</a>
+					<a id="down_png" title="download chart image as chart.png">png</a>
+				</div>
+				<div class="left">
+					<img src="img/chart.png" id="offline" width="16px" height="16px" title="offline chart" class="button">
+					<div>
+						<img src="img/realtime.png" id="realtime" width="16px" height="16px" title="realtime chart" class="button">
+						<img src="img/detail.png" id="detail" width="16px" height="16px" title="detailed chart" class="button">
+						<img src="img/calendar.png" width="16px" height="16px">
+						<label>
+							from
+							<input type="date" id="start">
+						</label>
+						<label>
+							to
+							<input type="date" id="end">
+							<input type="button" value="apply" id="reset">
+						</label>
+					</div>
+				</div>
+			</div>
 		</section>
 		
+		<script src="js/ITAhM.js"></script>
+		<script src="js/Draggable.js"></script>
+		<script src="js/Manager.js"></script>
+		<script src="js/createData.js"></script>
+		<script src="js/Chart.js"></script>
+		<script src="device.js"></script>
 		<script>
 
 (function (window, top) {		
@@ -244,6 +324,7 @@ li {
 			type: document.getElementById("type"),
 			label: document.getElementById("label"),
 			snmp: document.getElementById("snmp"),
+			resource: document.getElementById("resource"),
 			information: document.getElementById("information")
 		},
 		id = 0,
@@ -252,6 +333,7 @@ li {
 	elements.edit.addEventListener("click", onEdit, false);
 	elements.save.addEventListener("click", onSave, false);
 	elements.cancel.addEventListener("click", onCancel, false);
+	elements.resource.addEventListener("click", onCheckResource, false);
 	//onChangeSnmp();
 	
 	parseType();
@@ -292,6 +374,15 @@ li {
 	
 	function onSave() {
 		save();
+	}
+	
+	function onCheckResource() {
+		if (this.checked) {
+			
+		}
+		else {
+			
+		}
 	}
 	
 	function save() {
@@ -361,6 +452,14 @@ li {
 		if (id === undefined) {
 			edit();
 		}
+	}
+	
+	function resize() {
+		var event = document.createEvent("Event");
+		
+		event.initEvent("resize", true, true);
+		
+		window.dispatchEvent(event);
 	}
 	
 	/**
