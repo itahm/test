@@ -19,20 +19,75 @@ li:hover:after {
 
 
 <body>
-	<select>
-		<optgroup label="group1">
-			<option>test2
-		</optgroup>
-		<option selected>test1
-		
-	</select>
+	<button onclick="test()">test</button>
   
 <script>
-setTimeout(function () {
-	var s = document.querySelector("select");
+
+function Communicator(server, port) {
+	var url = "http://"+ server + (port? (":"+ port): ""),
+		thread = new Worker("worker/communicator.js?2"),
+		dataQ = [],
+		callbackQ = [];
 	
-	s.value = "test2";
-}, 3000);
+	thread.onmessage = function (e) {
+		var data = dataQ.shift();
+		
+		callbackQ.shift()(e.data);
+		
+		if (data) {
+			send(data);
+		}
+	}
+	
+	function send(data) {
+		thread.postMessage({
+			url: url,
+			data: data
+		});
+	}
+	
+	this.send = function (data, callback) {
+		if (callbackQ.length == 0) {
+			send(data);
+		}
+		else {
+			dataQ.push(data);
+		}
+		
+		callbackQ.push(callback);
+	}
+}
+
+var c = new Communicator("127.0.0.1", 2014);
+
+c.send({
+	database: "device",
+	command: "get",
+	data: null
+}, onResponse);
+
+c.send({
+	database: "profile",
+	command: "get",
+	data: null
+}, onResponse);
+
+c.send({
+	database: "account",
+	command: "get",
+	data: null
+}, onResponse);
+
+c.send({
+	database: "icon",
+	command: "get",
+	data: null
+}, onResponse);
+function onResponse(json) {
+	document.write(JSON.stringify(json));
+	document.write("<br>");
+	document.write("===============================================<br>");
+}
 </script>
 
 </body>

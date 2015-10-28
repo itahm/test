@@ -17,4 +17,11 @@ if (xhr.status === 200) {
 	data.device = JSON.parse(xhr.responseText);
 }
 
+xhr.open("GET", "../json/snmp.json", false);
+xhr.send();
+
+if (xhr.status === 200) {
+	data.snmp = JSON.parse(xhr.responseText);
+}
+
 postMessage(data);

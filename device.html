@@ -217,25 +217,25 @@ li {
 					<ul>
 						<li>
 							<span>status</span>
-						<li id="txt_status">
+						<li id="status">
 							<span id=""></span>
 					</ul>
 					<ul>
 						<li>
 							<span>uptime</span>
-						<li id="txt_uptime">
+						<li id="uptime">
 							<span id=""></span>
 					</ul>
 					<ul>
 						<li>
 							<span>description</span>
-						<li id="txt_description">
+						<li id="description">
 							<span id=""></span>
 					</ul>
 					<ul>
 						<li>
 							<span>enterprise</span>
-						<li id="txt_enterprise">
+						<li id="enterprise">
 							<span id=""></span>
 					</ul>
 				</div>
@@ -327,6 +327,7 @@ li {
 			resource: document.getElementById("resource"),
 			information: document.getElementById("information")
 		},
+		deviceList = top.getDeviceList(),
 		id = 0,
 		device;
 	
@@ -390,7 +391,7 @@ li {
 			id = top.createDeviceID();
 			device.id = id;
 			
-			top.getDeviceList()[id] = device;
+			deviceList[id] = device;
 		}
 		
 		device.name = elements.form.name.value;
@@ -426,7 +427,7 @@ li {
 	}
 	
 	function resetDevice () {
-		device = id !== undefined? top.getDevice(id): {
+		device = id !== undefined? deviceList[id]: {
 			name: "",
 			address: "",
 			type: "",
@@ -443,7 +444,9 @@ li {
 		elements.snmp.textContent = device.snmp;
 		
 		if (device.snmp) {
-			document.body.classList.add("snmp");	
+			var snmp = snmpList[device.address];
+			
+			document.body.classList.add("snmp");
 		}
 		else {
 			document.body.classList.remove("snmp");

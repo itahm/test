@@ -128,13 +128,14 @@ body:not(.maximized) #minimize,
 			}
 		},
 		loader = new Worker("worker/loader.js"),
-		deviceList, iconList,
+		deviceList, iconList, snmpList,
 		iconMap, typeMap,
 		tmpID = 1;
 	
 	loader.onmessage = function (e) {
 		deviceList = e.data.device;
 		iconList = e.data.icon;
+		snmpList = e.snmp;
 		
 		loadIcon(function (map) {
 			iconMap = map;
@@ -242,6 +243,10 @@ body:not(.maximized) #minimize,
 	
 	window.getDeviceList = function () {
 		return deviceList;
+	};
+	
+	window.getSNMPList = function () {
+		return snmpList;
 	};
 	
 	window.getDevice = function (id) {
