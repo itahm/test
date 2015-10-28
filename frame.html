@@ -127,7 +127,7 @@ body:not(.maximized) #minimize,
 				event: document.getElementById("frame_event")
 			}
 		},
-		loader = new Worker("worker/loader.js"),
+		loader = new Worker("worker/loader.js?"),
 		deviceList, iconList, snmpList,
 		iconMap, typeMap,
 		tmpID = 1;
@@ -135,7 +135,7 @@ body:not(.maximized) #minimize,
 	loader.onmessage = function (e) {
 		deviceList = e.data.device;
 		iconList = e.data.icon;
-		snmpList = e.snmp;
+		snmpList = e.data.snmp;
 		
 		loadIcon(function (map) {
 			iconMap = map;

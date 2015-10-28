@@ -17,46 +17,11 @@ li:hover:after {
 	</style>
 </head>
 
-
 <body>
 	<button onclick="test()">test</button>
-  
-<script>
 
-function Communicator(server, port) {
-	var url = "http://"+ server + (port? (":"+ port): ""),
-		thread = new Worker("worker/communicator.js?2"),
-		dataQ = [],
-		callbackQ = [];
-	
-	thread.onmessage = function (e) {
-		var data = dataQ.shift();
-		
-		callbackQ.shift()(e.data);
-		
-		if (data) {
-			send(data);
-		}
-	}
-	
-	function send(data) {
-		thread.postMessage({
-			url: url,
-			data: data
-		});
-	}
-	
-	this.send = function (data, callback) {
-		if (callbackQ.length == 0) {
-			send(data);
-		}
-		else {
-			dataQ.push(data);
-		}
-		
-		callbackQ.push(callback);
-	}
-}
+<script src="js/Communicator.js"></script>  
+<script>
 
 var c = new Communicator("127.0.0.1", 2014);
 
@@ -83,6 +48,7 @@ c.send({
 	command: "get",
 	data: null
 }, onResponse);
+
 function onResponse(json) {
 	document.write(JSON.stringify(json));
 	document.write("<br>");

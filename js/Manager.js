@@ -344,7 +344,7 @@ function format(milliseconds) {
 			}
 		}
 		
-		ITAhM.download(new Blob([row.join("\n")], { type: "text/csv;charset=utf-8;"}), "chart.csv");
+		ITAhM.util.download(new Blob([row.join("\n")], { type: "text/csv;charset=utf-8;"}), "chart.csv");
 	}
 	
 	ChartManager.prototype.showDetail = function () {

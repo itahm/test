@@ -1,5 +1,5 @@
 @CHARSET "UTF-8";
-
+/*
 html,
 body {
 	margin: 0;
@@ -30,4 +30,4 @@ body.maximized iframe.maximized {
 
 #toolbar.minimized #minimize {
 	display: none;
-}
+}*/

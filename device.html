@@ -217,26 +217,26 @@ li {
 					<ul>
 						<li>
 							<span>status</span>
-						<li id="status">
-							<span id=""></span>
+						<li>
+							<span id="status"></span>
 					</ul>
 					<ul>
 						<li>
 							<span>uptime</span>
-						<li id="uptime">
-							<span id=""></span>
+						<li>
+							<span id="uptime"></span>
 					</ul>
 					<ul>
 						<li>
 							<span>description</span>
-						<li id="description">
-							<span id=""></span>
+						<li>
+							<span id="description"></span>
 					</ul>
 					<ul>
 						<li>
 							<span>enterprise</span>
-						<li id="enterprise">
-							<span id=""></span>
+						<li>
+							<span id="enterprise"></span>
 					</ul>
 				</div>
 				
@@ -324,10 +324,15 @@ li {
 			type: document.getElementById("type"),
 			label: document.getElementById("label"),
 			snmp: document.getElementById("snmp"),
+			status: document.getElementById("status"),
+			uptime: document.getElementById("uptime"),
+			description: document.getElementById("description"),
+			enterprise: document.getElementById("enterprise"),
 			resource: document.getElementById("resource"),
 			information: document.getElementById("information")
 		},
 		deviceList = top.getDeviceList(),
+		snmpList = top.getSNMPList(),
 		id = 0,
 		device;
 	
@@ -445,6 +450,15 @@ li {
 		
 		if (device.snmp) {
 			var snmp = snmpList[device.address];
+			
+			if (!device.name) {
+				elements.name.textContent = snmp.sysName;
+			}
+			
+			elements.status.textContent = snmp.timeout < 0? "up": "down";
+			elements.description.textContent = snmp.sysDescr;
+			elements.uptime.textContent = ITAhM.util.toUptimeString(snmp.hrSystemUptime);
+			elements.enterprise.textContent = ITAhM.util.enterpriseFromOID(snmp.sysObjectID);
 			
 			document.body.classList.add("snmp");
 		}
