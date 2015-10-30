@@ -247,7 +247,7 @@ li {
 					snmp response time
 				</h3>
 				<ul>
-					<li><input type="checkbox" id="resource">response time (ms)
+					<li><input type="checkbox" id="response">response time (ms)
 				</ul>
 				
 				<h3>
@@ -328,7 +328,7 @@ li {
 			uptime: document.getElementById("uptime"),
 			description: document.getElementById("description"),
 			enterprise: document.getElementById("enterprise"),
-			resource: document.getElementById("resource"),
+			response: document.getElementById("response"),
 			information: document.getElementById("information")
 		},
 		deviceList = top.getDeviceList(),
@@ -339,7 +339,7 @@ li {
 	elements.edit.addEventListener("click", onEdit, false);
 	elements.save.addEventListener("click", onSave, false);
 	elements.cancel.addEventListener("click", onCancel, false);
-	elements.resource.addEventListener("click", onCheckResource, false);
+	elements.response.addEventListener("click", onCheckResource, false);
 	//onChangeSnmp();
 	
 	parseType();
@@ -382,13 +382,40 @@ li {
 		save();
 	}
 	
-	function onCheckResource() {
-		if (this.checked) {
+	/**
+	 * monitor하고자 하는 resource check시 chart에 추가하거나 삭제
+	 */
+	function onCheckResource(database, index, e) {
+		var checkbox = e.currentTarget;
+		
+		if (checkbox.checked) {
+			var date = new Date(),
+				request = {
+					database: database,
+					command: "get",
+					data: {}
+				},
+				chart = createChart(database),
+				item = checkedList.add(checkbox, chart);
 			
+			request.data[ip] = {
+				index: index,
+				end: date.setMinutes(0, 0, 0),
+				start: date.setFullYear(date.getFullYear() -1),
+				summary: true
+			};
+			
+			item.request = request;
+			
+			elements.chart.appendChild(chart.chart);
+			
+			item.xhr.request(request);
 		}
 		else {
-			
+			elements.chart.removeChild(checkedList.remove(checkbox).chart.chart);
 		}
+		
+		resize();
 	}
 	
 	function save() {
@@ -448,27 +475,93 @@ li {
 		elements.label.textContent = device.label && (device.label.split(",")).join(", ") || "";
 		elements.snmp.textContent = device.snmp;
 		
-		if (device.snmp) {
-			var snmp = snmpList[device.address];
-			
-			if (!device.name) {
-				elements.name.textContent = snmp.sysName;
-			}
-			
+		resetSNMP(device);
+		
+		if (id === undefined) {
+			edit();
+		}
+	}
+	
+	function resetSNMP(device) {
+		var snmp;
+		
+		if (device.snmp && device.address && (snmp = snmpList[device.address])) {
 			elements.status.textContent = snmp.timeout < 0? "up": "down";
 			elements.description.textContent = snmp.sysDescr;
 			elements.uptime.textContent = ITAhM.util.toUptimeString(snmp.hrSystemUptime);
 			elements.enterprise.textContent = ITAhM.util.enterpriseFromOID(snmp.sysObjectID);
+			
+			resetResource(snmp);
 			
 			document.body.classList.add("snmp");
 		}
 		else {
 			document.body.classList.remove("snmp");
 		}
+	}
+	
+	function resetResource(snmp) {
+		/*var checkbox;
 		
-		if (id === undefined) {
-			edit();
+		// delay
+		checkbox = document.getElementById("check_delay");
+		checkbox.addEventListener("click", onCheckResource.bind(checkbox, "delay", 0), false);
+		
+		// cpu
+		for (index in device.hrProcessorIndex) {
+			checkbox = document.createElement("input");
+			checkbox.addEventListener("click", onCheckResource.bind(checkbox, "processor", index), false);
+			
+			li = document.createElement("li");
+			li.appendChild(checkbox).type = "checkbox";
+			li.appendChild(document.createElement("span")).textContent = "index."+ index;
+			
+			elements.cpuList.appendChild(li);
 		}
+		
+		// storage
+		for (index in device["hrStorageIndex"]) {
+			storage = device["hrStorageEntry"][index];
+			
+			li = document.createElement("li");
+			checkbox = document.createElement("input");
+			li.appendChild(checkbox).type = "checkbox";
+			
+			// physical memory
+			if (storage["hrStorageType"] === 2) {				
+				li.appendChild(document.createElement("span")).textContent = "index."+ index;
+				
+				checkbox.addEventListener("click", onCheckResource.bind(checkbox, "memory", index), false);
+				
+				elements.memList.appendChild(li);
+			}
+			
+			// non-removable storage
+			else if (storage["hrStorageType"] === 4) {
+				li.appendChild(document.createElement("span")).textContent = storage["hrStorageDescr"];
+				
+				checkbox.addEventListener("click", onCheckResource.bind(checkbox, "storage", index), false);
+				
+				elements.diskList.appendChild(li);
+			}			
+		}
+		
+		// interface
+		for (index in device["ifIndex"]) {
+			port = device["ifEntry"][index];
+			
+			checkbox = document.createElement("input");
+			
+			li = document.createElement("li");
+			li.title = port["ifDescr"];
+			li.appendChild(checkbox).type = "checkbox";
+			li.appendChild(document.createElement("span")).textContent = port["ifName"];
+			
+			checkbox.addEventListener("click", onCheckResource.bind(checkbox, "inoctet", index), false);
+			checkbox.addEventListener("click", onCheckResource.bind(checkbox, "ouoctet", index), false);
+			
+			elements.portList.appendChild(li);
+		}*/
 	}
 	
 	function resize() {

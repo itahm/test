@@ -14,8 +14,8 @@ body {
 }
 
 header {
-	position: fixed; top: 0; right: 0; left: 0; height: 30px;
-	line-height: 20px;
+	position: fixed; top: 0; right: 0; left: 0; height: 40px;
+	line-height: 30px;
 	padding: 5px;
 	box-sizing: border-box;
 	font-size: 12px;
@@ -23,7 +23,39 @@ header {
 }
 
 div[role="main"] {
-	position: fixed; top: 30px; right: 0; left: 0; bottom: 0;
+	position: fixed; top: 40px; right: 0; left: 0; bottom: 0;
+}
+
+div[role="main"].setting {
+	padding: 10px;
+	background-color: rgba(255, 255, 255, 1);
+}
+
+div[role="main"].setting input {
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+div[role="main"].setting input[name="ip"] {
+	background: transparent url("img/home.png") no-repeat 10px center;
+	width: 160px;
+	padding-left: 36px;
+}
+
+div[role="main"].setting input[name="port"] {
+	background: transparent url("img/port.png") no-repeat 10px center;
+	width: 100px;
+	padding-left: 36px;
+}
+
+div[role="main"].setting input[name="username"] {
+	background: transparent url("img/user.png") no-repeat 10px center;
+	padding-left: 36px;
+}
+
+div[role="main"].setting input[name="password"] {
+	background: transparent url("img/lock.png") no-repeat 10px center;
+	padding-left: 36px;
 }
 
 iframe {
@@ -62,21 +94,29 @@ body.maximized .iframe {
 	position: absolute; top: 0; right: 0;
 }
 
+header img,
 #toolbar img {
 	vertical-align: middle;
 	border: 1px solid transparent;
 }
 
+header img:hover,
 #toolbar img:hover {
 	border-color: #ddf;
 	cursor: pointer;
 }
 
 body.maximized #maximize,
+body.connected #form_agent,
+/*body.setting>:not(.setting),*/
 body:not(.maximized) #minimize,
+body:not(.setting)>.setting,
+body.authorized .setting form,
+body:not(.connected) #agent, 
 .hide {
 	display: none;
 }
+
 
 		</style>
 		
@@ -85,6 +125,8 @@ body:not(.maximized) #minimize,
 	<body>
 	
 		<header>
+			<img src="img/gear_w.png" id="setting">
+			<img src="img/synchronize_w.png">
 		</header>
 		
 		<div role="main">
@@ -105,6 +147,27 @@ body:not(.maximized) #minimize,
 			</section>
 		</div>
 		
+		<div role="main" class="setting">
+			<h3>agent</h3>
+			<h4 id="agent">127.0.0.1:2014</h4>
+			<form id="form_agent">
+				<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address">
+				<input type="text" name="port" value="2014" placeholder="tcp port">
+				<input type="submit" value="connect">
+			</form>
+			<form id="form_signin">
+				<input type="text" name="username" placeholder="username">
+				<input type="password" name="password" placeholder="password">
+				<input type="submit" value="sign in">
+			</form>
+			
+			
+			<h3>snmp profile</h3>
+			<ul>
+				<li>public
+			</ul>
+		</div>
+		
 		<div class="hide">
 			<div id="toolbar" class="minimized">
 				<img id="maximize" src="img/maximize.png">
@@ -112,64 +175,73 @@ body:not(.maximized) #minimize,
 			</div>
 		</div>
 		
+		<script src="js/Communicator.js"></script>
 		<script>
 
 (function (window, undefined){
 	
-	var elements = {
+	var communicator,
+		deviceList, iconList, snmpList,
+		iconMap, typeMap = {},
+		tmpID = 1,
+		agent,
+		elements = {
+			agent: document.getElementById("agent"),
 			toolbar: document.getElementById("toolbar"),
 			maximize: document.getElementById("maximize"),
 			minimize: document.getElementById("minimize"),
+			setting: document.getElementById("setting"),
+			form: {
+				agent: document.getElementById("form_agent"),
+				signin: document.getElementById("form_signin"),
+			},
 			frame: {
 				list: document.getElementById("frame_list"),
 				map : document.getElementById("frame_map"),
 				device: document.getElementById("frame_device"),
 				event: document.getElementById("frame_event")
 			}
-		},
-		loader = new Worker("worker/loader.js?"),
-		deviceList, iconList, snmpList,
-		iconMap, typeMap,
-		tmpID = 1;
+		};
 	
-	loader.onmessage = function (e) {
-		deviceList = e.data.device;
-		iconList = e.data.icon;
-		snmpList = e.data.snmp;
-		
-		loadIcon(function (map) {
-			iconMap = map;
+	load();
+	
+	/**
+	 * load
+	 * script 시작점
+	 * deviceList, snmpList, 
+	 */
+	function load() {
+		new Worker("worker/loader.js?").onmessage = function (e) {
+			deviceList = e.data.device;
+			iconList = e.data.icon;
+			snmpList = e.data.snmp;
 			
-			/**
-			 * icon 모두 load 된 후 페이지 시작
-			 */
-			load();
-		});
+			loadIcon(function (map) {
+				iconMap = map;
+				
+				/**
+				 * icon 모두 load 된 후 페이지 시작
+				 */
+				init(e.data);
+			});
+		}
 	}
 	
 	/**
 	 * 페이지 시작점
 	 */
-	function load() {
-		var data, group;
+	function init(data) {
+		// 변수 초기화
+		communicator = new Communicator();
 		
-		typeMap = {};
+		// event 등록
+		elements.setting.addEventListener("click", onSetting, false);
+		elements.maximize.addEventListener("click", onMaximize, false);
+		elements.minimize.addEventListener("click", onMinimize, false);
+		elements.form.agent.addEventListener("submit", onConnect, false);
+		elements.form.signin.addEventListener("submit", onSignin, false);
 		
-		for (var type in iconList) {
-			data = iconList[type];
-			group = data.group;
-			
-			if (!(group in typeMap)) {
-				typeMap[group] = [];
-			}
-			
-			typeMap[group].push(type);
-		}
-		
-		elements.maximize.addEventListener("click", onMaximized, false);
-		
-		elements.minimize.addEventListener("click", onMinimized, false);
-		
+		// 각 frame들에게 event 등록
 		(function (frame) {
 			for (var id in frame) {
 				frame[id].addEventListener("mouseenter", onFocus, false);
@@ -177,17 +249,86 @@ body:not(.maximized) #minimize,
 			
 		}) (elements.frame);
 		
+		// iconList로부터 type map 생성
+		(function () {
+			var group;
+			
+			for (var type in iconList) {
+				group = iconList[type].group;
+				
+				if (!(group in typeMap)) {
+					typeMap[group] = [];
+				}
+				
+				typeMap[group].push(type);
+			}
+		}) ();
+		
+		// frame load
 		elements.frame.list.src = "list.html";
 		elements.frame.map.src = "map.html";
 		elements.frame.device.src = "device.html";
 		elements.frame.event.src = "event.html";
+		
+		document.body.classList.add("setting");
 	}
 	
-	function onMaximized(e) {
+	function onConnect(e) {
+		e.preventDefault();
+		
+		var ip = elements.form.agent.elements["ip"].value,
+			port = elements.form.agent.elements["port"].value;
+		
+		communicator.connect(ip, port);
+		
+		communicator.send({
+			command: "echo"
+		}, function (status, data) {
+			if (status === 401) {
+				elements.agent.textContent = ip +" : "+ port;
+				agent = ip +":"+ port;
+				
+				document.body.classList.add("connected");
+			}
+			else {
+				communicator.close();
+			}
+			
+			console.log(status, data); 
+		});
+	}
+	
+	function onSignin(e) {
+		e.preventDefault();
+		
+		communicator.send({
+			command: "signin",
+			username: elements.form.signin.elements["username"].value,
+			password: elements.form.signin.elements["password"].value
+		}, function (status, data) {
+			if (status === 200) {
+				// TODO 이곳에 로그인 성공 후 수행할 로직 작성할것
+				
+				document.body.classList.add("authorized");
+			}
+			else {
+				alert("Incorrect username or password");
+				
+				elements.form.signin.elements["username"].select();
+			}
+		});
+	}
+	
+	function onSetting(e) {
+		
+		document.body.classList.toggle("setting");
+	}
+	
+	function onMaximize(e) {
 		maximize(this.parentNode.parentNode);
 	}
 	
-	function onMinimized(e) {
+	function onMinimize(e) {
 		minimize();
 	}
 	
