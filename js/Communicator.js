@@ -1,7 +1,7 @@
 ;"use strict";
 
 function Communicator() {
-	var xhr, url, dataQ, callbackQ;
+	var xhr, url, dataQ, callbackQ, response;
 	
 	init();
 	
@@ -15,22 +15,31 @@ function Communicator() {
 			xhr = new XMLHttpRequest();
 		}
 		
+		document.body.classList.add("loading");
+		
+		response = undefined;
+		
 		xhr.open("POST", url, true);
-		xhr.onload = onLoad;
+		xhr.onload = onSuccess;
+		xhr.onloadend = onLoad;
+		xhr.timeout = 3000;
 		xhr.withCredentials = true;
 		xhr.send(JSON.stringify(data));
 	}
 	
-	function onLoad(e) {
-		var data = dataQ.shift(),
-			response;
-	
+	function onSuccess(e) {
 		if (xhr.status === 200) {
 			var text = xhr.responseText;
 			response = text.length > 0? JSON.parse(text): {};
 		}
+	};
+	
+	function onLoad(e) {
+		var data = dataQ.shift();
 		
-		callbackQ.shift()(xhr.status, response);
+		callbackQ.shift()(response, xhr.status);
+		
+		document.body.classList.remove("loading");
 		
 		if (data) {
 			send(data);

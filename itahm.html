@@ -157,7 +157,7 @@ body:not(.loading) .loading,
 		
 	</head>
 	
-	<body>
+	<body class="setting">
 	
 		<header>
 			<img src="img/gear_w.png" id="setting">
@@ -191,8 +191,8 @@ body:not(.loading) .loading,
 				<input type="submit" value="connect">
 			</form>
 			<form id="form_signin">
-				<input type="text" name="username" placeholder="username">
-				<input type="password" name="password" placeholder="password">
+				<input type="text" name="username" value="root" placeholder="username">
+				<input type="password" name="password" value="root" placeholder="password">
 				<input type="submit" value="sign in">
 			</form>
 			
@@ -213,14 +213,16 @@ body:not(.loading) .loading,
 			</div>
 		</div>
 		
+		<script src="js/icon.js"></script>
 		<script src="js/Communicator.js"></script>
 		<script>
 
 (function (window, undefined){
 	
-	var communicator,
-		deviceList, iconList, snmpList,
-		iconMap, typeMap = {},
+	var communicator = new Communicator(),
+		deviceData, iconData, snmpData,
+		iconMap = {},
+		typeMap = {},
 		tmpID = 1,
 		agent,
 		elements = {
@@ -243,12 +245,26 @@ body:not(.loading) .loading,
 			}
 		};
 	
-	load();
+	// event 등록
+	elements.setting.addEventListener("click", onSetting, false);
+	elements.maximize.addEventListener("click", onMaximize, false);
+	elements.minimize.addEventListener("click", onMinimize, false);
+	elements.form.agent.addEventListener("submit", onConnect, false);
+	elements.form.signin.addEventListener("submit", onSignin, false);
+	document.getElementById("disconnect").addEventListener("click", onDisconnect, false);
+	
+	// 각 frame들에게 event 등록
+	(function (frame) {
+		for (var id in frame) {
+			frame[id].addEventListener("mouseenter", onFocus, false);
+		}
+		
+	}) (elements.frame);
 	
 	/**
 	 * load
-	 * script 시작점
-	 * deviceList, snmpList, iconList 초기화
+	 * agent가 결정되면 호출된다.
+	 * deviceData, snmpData, iconData 초기화
 	 */
 	function load() {
 		sendRequest({
@@ -263,65 +279,23 @@ body:not(.loading) .loading,
 		
 		sendRequest({
 			command: "pull",
+			database: "snmp"
+		}, onInitSnmp);
+		
+		sendRequest({
+			command: "pull",
 			database: "device"
 		}, onInitDevice);
 		
-		document.body.classList.add("authorized");
+		iconData = ITAhM.iconData;
 		
-		new Worker("worker/loader.js?").onmessage = function (e) {
-			deviceList = e.data.device;
-			iconList = e.data.icon;
-			snmpList = e.data.snmp;
-			
-			loadIcon(function (map) {
-				iconMap = map;
-				
-				/**
-				 * icon 모두 load 된 후 페이지 시작
-				 */
-				init(e.data);
-			});
-		}
+		document.body.classList.add("authorized");
 	}
 	
 	/**
 	 * 페이지 시작점
 	 */
-	function init(data) {
-		// 변수 초기화
-		communicator = new Communicator();
-		
-		// event 등록
-		elements.setting.addEventListener("click", onSetting, false);
-		elements.maximize.addEventListener("click", onMaximize, false);
-		elements.minimize.addEventListener("click", onMinimize, false);
-		elements.form.agent.addEventListener("submit", onConnect, false);
-		elements.form.signin.addEventListener("submit", onSignin, false);
-		document.getElementById("disconnect").addEventListener("click", onDisconnect, false);
-		
-		// 각 frame들에게 event 등록
-		(function (frame) {
-			for (var id in frame) {
-				frame[id].addEventListener("mouseenter", onFocus, false);
-			}
-			
-		}) (elements.frame);
-		
-		// iconList로부터 type map 생성
-		(function () {
-			var group;
-			
-			for (var type in iconList) {
-				group = iconList[type].group;
-				
-				if (!(group in typeMap)) {
-					typeMap[group] = [];
-				}
-				
-				typeMap[group].push(type);
-			}
-		}) ();
-		
+	function init() {		
 		// frame load
 		elements.frame.list.src = "list.html";
 		elements.frame.map.src = "map.html";
@@ -356,7 +330,7 @@ body:not(.loading) .loading,
 		}
 		else if (status === 200) {
 			setAgent();
-			
+			console.log("load");
 			load();
 		}
 		else {
@@ -455,12 +429,26 @@ body:not(.loading) .loading,
 		}
 	}
 	
+	function onInitSnmp(data, status) {
+		if (!data) {
+			return;
+		}
+		
+		snmpData = data;
+		
+	}
+	
 	function onInitDevice(data, status) {
 		if (!data) {
 			return;
 		}
 		
-		dataList = data;
+		deviceData = data;
+		
+		/**
+		 * icon 모두 load 된 후 페이지 시작
+		 */
+		loadIcon(init);
 	}
 	
 	/**
@@ -496,26 +484,53 @@ body:not(.loading) .loading,
 		document.body.classList.remove("maximized");
 	}
 	
+	// iconList로부터 type map 생성
+	(function () {
+		var group;
+		
+		for (var type in iconData) {
+			group = iconData[type].group;
+			
+			
+		}
+	}) ();
+	
+	/**
+	 * iconData loop에서 iconMap 과 typeMap 완성
+	 * map 상태에서는 처리 했는지 안했는지 알수 없기 때문에 array 상태로 loop
+	 */
 	function loadIcon(complete) {
-		var names = Object.keys(iconList),
-			length = names.length,
+		var types = Object.keys(iconData),
+			length = types.length,
 			icon = new Image(),
 			index = 0,
-			map = {};
+			group;
 		
 		icon.onload = onLoad;
-		icon.src = iconList[names[index]].src;
+		icon.src = iconData[types[index]].src;
 		
 		function onLoad() {
-			map[names[index]] = this;
+			var type = types[index],
+				data = iconData[type],
+				group = data.group;
+			// iconMap
+			iconMap[type] = this;
 			
+			// typeMap
+			if (!(group in typeMap)) {
+				typeMap[group] = [];
+			}
+			
+			typeMap[group].push(type);
+			
+			// next loop
 			if (++index < length) {
 				icon = new Image();
 				icon.onload = onLoad;
-				icon.src = iconList[names[index]].src;
+				icon.src = iconData[types[index]].src;
 			}
 			else {
-				complete(map);
+				complete();
 			}
 		}
 	}
@@ -530,19 +545,19 @@ body:not(.loading) .loading,
 	window.sendRequest = sendRequest;
 	
 	window.getDeviceList = function () {
-		return deviceList;
+		return deviceData;
 	};
 	
 	window.getSNMPList = function () {
-		return snmpList;
+		return snmpData;
 	};
 	
 	window.getDevice = function (id) {
-		return deviceList[id];
+		return deviceData[id];
 	};
 	
 	window.getIconData = function (type) {
-		return iconList[type];
+		return iconData[type];
 	};
 	
 	window.selectDevice = function (id) {
