@@ -228,12 +228,7 @@ function fireEvent(eventType, element) {
 			this.axisRightWidth = 0;
 			this.axisTopHeight = FONT_SIZE;
 			this.axisBottomHeight = FONT_SIZE;
-			this.ondrag = config.ondrag || function () {};
-			this.manager = config.manager || {
-				resize: function () {
-					
-				}
-			}
+			//this.ondrag = config.ondrag || function () {};
 			
 			this.onxvalue = config.onxvalue || function (value) {
 				return value;
@@ -247,16 +242,6 @@ function fireEvent(eventType, element) {
 			this.chart.className = "chart";
 			
 			container.appendChild(this.chart);
-			
-			this.resize();
-			
-			fireEvent("resize", window);
-			
-			window.addEventListener("resize", function () {
-				this.resize();
-				
-				this.manager.resize();
-			}.bind(this), false);
 		},
 		
 		onresize: function () {
@@ -417,15 +402,6 @@ function fireEvent(eventType, element) {
 				
 				fireEvent("click", a);
 			}
-		},
-		
-		/**
-		 * @param {Manager} manager
-		 */
-		connect: function (manager) {
-			this.manager = manager;
-			
-			manager.resize();
 		}
 		
 	};

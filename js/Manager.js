@@ -6,6 +6,12 @@ var
 	WHEEL_REPEAT = 20,
 	MONTH_NAME = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+/**
+ * manager가 하는 일
+ * offline인 경우
+ * data 관리
+ * tpp 관리
+ */
 function Manager() {}
 
 function format(milliseconds) {
@@ -28,13 +34,15 @@ function format(milliseconds) {
 		};
 	
 	Manager.getInstance = function (chart, managerName) {
-		return new (managerMap[managerName] || ChartManager) (chart);
+		return new (managerMap[managerName] || ChartManager) ();
 	};
 	
 	Manager.prototype = {
-		init: function (chart) {
+		init: function () {
 			this.data = {};
-			this.chart = chart;
+			this.chart;
+			
+			window.addEventListener("resize", this.resize.bind(this), false);
 		},
 		
 		resetTPP: function () {
@@ -101,7 +109,7 @@ function format(milliseconds) {
 		 * @abstract
 		 */
 		resize: function () {
-		
+			this.chart.resize();
 		},
 		
 		/**
@@ -237,6 +245,8 @@ function format(milliseconds) {
 	}
 	
 	RealTimeManager.prototype.resize = function () {
+		Manager.prototype.resize.call(this);
+		
 		if (this.isEmpty()) {
 			return;
 		}
@@ -495,6 +505,8 @@ function format(milliseconds) {
 	}
 	
 	ChartManager.prototype.resize = function () {
+		Manager.prototype.resize.call(this);
+		
 		this.resetTPP();
 		
 		this.invalidate();

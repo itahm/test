@@ -5,54 +5,40 @@
 <title>Insert title here</title>
 
 	<style>
-li {
-	cursor: pointer;
+.c {
+	height: 400px;
+	display: flex;
 }
 
-li:hover:after {
-	content: "x";
-	float: right;
-	
+.c1, .c2 {
+	flex: 1;
+	margin: 100px;
 }
+
+.c1 {
+	background-color: #f00;
+}
+
+.c2 {
+	background-color: #0f0;
+}
+
 	</style>
 </head>
 
 <body>
-	<button onclick="test()">test</button>
 
-<script src="js/Communicator.js"></script>  
+<div class="c">
+	<div class="c1"></div>
+	<div class="c2"></div>
+</div>
+	
+
 <script>
+var c = document.querySelector(".c");
 
-var c = new Communicator("127.0.0.1", 2014);
-
-c.send({
-	database: "device",
-	command: "get",
-	data: null
-}, onResponse);
-
-c.send({
-	database: "profile",
-	command: "get",
-	data: null
-}, onResponse);
-
-c.send({
-	database: "account",
-	command: "get",
-	data: null
-}, onResponse);
-
-c.send({
-	database: "icon",
-	command: "get",
-	data: null
-}, onResponse);
-
-function onResponse(json) {
-	document.write(JSON.stringify(json));
-	document.write("<br>");
-	document.write("===============================================<br>");
+c.onmouseover = function (e) {
+	console.log(e.target);
 }
 </script>
 
