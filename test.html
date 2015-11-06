@@ -35,10 +35,22 @@
 	
 
 <script>
-var c = document.querySelector(".c");
+function cls (){
+	window.addEventListener("resize", x = this.f.bind(this), false);
+}
+var x;
+cls.prototype = {
+	f: function () {
+		console.log("!");
+	},
+	ff: function () {console.log("click!");
+		window.removeEventListener("resize", x, false);
+	}
+};
+var c = new cls();
 
-c.onmouseover = function (e) {
-	console.log(e.target);
+document.querySelector(".c").onclick = function () {
+	c.ff();
 }
 </script>
 

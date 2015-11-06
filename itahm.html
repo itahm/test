@@ -290,6 +290,7 @@ body:not(.loading) .loading,
 		iconData = ITAhM.iconData;
 		
 		document.body.classList.add("authorized");
+		document.body.classList.remove("setting");
 	}
 	
 	/**
@@ -543,6 +544,13 @@ body:not(.loading) .loading,
 	 * public method
 	 */
 	window.sendRequest = sendRequest;
+	
+	window.unauthorized = function () {
+		var classList = document.body.classList;
+		
+		classList.remove("authorized");
+		classList.add("setting");
+	};
 	
 	window.getDeviceList = function () {
 		return deviceData;

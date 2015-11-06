@@ -28,10 +28,9 @@ function Communicator() {
 	}
 	
 	function onSuccess(e) {
-		if (xhr.status === 200) {
-			var text = xhr.responseText;
-			response = text.length > 0? JSON.parse(text): {};
-		}
+		var text = xhr.responseText;
+		
+		response = text.length > 0? JSON.parse(text): {};
 	};
 	
 	function onLoad(e) {

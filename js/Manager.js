@@ -284,7 +284,7 @@ function format(milliseconds) {
 		
 		var date = new Date();
 		
-		this.tpp = this.resetTPP();
+		//this.tpp = this.resetTPP();
 		this.blocks = [];
 		this.start = date.setHours(0, 0, 0, 0);
 		this.end = date.setDate(date.getDate() +1);
