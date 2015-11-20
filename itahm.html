@@ -263,7 +263,7 @@ body:not(.loading) .loading,
 	
 	/**
 	 * load
-	 * agent가 결정되면 호출된다.
+	 * agent가 결정되고 signin 하면 호출된다.
 	 * deviceData, snmpData, iconData 초기화
 	 */
 	function load() {
@@ -276,12 +276,12 @@ body:not(.loading) .loading,
 			command: "pull",
 			database: "account"
 		}, onInitAccount);
-		
+		/*
 		sendRequest({
 			command: "pull",
 			database: "snmp"
 		}, onInitSnmp);
-		
+		*/
 		sendRequest({
 			command: "pull",
 			database: "device"
@@ -303,7 +303,7 @@ body:not(.loading) .loading,
 		elements.frame.device.src = "device.html";
 		elements.frame.event.src = "event.html";
 		
-		document.body.classList.add("setting");
+		//document.body.classList.add("setting");
 	}
 	
 	/**
@@ -322,13 +322,15 @@ body:not(.loading) .loading,
 		}, onEcho);
 	}
 	
-	function onEcho(data, status) {		
+	function onEcho(data, status) {
+		// agent에 연결 가능하나 session 없음
 		if (status === 401) {
 			setAgent();
 			
 			elements.form.signin.reset();
 			elements.form.signin.elements["username"].focus();
 		}
+		// agent에 연결 가능하고 이미 session 있음
 		else if (status === 200) {
 			setAgent();
 
@@ -384,7 +386,7 @@ body:not(.loading) .loading,
 	}
 	
 	function onInitProfile(data, status) {
-		if (!data) {
+		if (status != 200) {
 			return;
 		}
 		
@@ -410,7 +412,7 @@ body:not(.loading) .loading,
 	}
 	
 	function onInitAccount(data, status) {
-		if (!data) {
+		if (status != 200) {
 			return;
 		}
 		
@@ -429,18 +431,18 @@ body:not(.loading) .loading,
 			list.appendChild(li);
 		}
 	}
-	
+	/*
 	function onInitSnmp(data, status) {
-		if (!data) {
+		if (status != 200) {
 			return;
 		}
 		
 		snmpData = data;
 		
 	}
-	
+	*/
 	function onInitDevice(data, status) {
-		if (!data) {
+		if (status != 200) {
 			return;
 		}
 		
@@ -536,8 +538,8 @@ body:not(.loading) .loading,
 		}
 	}
 	
-	function sendRequest(data, callback) {
-		communicator.send(data, callback);
+	function sendRequest(data, callback, background) {
+		communicator.send(data, callback, background);
 	}
 	
 	/**
@@ -555,11 +557,11 @@ body:not(.loading) .loading,
 	window.getDeviceList = function () {
 		return deviceData;
 	};
-	
+	/*
 	window.getSNMPList = function () {
 		return snmpData;
 	};
-	
+	*/
 	window.getDevice = function (id) {
 		return deviceData[id];
 	};

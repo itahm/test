@@ -3,11 +3,10 @@
 var
 	HOUR1 = 60 *60 *1000,
 	MINUTES1 = 60 *1000,
-	WHEEL_REPEAT = 20,
-	MONTH_NAME = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	WHEEL_REPEAT = 20;
 
-function Chart(container, config) {
-	this.init(container, config);
+function Chart(container) {
+	this.init(container);
 }
 
 function format(milliseconds) {
@@ -25,7 +24,11 @@ function format(milliseconds) {
 
 (function (window, undefined) {
 	
-	function onWheel (manager, e) {
+	function onSort(a, b) {
+		return Number(a) - Number(b);
+	}
+	
+	function onWheel(manager, e) {
 		if (manager.mode === "realtime") {
 			return;
 		}
@@ -36,9 +39,13 @@ function format(milliseconds) {
 			manager.zoom(zoom);
 		}
 
-		manager.onchange(this.start, this.end);
+		manager.onchange();
 		
 		manager.invalidate();
+		
+		clearTimeout(manager.timer);
+		
+		manager.timer = setTimeout(onDetail.bind(undefined, manager), 100);
 	}
 	
 	function onDrag(manager, e) {
@@ -48,61 +55,74 @@ function format(milliseconds) {
 		
 		manager.move(e.moveX);
 		
-		manager.onchange(manager.start, manager.end);
+		manager.onchange();
 		
 		manager.invalidate();
 	}
 	
-	function onDragEnd(manager, e) {console.log("!");
-		if (manager.mode === "realtime" || this.tpp > MINUTES1) {
+	function onDetail(manager) {
+		if (manager.mode === "realtime" || manager.tpp > MINUTES1) {
+			this.detail = undefined;
+			
 			return;
 		}
-		console.log(manager.ondetail);
+		
 		manager.ondetail();
 	}
 	
 	function invalidateRT(manager) {
-		var data = {},
-			high = manager.high,
-			low = manager.low;
-		
-		if (high == low) {
-			high++;
-			low = Math.max(0, --low);
-		}
+		var tpp = 100,
+			date = new Date(),
+			end = date.setMilliseconds(0),
+			// graph area width가 아니고 여유있게canvas width 이다. 이후 다시 정확히 계산한다.
+			start = end - tpp * manager.chart.canvas.width,
+			high, low, value, scale;
 		
 		manager.chart.clear();
 		
-		manager.chart.setYAxis(high, low, 100);
+		// data 가공
+		// realtimeData가 무한히 커지는것을 막기 위해 start 보다 오래된 data는 삭제한다.
+		// 삭제된 data로 인해 high와 low가 변경될수 있기 때문에 다시 계산한다.
+		for (var dateMills in manager.realtimeData) {
+			high = low = manager.realtimeData[dateMills];
+			break;
+		}
 		
-		// y축 width 변화로 start가 변경되었음
-		manager.setCurrent()
+		for (var dateMills in manager.realtimeData) {
+			if (dateMills < start) {
+				delete manager.realtimeData[dateMills];
+			}
+			else {
+				value = manager.realtimeData[dateMills];
+				
+				high = Math.max(high, value);
+				low = Math.min(low, value);
+			}
+		}
 		
-		manager.chart.setXAxis(manager.getAxisValues());
+		scale = manager.chart.graphArea.height / (high - low);
+		
+		manager.chart.setYAxis(high, low);
+
+		// start 다시 계산
+		start = end - tpp * manager.chart.graphArea.width,
+		
+		manager.chart.setXAxis(getAxisValues(start, end, tpp));
 		
 		manager.resetScale(high, low);
 		
-		// data가 무한히 늘어나는것을 방지하기 위해 key가 start보다 작은것은 삭제하고 다시 data를 만들어 준다.
 		manager.chart.draw({
-			stroke: "#0f0",
+			stroke: "#fdd400",
 			width: 2,
-			keys: [Object.keys(manager.data)],
+			keys: [Object.keys(manager.realtimeData)],
 			get: function (key) {
-				var value = manager.data[key],
-					coords = {
-						x: (key - manager.start) / manager.tpp,
-						y: (value - low) * manager.scale
-					};
+				return {
+					x: (key - start) / tpp,
+					y: (manager.realtimeData[key] - low) * scale
+				};
 				
-				if (manager.start <= key) {
-					data[key] = value;
-				}
-				
-				return coords;
-			}.bind(manager)
+			}//.bind(manager)
 		});
-		
-		manager.data = data;
 	}
 	
 	/**
@@ -112,7 +132,7 @@ function format(milliseconds) {
 	 * setXAxis
 	 * draw
 	 */
-	function invalidateOL(manager) {
+	function invalidateOL(manager) {		
 		var date = new Date(manager.start),
 			dateMills = date.setMinutes(0, 0, 0),
 			endMills = (function (date) {
@@ -146,22 +166,27 @@ function format(milliseconds) {
 			manager.blocks.splice(manager.blocks.length -1, 1);
 		}
 		
-		// high, low 구하는 과정
-		for (var i=0, _i=manager.blocks.length; i<_i; i++) {
-			block = manager.blocks[i];
-			
-			max = Math.max.apply(undefined, block.map(function (key) {return manager.data[key].max;}.bind(manager)));
-			min = Math.min.apply(undefined, block.map(function (key) {return manager.data[key].min;}.bind(manager)));
-			
-			high = i == 0? max: Math.max(high, max);
-			low = i == 0? min: Math.min(low, min);
-		}
-		
-		low = Math.max(0, low);
-		
+		// 축 그리기
 		manager.chart.clear();
 		
-		manager.chart.setYAxis(high, low);
+		if (manager.blocks.length === 0) {
+			// data가 없음.
+			manager.chart.setYAxis();
+		}
+		else {
+			// high, low 구하는 과정
+			for (var i=0, _i=manager.blocks.length; i<_i; i++) {
+				block = manager.blocks[i];
+				
+				max = Math.max.apply(undefined, block.map(function (key) {return manager.data[key].max;}.bind(manager)));
+				min = Math.min.apply(undefined, block.map(function (key) {return manager.data[key].min;}.bind(manager)));
+				
+				high = i == 0? max: Math.max(high, max);
+				low = i == 0? min: Math.min(low, min);
+			}
+			
+			manager.chart.setYAxis(high, low);
+		}
 		
 		// y축 width 변화로 tpp 변화 적용해 줘야함
 		manager.resetTPP();
@@ -178,11 +203,11 @@ function format(milliseconds) {
 		manager.detail = undefined;
 		
 		manager.chart.draw({
-			fill: "#e0ffff",
+			fill: "#0084ff",
 			keys: manager.blocks,
 			get: function (key) {
 				return {
-					x: (key - manager.start) / manager.tpp,
+					x: (key - manager.start + HOUR1) / manager.tpp,
 					y: (manager.data[key].max - low) * manager.scale
 				}
 			}.bind(manager)
@@ -194,43 +219,81 @@ function format(milliseconds) {
 			keys: manager.blocks,
 			get: function (key) {
 				return {
-					x: (key - manager.start) / manager.tpp,
+					x: (key - manager.start + HOUR1) / manager.tpp,
 					y: (manager.data[key].min - low) * manager.scale
 				}
 			}.bind(manager)
 		});
 		
 		manager.chart.draw({
-			stroke: "#73a4e6",
+			stroke: "#e0ffff",
 			width: 2,
 			keys: manager.blocks,
 			get: function (key) {
 				return {
-					x: (key - manager.start) /manager.tpp,
+					x: (key - manager.start + HOUR1) /manager.tpp,
 					y: (manager.data[key].avg - low) * manager.scale
 				}
 			}.bind(manager)
 		});
 	}
 	
+	function getAxisValues(start, end, tpp) {
+		var	date = new Date(start),
+			dateMills,
+			pow = (function () {
+				var date = new Date(0),
+					gap = GRID_MIN_WIDTH * tpp + date.getTime(),
+					pow = 0;
+			
+				for (; gap > date.setHours(date.getHours() +1); pow++);
+			
+				return Math.max(pow, 1);
+			})(),
+			axisValueArray = [];
+		
+		date.setMinutes(0, 0, 0);
+		
+		while ((dateMills = date.setHours(date.getHours() + pow)) < end) {
+			axisValueArray[axisValueArray.length] = [(dateMills - start) / tpp, ITAhM.util.toDateFormatString(date)];
+		}
+		
+		return axisValueArray;
+	}
+	
 	Chart.prototype = {
-		init: function (container, config) {
+		init: function (container) {
 			var date = new Date();
 			
 			this.data = {};
-			this.chart = new ChartObject(container, config);
+			this.chart = new ChartObject(container);
 			this.blocks = [];
 			this.start = date.setHours(0, 0, 0, 0);
 			this.end = date.setDate(date.getDate() +1);
 			this.setMode("offline");
-			this.ondetail = config && config.detail || function () {};
+			this.ondetail = function () {};
 			
 			this.chart.element.addEventListener("wheel", onWheel.bind(undefined, this));
 			window.addEventListener("resize", this.listener = this.resize.bind(this));
 			
 			new Draggable(this.chart.element)
 				.on("dragmove", onDrag.bind(undefined, this))
-				.on("dragend", onDragEnd.bind(undefined, this));
+				.on("dragend", onDetail.bind(undefined, this));
+		},
+		
+		setData: function (option) {
+			if (typeof option.onyvalue === "function") {
+				this.chart.onyvalue = option.onyvalue;
+			}
+			
+			this.chart.title = option.title || "";
+			this.chart.capacity = option.capacity || 100;
+			
+			this.option = option;
+		},
+		
+		getData: function () {
+			return this.option;
 		},
 		
 		resetTPP: function () {
@@ -304,34 +367,21 @@ function format(milliseconds) {
 			this.resetTPP();
 			
 			this.invalidate();
-		},
-		
-		/*
-		 * realtime only
-		 */
-		setCurrent: function () {
-			var date = new Date();
 			
-			this.end = date.setMilliseconds(0);
-			this.start = this.end - this.tpp * this.chart.graphArea.width;
-		},
-		
-		clear: function () {
-			this.data = {};
+			onDetail(this);
 		},
 		
 		setMode: function (mode) {
+			this.mode = mode;
+			
 			if (mode === "realtime") {
-				this.tpp = 100;
-				this.setCurrent();
-				//this.invalidate = invalidateRT.bind(undefined, this);
+				this.realtimeData = {};
 			}
 			else if (mode === "offline") {
 				this.resetTPP();
-				//this.invalidate = invalidateOL.bind(undefined, this); 
 			}
 			
-			this.mode = mode;
+			this.invalidate();
 		},
 		
 		/**
@@ -341,16 +391,7 @@ function format(milliseconds) {
 		 * @returns {undefined}
 		 */
 		update: function (dateMills, value) {
-			var	values;
-			
-			this.data[dateMills] = value;
-			
-			// data가 삭제되는 경우를 가정하여 항상 high, low를 다시 계산한다.
-			values = Object.keys(this.data).map(function (key) {return this.data[key];});
-			this.high = Math.max.apply(undefined, values);
-			this.low = Math.min.apply(undefined, values);
-			
-			this.move(this.end - dateMills);
+			this.realtimeData[dateMills] = value;
 			
 			this.invalidate();
 		},
@@ -375,7 +416,7 @@ function format(milliseconds) {
 			date.setMinutes(0, 0, 0);
 			
 			while ((dateMills = date.setHours(date.getHours() + pow)) < this.end) {
-				axisValueArray[axisValueArray.length] = [(dateMills - this.start) / this.tpp, format(dateMills)];
+				axisValueArray[axisValueArray.length] = [(dateMills - this.start) / this.tpp, ITAhM.util.toDateFormatString(date)];
 			}
 			
 			return axisValueArray;
@@ -424,11 +465,15 @@ function format(milliseconds) {
 			ITAhM.util.download(new Blob([row.join("\n")], { type: "text/csv;charset=utf-8;"}), "chart.csv");
 		},
 		
-		showDetail: function (detail) {			
+		showDetail: function (detail) {
+			var keys = Object.keys(detail);
+			
+			keys.sort(onSort);
+			
 			this.chart.draw({
-				stroke: "#f00",
-				width: .5,
-				keys: [Object.keys(detail)],
+				stroke: "#fdd400",
+				width: 2,
+				keys: [keys],
 				get: function (key) {
 					var coords = {
 							x: (key - this.start) /this.tpp,
@@ -441,16 +486,15 @@ function format(milliseconds) {
 		},
 		
 		resize: function () {
+			this.chart.resize();
+			
 			if (this.mode === "realtime") {
-				this.setCurrent();
-				
-				invalidateRT(this);
 			}
 			else {
 				this.resetTPP();
-				
-				invalidateOL(this);
 			}
+			
+			this.invalidate();
 		},
 		
 		invalidate: function () {

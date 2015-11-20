@@ -239,7 +239,7 @@ form {
 		for (var i=0, length=row.length; i<length; i++) {
 			device = deviceList[row[i].dataset.id];
 			
-			if (device.name.indexOf(keyword) === -1 && device.address.indexOf(keyword) === -1 && device.type.indexOf(keyword) === -1) {
+			if (device.name.indexOf(keyword) === -1 && device.ip.indexOf(keyword) === -1 && device.type.indexOf(keyword) === -1) {
 				matched[matched.length] = row[i];
 			}
 		}
@@ -302,7 +302,7 @@ form {
 				row.appendChild(checkbox);
 				row.appendChild(document.createElement("li")).textContent = device.name;
 				row.appendChild(document.createElement("li")).textContent = device.type;
-				row.appendChild(document.createElement("li")).textContent = device.address;
+				row.appendChild(document.createElement("li")).textContent = device.ip;
 				row.appendChild(document.createElement("li")).textContent = "";
 				row.appendChild(document.createElement("li")).textContent = "";
 				row.appendChild(document.createElement("li")).textContent = "";
@@ -325,7 +325,7 @@ form {
 			
 			col[1].textContent = device.name;
 			col[2].textContent = device.type;
-			col[3].textContent = device.address;
+			col[3].textContent = device.ip;
 			col[4].textContent = "";
 			col[5].textContent = "";
 			col[6].textContent = "";

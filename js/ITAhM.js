@@ -289,7 +289,9 @@ var ITAhM = {};
 		toUptimeString: toUptimeString,
 		toBPSString: toBPSString,
 		toBytesString: toBytesString,
-		enterpriseFromOID: enterpriseFromOID
+		enterpriseFromOID: enterpriseFromOID,
+		toDateString: toDateString,
+		toDateFormatString: toDateFormatString
 	};
 	
 	function enterpriseFromOID(oid) {
@@ -354,6 +356,49 @@ var ITAhM = {};
 		uptime -= minutes * 60;
 	
 		return days +" days " + hours +" hours " + minutes +" minutes " + Math.floor(uptime) +" seconds";
+	}
+	
+	/**
+	 * 표준시로 간주하기 때문에 못씀
+	 */
+	function _toDateString(dateMills) {
+		var date = new Date(dateMills);
+		
+		return date.toISOString().slice(0,10);
+	}
+
+	// ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
+	var MONTH_NAME = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+		getDateFormatString = {
+			ko: function (date) {
+				var format = ["월 ", "일 ", "시"];
+				
+				format.splice(2, 0, date.getHours());
+				format.splice(1, 0, date.getDate());
+				format.splice(0, 0, date.getMonth());
+				
+				return format.join("");
+			},
+			en: function (date) {
+				var day = date.getDate(),
+					hour = date.getHours();
+				
+				return MONTH_NAME[date.getMonth()]
+					+ (day === 1? "" : " "+ (day > 9? "": "0")+ day +", "+ (hour > 9? "": "0") + hour);
+			}
+		};
+	
+	function toDateFormatString(date) {
+		//return getDateFormatString["en"](date);
+		return (getDateFormatString[navigator.language] || getDateFormatString.en)(date);
+	}
+
+	function toDateString(date) {
+		var year = date.getFullYear(),
+			month = date.getMonth() + 1,
+			day  = date.getDate();
+		
+		return year +"-"+ (month > 9? "": "0") + month +"-"+ (day > 9? "": "0") + day;
 	}
 	
 	function download (blob, fileName) {

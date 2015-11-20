@@ -16,8 +16,8 @@ var
 	MODE_MOVE = MODE_START | MODE_END,
 	BG_COLOR = "#ffffff";
 
-function ChartObject(container, config) {
-	this.init(container, config);
+function ChartObject(container) {
+	this.init(container);
 }
 
 function fireEvent(eventType, element) {
@@ -30,6 +30,9 @@ function fireEvent(eventType, element) {
 
 (function (window, undefined) {
 	
+	/**
+	 * @param {Array} textArray /out/
+	 */
 	function getMaxWidth(chart, valueGap, low, count, textArray) {
 		var value, max, text;
 		
@@ -49,84 +52,101 @@ function fireEvent(eventType, element) {
 		return max;
 	}
 	
-	function setYAxis(chart, high, low) {
+	function setYAxis(chart, nodata) {
 		var count = Math.floor(chart.graphArea.height /GRID_MIN_HEIGHT),
-			axisGap = chart.graphArea.height / count,
-			valueGap = (high - low) / count,
-			context = chart.context,
-			grid = chart.grid.getContext("2d"),
-			textArray = [],
 			width = chart.graphArea.width,
-			y = PADDING + chart.axisTopHeight + MARGIN,
-			y2,
-			x1 = PADDING,
-			x2 = chart.canvas.width - PADDING;
+			x = {
+				left: PADDING,
+				right: chart.canvas.width - PADDING
+			};
 		
+		// y축 눈금의 갯수가 1보다 작으면 그리지 않음 (눈금 하나의 길이가 GRID_MIN_HEIGHT보다 작음)
 		if (count === 0) {
 			return;
 		}
 		
-		x1 += (chart.axisLeftWidth = getMaxWidth(chart, valueGap, low, count, textArray));
-		x2 -= (chart.axisRightWidth = context.measureText("100.00%").width);
+		// 그릴 data가 없음
+		if (!!nodata) {
+			chart.axisLeftWidth = 0;
+			chart.axisRightWidth = 0;
+		}
+		else {
+			drawXAxis(chart, x, count);
+		}
+		
+		drawYAxis(chart, x);
+		
+		setGraphWidth(chart);
+	}
+
+	function drawXAxis(chart, x, count) {
+		var context = chart.context,
+			gridContext = chart.gridContext,
+			axisGap = chart.graphArea.height / count,
+			valueGap = (chart.high - chart.low) / count,
+			y = PADDING + chart.axisTopHeight + MARGIN, y2,
+			textArray = [];
+		
+		// getMaxWidth를 통해 width를 계산하기도 하지만 더불어 textArray를 완성해 옴.
+		x.left += (chart.axisLeftWidth = getMaxWidth(chart, valueGap, chart.low, count, textArray));
+		x.right -= (chart.axisRightWidth = context.measureText("100.00%").width);
 		
 		context.save();
 		context.textBaseline = "middle";
 		context.textAlign = "right";
 		
+		gridContext.beginPath();
+		
+		// 가로 선 path 만들고 y축 라벨 붙이기
 		count++;
 		for(; count-- > 0; y += axisGap) {
 			y2 = Math.round(y);
 			
 			context.save();
 			context.textAlign = "left";
-			context.fillText(textArray[count][1], x2, y2);
+			context.fillText(textArray[count][1], x.right, y2);
 			context.restore();
 			
-			grid.moveTo(x1, y2 -.5);
-			grid.lineTo(x2, y2 -.5);	
+			gridContext.moveTo(x.left, y2 -.5);
+			gridContext.lineTo(x.right, y2 -.5);	
 			
-			context.fillText(textArray[count][0], x1, y2);
+			context.fillText(textArray[count][0], x.left, y2);
 		}
 		
 		context.restore();
 		
-		
-		grid.save();
-		grid.strokeStyle = "#ddd";
-		grid.lineWidth = 1;
-		grid.globalAlpha = .2;
-		grid.stroke();
-		grid.restore();
-		
-		drawAxis(chart, x1, x2);
-		
-		setGraphWidth(chart);
+		// 가로선 그리기
+		gridContext.save();
+		gridContext.strokeStyle = "#ddd";
+		gridContext.lineWidth = 1;
+		gridContext.globalAlpha = .2;
+		gridContext.stroke();
+		gridContext.restore();
 	}
-
 	/**
 	 * @param x1 graph area 시작 x 좌표
 	 * @param x2 graph area 끝 x좌표
 	 */
-	function drawAxis(chart, x1, x2) {
-		var context = chart.grid.getContext("2d"),
-			y1 = PADDING + chart.axisTopHeight + MARGIN,
-			y2 = y1 + chart.graphArea.height;
+	function drawYAxis(chart, x) {
+		var context = chart.gridContext,
+			y = PADDING + chart.axisTopHeight + MARGIN,
+			y2 = y + chart.graphArea.height;
 			
-		x1 += (MARGIN -1);
-		x2 += (-MARGIN -1);
+		x.left += (MARGIN -1);
+		x.right += (-MARGIN -1);
 		
 		context.beginPath();
-		context.moveTo(x1, y1);
-		context.lineTo(x1, y2);
-		context.moveTo(x2, y1);
-		context.lineTo(x2, y2);
+		context.moveTo(x.left, y);
+		context.lineTo(x.left, y2);
+		context.moveTo(x.right, y);
+		context.lineTo(x.right, y2);
 		context.stroke();
 		
 		context.save();
 		context.textBaseline = "bottom";
 		context.textAlign = "center";		
 		
-		context.fillText(chart.title, Math.round((x2 + x1) /2), y1 - MARGIN);
+		context.fillText(chart.title, Math.round((x.right + x.left) /2), y - MARGIN);
 		context.restore();
 	}
 
@@ -136,7 +156,7 @@ function fireEvent(eventType, element) {
 		context = chart.context;
 		context.font = "normal "+ FONT_SIZE +"px tahoma, arial, '맑은 고딕'";
 		
-		context = chart.grid.getContext("2d");
+		context = chart.gridContext;
 		context.font = "normal "+ FONT_SIZE +"px tahoma, arial, '맑은 고딕'";
 		context.lineWidth = 2;
 		context.strokeStyle = "#73a4e6";
@@ -215,28 +235,22 @@ function fireEvent(eventType, element) {
 	}
 
 	ChartObject.prototype = {
-		init: function (container, config) {
-			config = config || {};
-			
+		init: function (container) {
 			this.element = document.createElement("div");
 			this.canvas = document.createElement("canvas");
 			this.grid = document.createElement("canvas");
 			this.context = this.canvas.getContext("2d");
+			this.gridContext = this.grid.getContext("2d");
 			this.graphArea = {};
-			this.title = config.title || "";
-			this.capacity = config.capacity || 100;
+			this.title = "";
+			this.capacity = 100;
 			this.axisLeftWidth = 0;
 			this.axisRightWidth = 0;
 			this.axisTopHeight = FONT_SIZE;
 			this.axisBottomHeight = FONT_SIZE;
-			this.ondrag = config.ondrag || function () {};
-			this.manager = config.manager || {
-				resize: function () {
-					
-				}
-			}
+			this.ondrag = function () {};
 			
-			this.onyvalue = config.onyvalue || function (value) {
+			this.onyvalue = function (value) {
 				return value;
 			}
 			
@@ -245,15 +259,9 @@ function fireEvent(eventType, element) {
 			
 			container.appendChild(this.element);
 			
-			this.resize();
+			//this.resize();
 			
-			fireEvent("resize", window);
-			
-			window.addEventListener("resize", function () {
-				this.resize();
-				
-				this.manager.resize();
-			}.bind(this), false);
+			//fireEvent("resize", window);
 		},
 		
 		onresize: function () {
@@ -279,7 +287,7 @@ function fireEvent(eventType, element) {
 		/**
 		 * 
 		 * @param {Object} chartData
-		 * @param {Array} [chartData.keys] Array[Array[]] 이어야 함
+		 * @param {Array} [chartData.keys] Array[Array[]] 이어야 함 !!! 중요!!! 자주하는 실수!!!
 		 * 
 		 */
 		draw: function (chartData) {
@@ -346,15 +354,27 @@ function fireEvent(eventType, element) {
 		 * @param {Number} low
 		 */
 		setYAxis: function(high, low) {
-			if (high == low) {
-				++high;
-				low = Math.max(0, --low);
+			switch(arguments.length) {
+			case 0:
+				setYAxis(this, true);
+				
+				break;
+			case 2:
+				var high = arguments[0],
+					low = arguments[1];
+				
+				if (high == low) {
+					++high;
+					low = Math.max(0, --low);
+				}
+				
+				this.high = high;
+				this.low = low;
+			
+				setYAxis(this);
+				
+				break;
 			}
-			
-			this.high = high;
-			this.low = low;
-			
-			setYAxis(this, high, low);
 		},
 		
 		/**
@@ -386,7 +406,7 @@ function fireEvent(eventType, element) {
 			this.context.clearRect(0, 0, width, height);
 			//this.context.restore();
 			
-			this.grid.getContext("2d").clearRect(0, 0, width, height);
+			this.gridContext.clearRect(0, 0, width, height);
 		},
 		
 		download: function () {

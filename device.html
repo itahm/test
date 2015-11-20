@@ -72,13 +72,17 @@ section {
 }
 
 body.snmp .interface,
-.hide,
 .snmp:not(body),
 #save,
 #cancel,
 #information:not(.edit) li:nth-child(3),
 #information.edit li:nth-child(2),
-#information.edit #edit {
+#information.edit #edit,
+#controller #offline,
+#controller.realtime .right,
+#controller.realtime .left :not(#offline),
+#controller:not(.copied) #paste,
+.hidden {
 	display: none;
 }
 
@@ -123,23 +127,16 @@ li {
 	float: left;
 }
 
-#controller #offline,
-#controller.realtime .right,
-#controller.realtime .left :not(#offline),
-.hidden {
-	display: none;
-}
-
 #controller.realtime #offline {
 	display: inline;
 }
 
-#controller img {
+img {
 	vertical-align: middle;
 	border: 1px solid transparent;
 }
 
-#controller img.button:hover {
+img.button:hover {
 	border-color: #ddf;
 	cursor: pointer;
 }
@@ -153,7 +150,11 @@ li {
 	text-decoration: underline;
 	cursor: pointer;
 }
-		
+
+#selector {
+	position: absolute; top: 5px; left: 0;
+}
+
 		</style>
 		
 	</head>
@@ -286,8 +287,11 @@ li {
 					<img src="img/chart.png" id="offline" width="16px" height="16px" title="offline chart" class="button">
 					<div>
 						<img src="img/realtime.png" id="realtime" width="16px" height="16px" title="realtime chart" class="button">
-						<img src="img/detail.png" id="detail" width="16px" height="16px" title="detailed chart" class="button">
-						<img src="img/calendar.png" width="16px" height="16px">
+						<!--img src="img/detail.png" id="detail" width="16px" height="16px" title="detailed chart" class="button"-->
+						<img src="img/copy.png" id="copy" width="16px" height="16px" title="copy date range" class="button">
+						<img src="img/paste.png" id="paste" width="16px" height="16px" title="paste date range" class="button">
+						<!-- img src="img/paste_g.png" width="16px" height="16px" title="empty"-->
+						<img src="img/calendar.png" id="apply" width="16px" height="16px" title="apply date range" class="button">
 						<label>
 							from
 							<input type="date" id="start">
@@ -295,10 +299,12 @@ li {
 						<label>
 							to
 							<input type="date" id="end">
-							<input type="button" value="apply" id="apply">
 						</label>
 					</div>
 				</div>
+			</div>
+			<div id="selector">
+				<img src="img/select.png" width="16px" height="16px" title="select chart" class="button">
 			</div>
 		</div>
 		
@@ -316,17 +322,6 @@ li {
 	
 	var elements = {
 			chart: document.getElementById("chart"),
-			controller: {
-				element : document.getElementById("controller"),
-				apply: document.getElementById("apply"),
-				png: document.getElementById("png"),
-				csv: document.getElementById("csv"),
-				start: document.getElementById("start"),
-				end: document.getElementById("end"),
-				detail: document.getElementById("detail"),
-				offline: document.getElementById("offline"),
-				realtime: document.getElementById("realtime")
-			},
 			aside: document.querySelector("aside"),
 			form: document.getElementById("form"),
 			edit: document.getElementById("edit"),
@@ -350,51 +345,15 @@ li {
 				"interface": document.getElementById("interface"),
 			}
 		},
-		titleMap = {
-			responseTime: "response time",
-			hrProcessorLoad: "processor load",
-			hrStorageUsed: "storage usage",
-			ifInOctets: "interface throughput input",
-			ifOutOctets: "interface throughput output"
-		},
-		formatMap = {
-			responseTime: function (value) {
-				return value.toFixed(2) +"ms";
-			},
-			hrProcessorLoad: function (value) {
-				return value.toFixed(2) +"%";
-			},
-			hrStorageUsed: function (value) {
-				return ITAhM.util.toBytesString(value).replace("ytes", "");
-			},
-			ifInOctets: function (value) {
-				return ITAhM.util.toBPSString(value);
-			},
-			ifOutOctets: function (value) {
-				return ITAhM.util.toBPSString(value);
-			},
-		},
-		selectedChart,
+		controller = new Controller(),
 		deviceList = top.getDeviceList(),
-		snmpList = top.getSNMPList(),
-		timer,
 		id = 0,
 		device;
 	
 	elements.edit.addEventListener("click", onEdit, false);
 	elements.save.addEventListener("click", onSave, false);
 	elements.cancel.addEventListener("click", onCancel, false);
-	elements.controller.element.addEventListener("mousedown", stopPropagation, false);
-	elements.controller.png.addEventListener("click", onDownloadPNG, false);
-	elements.controller.csv.addEventListener("click", onDownloadCSV, false);
-	//elements.controller.detail.addEventListener("click", onShowDetail, false);
-	elements.controller.offline.addEventListener("click", onOffline, false);
-	elements.controller.realtime.addEventListener("click", onRealtime, false);
-	elements.controller.apply.addEventListener("mousedown", stopPropagation, false);
-	elements.controller.apply.addEventListener("click", onApplyDate, false);
-	//onChangeSnmp();
-	
-	elements.controller.start.value = 
+		
 	parseType();
 	
 	resetDevice();
@@ -419,66 +378,7 @@ li {
 	
 	/**
 	 * callback method
-	 */
-	function onFocus(chart) {
-		chart.append(elements.controller.element);
-		
-		selectedChart = chart;
-	}
-	
-	function onDownloadPNG() {
-		if (selectedChart) {
-			selectedChart.download();
-		}
-	}
-	
-	function onDownloadCSV() {
-		if (!selectedChart) {
-			return;
-		}
-		
-		selectedChart.download();
-	}
-	
-	// TODO offline으로 전환될때 realtime 에 쓰였던 data 초기화 할것
-	function onOffline(e) {
-		elements.controller.element.classList.remove("realtime");
-		
-		clearInterval(timer);
-		
-		//manager.realtime.clear();
-	}
-	
-	function onRealtime(e) {
-		elements.controller.element.classList.add("realtime");
-		
-		timer = setInterval(function () {
-			//manager.realtime.update(new Date().getTime(), ###);
-		}, 1000);
-	}
-	
-	/*
-	 * 시, 분, 초 정보가 없기 때문에 모두 자동으로 0으로 채워지는데,
-	 * locale에 따라 시간은 달라지므로 별도로 0으로 채워주어야 함.
-	 * start는 해당 일자의 0시로, end는 해당 일자의 24시(다음날의 0시)로 설정.
-	 */
-	function onApplyDate(e) {
-		if (!selectedChart) {
-			return;
-		}
-		
-		var start = Date.parse(elements.controller.start.value),
-			end = Date.parse(elements.controller.end.value);
-		
-		if (isNaN(start) || isNaN(end)) {
-			return;
-		}
-		 
-		end = new Date(end);
-		end.setHours(0);
-		
-		selectedChart.setDate(new Date(start).setHours(0), end.setDate(end.getDate() +1));
-	}
+	 */	
 	
 	function onCancel() {
 		close();
@@ -493,10 +393,7 @@ li {
 	}
 	
 	function onResponse(request, chart, response, status) {
-		if (status === 401) {
-			top.unauthorized();
-		}
-		else if (status === 200) {
+		if (status === 200) {
 			if (request.summary) {
 				chart.data = response;
 			
@@ -506,78 +403,74 @@ li {
 				chart.showDetail(response);
 			}
 		}
+		else if (status === 401) {
+			top.unauthorized();
+		}
+		else if (status === 400){
+			console.log(response.error);
+		}
 		else {
-			throw "";
+			throw status;
 		}
 	}
 	
 	/**
 	 * monitor하고자 하는 resource check시 chart에 추가하거나 삭제
 	 */
-	function onCheckResource(database, index, capacity, e) {
+	function onCheckResource(chartData, e) {
 		var checkbox = e.currentTarget;
 		
 		if (!checkbox.checked) {
-			return;
+			chartData.chart.close();
+			
+			// realtime mode 이었다면 listener에서 제거해 줘야 한다.
+			controller.cancel(chartData.chart);
+			
+			chartData.chart = undefined;
+		}
+		else {
+			var chart = new Chart(elements.chart),
+				date = new Date(),
+				request = {
+					command: "query",
+					ip: device.ip,
+					database: chartData.database,
+					index: chartData.index,
+					summary: true,
+					end: date.setMinutes(0, 0, 0),
+					start: date.setFullYear(date.getFullYear() -1)
+					
+				};
+			
+			chart.setData(chartData);
+			
+			controller.set(chart);
+			
+			chart.ondetail = onDetail.bind(undefined, chart);
+			
+			top.sendRequest(request, onResponse.bind(undefined, request, chartData.chart = chart));
 		}
 		
-		var date = new Date(),
+		resize();
+	}
+	
+	function onDetail(chart, start, end) {
+		var charData = chart.getData(),
 			request = {
-				command: "query",
-				device: device.address,
-				database: database,
-				index: index,
-				summary: true,
-				end: date.setMinutes(0, 0, 0),
-				start: date.setFullYear(date.getFullYear() -1)
-				
-			},
-			config = {
-				title: titleMap[database],
-				capacity: capacity,
-				onyvalue: formatMap[database]
-			},
-			chart = new Chart(elements.chart, config);
-		
-		chart.ondetail = onDetail.bind(undefined, chart, database, index);
-		chart.database = database;
-		chart.on("mouseenter", onFocus.bind(undefined, chart));
-		checkbox.addEventListener("click", onCancelResource.bind(undefined, checkbox, chart), true);
-		
-		top.sendRequest(request, onResponse.bind(undefined, request, chart));
-		
-		resize();
-	}
-	
-	function onCancelResource(checkbox, chart, e) {
-		var checkbox = e.currentTarget;
-		
-		if (checkbox.checked) {
-			return;
-		}
-		
-		chart.close();
-		chart = undefined;
-		
-		resize();
-	}
-	
-	function onDetail(chart, database, index, start, end) {
-		var request = {
 			command: "query",
-			device: device.address,
-			database: database,
-			index: index,
+			ip: device.ip,
+			database: charData.database,
+			index: charData.index,
 			summary: false
 		},
-		start = new Date(chart.start),
-		end = new Date(chart.end);
+		startDate = new Date(chart.start),
+		endDate = new Date(chart.end);
 		
-		end.setSeconds(0, 0);
+		endDate.setSeconds(0, 0);
 		
-		request.start = start.setSeconds(0, 0);
-		request.end = end.setMinutes(end.getMinutes() +1);
-		console.log(request);
+		request.start = startDate.setSeconds(0, 0);
+		request.end = endDate.setMinutes(endDate.getMinutes() +1);
+		
 		top.sendRequest(request, onResponse.bind(undefined, request, chart));
 	}
 	
@@ -594,7 +487,7 @@ li {
 		}
 		
 		device.name = elements.form.name.value;
-		device.address = elements.form.ip.value;
+		device.ip = elements.form.ip.value;
 		device.type = elements.form.type.value;
 		
 		var array = [];
@@ -626,9 +519,9 @@ li {
 	}
 	
 	function resetDevice () {
-		device = id !== undefined? deviceList[id]: {
+		device = (id !== undefined)? deviceList[id]: {
 			name: "",
-			address: "",
+			ip: "",
 			type: "",
 			label: "",
 			snmp: "",
@@ -637,101 +530,197 @@ li {
 		};
 		
 		elements.name.textContent = device.name;
-		elements.ip.textContent = device.address;
+		elements.ip.textContent = device.ip;
 		elements.type.textContent = device.type;
 		elements.label.textContent = device.label && (device.label.split(",")).join(", ") || "";
 		elements.snmp.textContent = device.snmp;
 		
-		resetSNMP(device);
-		
-		if (id === undefined) {
-			edit();
-		}
-	}
-	
-	function resetSNMP(device) {
-		var snmp;
-		
-		if (device.snmp && device.address && (snmp = snmpList[device.address])) {			
-			elements.status.textContent = snmp.timeout < 0? "up": "down";
-			elements.description.textContent = snmp.sysDescr;
-			elements.uptime.textContent = ITAhM.util.toUptimeString(snmp.hrSystemUptime);
-			elements.enterprise.textContent = ITAhM.util.enterpriseFromOID(snmp.sysObjectID);
-			
-			resetResource(snmp);
+		if (device.profile) {
+			top.sendRequest({
+				command: "select",
+				ip: device.ip
+			}, onSNMP);
 			
 			document.body.classList.add("snmp");
 		}
 		else {
 			document.body.classList.remove("snmp");
 		}
+		
+		if (id === undefined) {
+			edit();
+		}
 	}
 	
-	function resetResource(snmp) {
-		var checkbox, resource, li;
-		
-		// delay
-		checkbox = document.getElementById("response");
-		checkbox.addEventListener("click", onCheckResource.bind(undefined, "responseTime", 0, 3000), false);
-		
-		// cpu
-		for (index in snmp.hrProcessorIndex) {
-			checkbox = document.createElement("input");
-			checkbox.addEventListener("click", onCheckResource.bind(undefined, "hrProcessorLoad", index, 100), false);
+	function onSNMP(snmp, status) {
+		if (status === 200) {
+			elements.status.textContent = snmp.timeout < 0? "up": "down";
+			elements.description.textContent = snmp.sysDescr;
+			elements.uptime.textContent = ITAhM.util.toUptimeString(snmp.hrSystemUptime);
+			elements.enterprise.textContent = ITAhM.util.enterpriseFromOID(snmp.sysObjectID);
 			
-			li = document.createElement("li");
-			li.appendChild(checkbox).type = "checkbox";
-			li.appendChild(document.createElement("span")).textContent = "index."+ index;
-			
-			elements.resource.processor.appendChild(li);
+			for (var resource in resetResource) {
+				resetResource[resource](snmp);
+			}
+
 		}
-		
-		// storage
-		for (index in snmp["hrStorageIndex"]) {
-			resource = snmp["hrStorageEntry"][index];
-			
-			if (resource["hrStorageSize"] === 0) {
-				continue;
-			}
-			
-			li = document.createElement("li");
-			checkbox = document.createElement("input");
-			li.appendChild(checkbox).type = "checkbox";
-			
-			// physical memory
-			if (resource["hrStorageType"] === 2) {				
-				li.appendChild(document.createElement("span")).textContent = "index."+ index;
-				
-				elements.resource.memory.appendChild(li);
-			}
-			
-			// non-removable storage
-			else if (resource["hrStorageType"] === 4) {
-				li.appendChild(document.createElement("span")).textContent = resource["hrStorageDescr"];
-				
-				elements.resource.storage.appendChild(li);
-			}
-			
-			checkbox.addEventListener("click", onCheckResource.bind(undefined, "hrStorageUsed", index, resource["hrStorageSize"] * resource["hrStorageAllocationUnits"]), false);
+		else if (status === 401) {
+			top.unauthorized();
 		}
-		
-		// interface
-		for (index in snmp["ifIndex"]) {
-			resource = snmp["ifEntry"][index];
-			
-			checkbox = document.createElement("input");
-			
-			li = document.createElement("li");
-			li.title = resource["ifDescr"];
-			li.appendChild(checkbox).type = "checkbox";
-			li.appendChild(document.createElement("span")).textContent = resource["ifName"];
-			
-			checkbox.addEventListener("click", onCheckResource.bind(undefined, "ifInOctets", index, resource["ifSpeed"]), false);
-			checkbox.addEventListener("click", onCheckResource.bind(undefined, "ifOutOctets", index, resource["ifSpeed"]), false);
-			
-			elements.resource["interface"].appendChild(li);
+		else if (status === 400){
+			console.log(response.error);
+		}
+		else {
+			throw status;
 		}
 	}
+		
+	var resetResource = {
+		"response": function (snmp) {
+			var checkbox, resource, li, chartData;
+			
+			checkbox = document.getElementById("response");
+			chartData = {
+				title: "response time",
+				capacity: 3000,
+				onyvalue: function (value) {
+					return value.toFixed(2) +"ms";
+				},
+				update: function (response) {
+					return response.responseTime;
+				},
+				database: "responseTime",
+				index: 0
+			};
+			
+			checkbox.addEventListener("click", onCheckResource.bind(undefined, chartData), false);
+		},
+		"processor": function (snmp) {
+			var checkbox, resource, li, chartData;
+			
+			for (index in snmp.hrProcessorIndex) {
+				checkbox = document.createElement("input");
+				
+				chartData = {
+					title: "processor load",
+					capacity: 100,
+					onyvalue: function (value) {
+						return value.toFixed(2) +"%";
+					},
+					update: function (response, index) {
+						return response.hrProcessorEntry[index];
+					},
+					database: "hrProcessorLoad",
+					index: index
+				};
+				
+				checkbox.addEventListener("click", onCheckResource.bind(undefined, chartData), false);
+				
+				li = document.createElement("li");
+				li.appendChild(checkbox).type = "checkbox";
+				li.appendChild(document.createElement("span")).textContent = "index."+ index;
+				
+				elements.resource.processor.appendChild(li);
+			}
+		},
+		"storage": function (snmp, oncreated) {
+			var checkbox, resource, li, chartData;
+			
+			for (index in snmp["hrStorageIndex"]) {
+				resource = snmp["hrStorageEntry"][index];
+				
+				if (resource["hrStorageSize"] === 0) {
+					continue;
+				}
+				
+				li = document.createElement("li");
+				checkbox = document.createElement("input");
+				li.appendChild(checkbox).type = "checkbox";
+				
+				chartData = {
+					capacity: resource.hrStorageSize * resource.hrStorageAllocationUnits,
+					onyvalue: function (value) {
+						return ITAhM.util.toBytesString(value).replace("ytes", "");
+					},
+					update: function (response, index) {
+						var resource = response.hrStorageEntry[index];
+						
+						return resource.hrStorageUsed * resource.hrStorageAllocationUnits;
+					},
+					database: "hrStorageUsed",
+					index: index
+				};
+				
+				// physical memory
+				if (resource["hrStorageType"] === 2) {				
+					li.appendChild(document.createElement("span")).textContent = "index."+ index;
+					
+					chartData.title = "physical memory";
+					
+					elements.resource.memory.appendChild(li);
+				}
+				
+				// non-removable storage
+				else if (resource["hrStorageType"] === 4) {
+					li.appendChild(document.createElement("span")).textContent = resource["hrStorageDescr"];
+					
+					chartData.title = "storage usage";
+					
+					elements.resource.storage.appendChild(li);
+				}
+
+				
+				
+				checkbox.addEventListener("click", onCheckResource.bind(undefined, chartData), false);
+			}
+		},
+		"throughput": function (snmp) {
+			var checkbox, resource, li, chart;
+			
+			for (index in snmp["ifIndex"]) {
+				resource = snmp["ifEntry"][index];
+				
+				checkbox = document.createElement("input");
+				
+				li = document.createElement("li");
+				li.title = resource["ifDescr"];
+				li.appendChild(checkbox).type = "checkbox";
+				li.appendChild(document.createElement("span")).textContent = resource["ifName"];
+				
+				chartData = {
+					title: "interface throughput input",
+					capacity: resource["ifSpeed"],
+					onyvalue: function (value) {
+						return ITAhM.util.toBPSString(value);
+					},
+					update: function (response, index) {
+						return response.ifEntry[index].ifInOctets;
+					},
+					database: "ifInOctets",
+					index: index
+				};
+				
+				checkbox.addEventListener("click", onCheckResource.bind(undefined, chartData), false);
+				
+				chartData = {
+					title: "interface throughput output",
+					capacity: resource["ifSpeed"],
+					onyvalue: function (value) {
+						return ITAhM.util.toBPSString(value);
+					},
+					update: function (response, index) {
+						return response.ifEntry[index].ifOutOctets;
+					},
+					database: "ifOutOctets",
+					index: index
+				};
+				
+				checkbox.addEventListener("click", onCheckResource.bind(undefined, chartData), false);
+				
+				elements.resource["interface"].appendChild(li);
+			}
+		},
+	};
 	
 	function resize() {
 		ITAhM.util.fireEvent("resize", window);
@@ -741,6 +730,180 @@ li {
 		e.stopPropagation();
 	}
 	
+	/**
+	 * inner class
+	 */
+	
+	function Controller() {
+		var selectedChart, focusedChart, copiedStartMills, copiedEndMills,
+			controller = document.getElementById("controller"),
+			apply = document.getElementById("apply"),
+			copy = document.getElementById("copy"),
+			paste = document.getElementById("paste"),
+			png = document.getElementById("png"),
+			csv = document.getElementById("csv"),
+			start = document.getElementById("start"),
+			end = document.getElementById("end"),
+			offline = document.getElementById("offline"),
+			realtime = document.getElementById("realtime"),
+			selector = document.getElementById("selector"),
+			fragment = document.createDocumentFragment(),
+			timer, listener = [];
+		
+		controller.addEventListener("mousedown", stopPropagation, false);
+		
+		selector.addEventListener("click", function (e) {
+			selectedChart = focusedChart;
+			
+			fragment.appendChild(selector);
+			
+			selectedChart.append(controller);
+			
+			controller.classList[selectedChart.mode === "realtime"? "add": "remove"]("realtime");
+		}, false);
+		
+		png.addEventListener("click", function (e) {
+			selectedChart.download();
+		}, false);
+		
+		csv.addEventListener("click", function (e) {
+			selectedChart.download();
+		}, false);
+		
+		offline.addEventListener("click", function (e) {
+
+			controller.classList.remove("realtime");
+			
+			selectedChart.setMode("offline");
+			
+			cancel(selectedChart);
+		}, false);
+		
+		realtime.addEventListener("click", function (e) {
+			controller.classList.add("realtime");
+			
+			selectedChart.setMode("realtime");
+			
+			if (timer === undefined) {
+				timer = setInterval(update, 1000);
+			}
+			
+			listener[listener.length] = selectedChart;
+		}, false);
+		
+		apply.addEventListener("click", function (e) {
+			var startMills = Date.parse(start.value),
+				endMills = Date.parse(end.value);
+			 
+			endDate = new Date(endMills);
+			
+			// locale에 따라 국가별 hour는 달라지므로 별도로 0으로 채워주어야 함.
+			endDate.setHours(0);
+			
+			// start는 해당 일자의 0시로, end는 해당 일자의 24시(다음날의 0시)로 설정.
+			selectedChart.setDate(new Date(startMills).setHours(0), endDate.setDate(endDate.getDate() +1));
+			
+			onChangeDate(selectedChart);
+		}, false);
+		
+		copy.addEventListener("click", function (e) {
+			controller.classList.add("copied");
+			
+			copiedStartMills = selectedChart.start;
+			copiedEndMills = selectedChart.end;
+			
+		}, false);
+		
+		paste.addEventListener("click", function (e) {
+			selectedChart.setDate(copiedStartMills, copiedEndMills);
+		}, false);
+		
+		// controller 초기화
+		start.value = end.value = ITAhM.util.toDateString(new Date());
+		
+		/**
+		 * private method
+		 */
+		function onFocusChart(chart) {
+			fragment.appendChild(selector);
+			
+			if (chart === selectedChart) {
+				return;
+			}
+			
+			chart.append(selector);
+			
+			focusedChart = chart;
+		}
+		
+		function onChangeDate(chart) {
+			if (chart !== selectedChart) {
+				return;
+			}
+			
+			start.value = ITAhM.util.toDateString(new Date(chart.start));
+			end.value = ITAhM.util.toDateString(new Date(chart.end));
+		}
+		
+		function onUpdate(response, status) {
+			if (status === 200) {
+				var currentMills = new Date().getTime(),
+					chart, chartData;
+				
+				for (var i=0, length=listener.length; i<length; i++) {
+					chart = listener[i];
+					chartData = chart.getData();
+					
+					chart.update(currentMills, chartData.update(response, chartData.index));
+				}
+			}
+			else if (status === 401) {
+				top.unauthorized();
+			}
+			else if (status === 400){
+				throw response.error;
+			}
+			else {
+				throw status;
+			}
+		}
+		
+		function update() {
+			top.sendRequest({
+				command: "select",
+				ip: device.ip,
+				trigger: true
+			}, onUpdate, true);
+		}
+		
+		function cancel(chart) {
+			var index = listener.indexOf(chart);
+			
+			listener.splice(index, 1);
+			
+			if (listener.length === 0) {
+				clearInterval(timer);
+				
+				timer = undefined;
+			}
+		}
+
+		/**
+		 * public method
+		 */
+		this.set = function (chart) {
+			chart.on("mouseover", onFocusChart.bind(undefined, chart));
+			chart.onchange = onChangeDate.bind(undefined, chart);
+		}
+		
+		/**
+		 * chart가 realtime mode 였다면 listenr 목록에서 제거
+		 */
+		this.cancel = function (chart) {
+			cancel(chart);
+		}
+	}
+	 
 	/**
 	 * public method
 	 */
