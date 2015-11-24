@@ -13,7 +13,7 @@ body {
 	padding: 0; 
 }
 
-li, input, button {
+li, input, button, td {
 	font-size: 14px;
 }
 
@@ -121,7 +121,7 @@ body.maximized .iframe {
 	position: absolute; top: 0; right: 0;
 }
 
-.agent button {
+button, input[type="button"] {
 	margin-left: 20px;
 	vertical-align: middle;
 	padding: .5em;
@@ -139,13 +139,67 @@ header img:hover,
 	cursor: pointer;
 }
 
+input[type="checkbox"] {
+	vertical-align: middle;
+}
+
+input[type="checkbox"] +h4 {
+	display: inline-block;
+	cursor: pointer;
+	margin: 5px;
+}
+
+input[type="checkbox"] +h4:hover {
+	text-decoration: underline;
+}
+
+input[type="checkbox"] +h4:hover:after {
+	/*position: absolute;
+	content: "edit";*/
+}
+
+#popup:not(:empty) {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	display: flex;
+	flex-direction:row;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(255, 255, 255, .9);
+}
+
+#popup>form {
+	padding: 20px;
+	background-color: #fff;
+	box-shadow: 0px 0px 20px 10px #ddd;
+}
+
+#popup input,
+#popup select {
+	padding: .5em;
+}
+
+#popup select {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.flex {
+	display: flex;
+}
+
+
+.flex input {
+	flex: 1;
+}
+
 body.maximized #maximize,
 body.connected #form_agent,
-/*body.setting>:not(.setting),*/
+body.setting>:not(header):not(.setting),
 body:not(.maximized) #minimize,
 body:not(.setting)>.setting,
-body.authorized .setting form,
-body:not(.connected) .agent,
+body.authorized #form_signin,
+body:not(.connected) .connected,
+body:not(.authorized) .authorized,
 body:not(.connected) #form_signin,
 body:not(.loading) .loading, 
 .hide {
@@ -178,13 +232,13 @@ body:not(.loading) .loading,
 			</section>
 			
 			<section class="iframe br">
-				<iframe id="frame_event"></iframe> 
+				<iframe id="frame_event"></iframe>
 			</section>
 		</div>
 		
 		<div role="main" class="setting">
 			<h3>agent</h3>
-			<h2 class="agent"><span id="agent"></span><button id="disconnect">disconnect</button></h2>
+			<h2 class="connected"><span id="agent"></span><button id="disconnect">disconnect</button></h2>
 			<form id="form_agent">
 				<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address">
 				<input type="text" name="port" value="2014" placeholder="tcp port">
@@ -196,14 +250,24 @@ body:not(.loading) .loading,
 				<input type="submit" value="sign in">
 			</form>
 			
-			
-			<h3>user account</h3>
-			<ul id="account"></ul>
-			
-			<h3>snmp profile</h3>
-			<ul id="profile"></ul>
+			<div class="authorized">
+				<h3>user account</h3>
+				<form id="account">
+					<input type="submit" value="add">
+					<input type="reset" value="remove">
+				</form>
+				<ul></ul>
+				
+				<h3>snmp profile</h3>
+				<form id="profile">
+					<input type="submit" value="add">
+					<input type="reset" value="remove">
+				</form>
+				<ul></ul>
+			</div>
 		</div>
 		
+		<div id="popup"></div>
 		<div class="loading"></div>
 		
 		<div class="hide">
@@ -211,46 +275,169 @@ body:not(.loading) .loading,
 				<img id="maximize" src="img/maximize.png">
 				<img id="minimize" src="img/minimize.png">
 			</div>
+			
+			<iframe id="frame_icon"></iframe>
+			
+			<form id="account_dialog" autocomplete="off">
+				<h2>account</h2>
+				<table>
+					<tbody>
+						<tr>
+							<td>username</td>
+							<td>
+								<input type="text" name="username" class="table text" required>
+							</td>
+						</tr>
+						<tr>
+							<td>password</td>
+							<td>
+								<input type="password" name="password"
+									class="table text"
+									placeholder="new password"
+									pattern="[a-zA-Z0-9]{6,}"
+									required>
+							</td>
+						</tr>
+						<tr>
+							<td>confirm password</td>
+							<td>
+								<input type="password" name="confirm"
+									class="table text"
+									placeholder="confirm password"
+									pattern="[a-zA-Z0-9]{6,}"
+									required>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="flex">
+					<input type="reset" value="cancel">
+					<input type="submit" value="apply">
+				</div>
+			</form>
+			
+			<form id="profile_dialog" autocomplete="off">
+				<h2>snmp profile</h2>
+				<table>
+					<tbody>
+						<tr>
+							<td>profile name: </td>
+							<td>
+								<input type="text" name="name" class="table text"
+									placeholder="snmp profile name" required autofocus>
+							</td>
+						</tr>
+						<tr>
+							<td>udp port: </td>
+							<td>
+								<input type="number" min="1" step="1" value="161" name="udp" class="table text"
+									placeholder="snmp udp port" pattern="\d*" required>
+							</td>
+						</tr>
+						<tr>
+							<td>snmp version: </td>
+							<td>
+								<label><input type="radio" value="v1" name="version" disabled>v1</label>
+								<label><input type="radio" value="v2c" name="version" checked>v2c</label>
+								<label><input type="radio" value="v3" name="version" disabled>v3</label>
+							</td>
+						</tr>
+						<tr>
+							<td>community: </td>
+							<td>
+								<input type="text" name="community" value="public" class="table text"
+									placeholder="snmp community string" required>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="flex">
+					<input type="reset" value="cancel">
+					<input type="submit" value="apply">
+				</div>
+			</form>
+			
+			<form id="device_dialog">
+				<h2>device</h2>
+				<table>
+					<tbody>
+						<tr>
+							<td>name</td>
+							<td>
+								<input type="text" name="name">
+							</td>
+						</tr>
+						<tr>
+							<td>ip address</td>
+							<td>
+								<input type="text" name="ip">
+							</td>
+						</tr>
+						<tr>
+							<td>type</td>
+							<td>
+								<select name="type"></select>
+							</td>
+						</tr>
+						<tr>
+							<td>label</td>
+							<td>
+								<input type="text" name="label">
+							</td>
+						</tr>
+						<tr>
+							<td>snmp profile</td>
+							<td>
+								<select name="profile"></select>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="flex">
+					<input type="reset" value="cancel">
+					<input type="submit" value="apply">
+				</div>
+			</form>
+			
 		</div>
 		
 		<script src="js/icon.js"></script>
 		<script src="js/Communicator.js"></script>
 		<script>
 
+var elements = {
+		popup: document.getElementById("popup"),
+		frame: {
+			list: document.getElementById("frame_list"),
+			map : document.getElementById("frame_map"),
+			device: document.getElementById("frame_device"),
+			event: document.getElementById("frame_event")
+		},
+		agent: document.getElementById("agent"),
+		toolbar: document.getElementById("toolbar"),
+		maximize: document.getElementById("maximize"),
+		minimize: document.getElementById("minimize"),
+		setting: document.getElementById("setting"),
+		form: {
+			agent: document.getElementById("form_agent"),
+			signin: document.getElementById("form_signin")
+		}
+	};
+
 (function (window, undefined){
 	
 	var communicator = new Communicator(),
-		deviceData, iconData, snmpData,
-		iconMap = {},
-		typeMap = {},
+		snmpData,
 		tmpID = 1,
-		agent,
-		elements = {
-			agent: document.getElementById("agent"),
-			toolbar: document.getElementById("toolbar"),
-			maximize: document.getElementById("maximize"),
-			minimize: document.getElementById("minimize"),
-			setting: document.getElementById("setting"),
-			profile: document.getElementById("profile"),
-			account: document.getElementById("account"),
-			form: {
-				agent: document.getElementById("form_agent"),
-				signin: document.getElementById("form_signin"),
-			},
-			frame: {
-				list: document.getElementById("frame_list"),
-				map : document.getElementById("frame_map"),
-				device: document.getElementById("frame_device"),
-				event: document.getElementById("frame_event")
-			}
-		};
-	
+		agent;
+		
 	// event 등록
 	elements.setting.addEventListener("click", onSetting, false);
 	elements.maximize.addEventListener("click", onMaximize, false);
 	elements.minimize.addEventListener("click", onMinimize, false);
 	elements.form.agent.addEventListener("submit", onConnect, false);
 	elements.form.signin.addEventListener("submit", onSignin, false);
+	
 	document.getElementById("disconnect").addEventListener("click", onDisconnect, false);
 	
 	// 각 frame들에게 event 등록
@@ -267,43 +454,13 @@ body:not(.loading) .loading,
 	 * deviceData, snmpData, iconData 초기화
 	 */
 	function load() {
-		sendRequest({
-			command: "pull",
-			database: "profile"
-		}, onInitProfile);
-		
-		sendRequest({
-			command: "pull",
-			database: "account"
-		}, onInitAccount);
-		/*
-		sendRequest({
-			command: "pull",
-			database: "snmp"
-		}, onInitSnmp);
-		*/
-		sendRequest({
-			command: "pull",
-			database: "device"
-		}, onInitDevice);
-		
-		iconData = ITAhM.iconData;
-		
 		document.body.classList.add("authorized");
 		document.body.classList.remove("setting");
-	}
-	
-	/**
-	 * 페이지 시작점
-	 */
-	function init() {		
-		// frame load
-		elements.frame.list.src = "list.html";
-		elements.frame.map.src = "map.html";
-		elements.frame.device.src = "device.html";
-		elements.frame.event.src = "event.html";
 		
-		//document.body.classList.add("setting");
+		initAccount();
+		initProfile();
+		initDevice();
+		initIcon();
 	}
 	
 	/**
@@ -385,52 +542,17 @@ body:not(.loading) .loading,
 		selected.appendChild(elements.toolbar);
 	}
 	
-	function onInitProfile(data, status) {
-		if (status != 200) {
-			return;
-		}
-		
-		var list = elements.profile,
-			li, snmp;
-		
-		while(li = list.firstChild) {
-			list.removeChild(li);
-		}
-		
-		for (var profile in data) {
-			snmp = data[profile];
-			li = document.createElement("li");
-			
-			li.appendChild(document.createElement("h4")).textContent = profile;
-			
-			li.appendChild(document.createElement("div")).textContent = snmp.community;
-			li.appendChild(document.createElement("div")).textContent = snmp.version;
-			li.appendChild(document.createElement("div")).textContent = snmp.udp;
-			
-			list.appendChild(li);
-		}
+	function onAddAccount (e) {
+		e.preventDefault();
 	}
 	
-	function onInitAccount(data, status) {
-		if (status != 200) {
-			return;
-		}
-		
-		var list = elements.account,
-			li;
-		
-		while(li = list.firstChild) {
-			list.removeChild(li);
-		}
-		
-		for (var username in data) {
-			li = document.createElement("li");
-			
-			li.appendChild(document.createElement("h4")).textContent = username;
-			
-			list.appendChild(li);
-		}
-	}
+	function onRemoveAccount (e) {
+		e.preventDefault();
+	}	
+	
+	
+	
+	
 	/*
 	function onInitSnmp(data, status) {
 		if (status != 200) {
@@ -441,18 +563,6 @@ body:not(.loading) .loading,
 		
 	}
 	*/
-	function onInitDevice(data, status) {
-		if (status != 200) {
-			return;
-		}
-		
-		deviceData = data;
-		
-		/**
-		 * icon 모두 load 된 후 페이지 시작
-		 */
-		loadIcon(init);
-	}
 	
 	/**
 	 * private method
@@ -487,57 +597,6 @@ body:not(.loading) .loading,
 		document.body.classList.remove("maximized");
 	}
 	
-	// iconList로부터 type map 생성
-	(function () {
-		var group;
-		
-		for (var type in iconData) {
-			group = iconData[type].group;
-			
-			
-		}
-	}) ();
-	
-	/**
-	 * iconData loop에서 iconMap 과 typeMap 완성
-	 * map 상태에서는 처리 했는지 안했는지 알수 없기 때문에 array 상태로 loop
-	 */
-	function loadIcon(complete) {
-		var types = Object.keys(iconData),
-			length = types.length,
-			icon = new Image(),
-			index = 0,
-			group;
-		
-		icon.onload = onLoad;
-		icon.src = iconData[types[index]].src;
-		
-		function onLoad() {
-			var type = types[index],
-				data = iconData[type],
-				group = data.group;
-			// iconMap
-			iconMap[type] = this;
-			
-			// typeMap
-			if (!(group in typeMap)) {
-				typeMap[group] = [];
-			}
-			
-			typeMap[group].push(type);
-			
-			// next loop
-			if (++index < length) {
-				icon = new Image();
-				icon.onload = onLoad;
-				icon.src = iconData[types[index]].src;
-			}
-			else {
-				complete();
-			}
-		}
-	}
-	
 	function sendRequest(data, callback, background) {
 		communicator.send(data, callback, background);
 	}
@@ -552,22 +611,6 @@ body:not(.loading) .loading,
 		
 		classList.remove("authorized");
 		classList.add("setting");
-	};
-	
-	window.getDeviceList = function () {
-		return deviceData;
-	};
-	/*
-	window.getSNMPList = function () {
-		return snmpData;
-	};
-	*/
-	window.getDevice = function (id) {
-		return deviceData[id];
-	};
-	
-	window.getIconData = function (type) {
-		return iconData[type];
 	};
 	
 	window.selectDevice = function (id) {
@@ -589,16 +632,439 @@ body:not(.loading) .loading,
 		return elements.frame[frameName].contentWindow;
 	};
 	
-	window.getIconMap = function () {
-		return iconMap;
+}) (window);
+
+// account 관리
+(function (window, undefined) {
+	var form = document.getElementById("account"),
+		list = document.querySelector("#account+ul"),
+		dialog = document.getElementById("account_dialog"),
+		accountData;
+	
+	// 추가
+	form.addEventListener("submit", function (e) {
+		e.preventDefault();
+		
+		elements.popup.appendChild(dialog);
+		
+		dialog.elements.username.focus();
+	}, false);
+	
+	// 삭제
+	form.addEventListener("reset", function (e) {
+		e.preventDefault();
+		
+		var accountList = list.getElementsByTagName("input"),
+			length=accountList.length;
+		
+		if (!confirm("remove "+ length +" account(s)?")) {
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {
+			delete accountData[accountList[i].value];
+		}
+		
+		resetList();
+	}, false);
+	
+	// 적용
+	dialog.addEventListener("submit", function (e) {
+		e.preventDefault();
+		
+		var username = dialog.elements.username.value,
+			password = dialog.elements.password.value,
+			confirm = dialog.elements.confirm;
+			
+		if (password === confirm.value) {
+			accountData[dialog.elements.username.value] = {
+				username: username,
+				password: password
+			};
+			
+			dialog.reset();
+			
+			resetList();
+		}
+		else {
+			alert("password does not match the confirm password");
+			
+			confirm.select();
+		}
+	}, false);
+	
+	// 취소
+	dialog.addEventListener("reset", function (e) {
+		elements.popup.removeChild(dialog);
+	}, false);
+	
+	function onResponse(data, status) {
+		if (status != 200) {
+			return;
+		}
+		
+		accountData = data;
+		
+		resetList();
+	}
+	
+	function resetList() {
+		var li, checkbox, text;
+		
+		while(li = list.firstChild) {
+			list.removeChild(li);
+		}
+		
+		for (var username in accountData) {
+			li = document.createElement("li");
+			
+			checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.value = username;
+			
+			text = document.createElement("h4");
+			text.textContent = username;
+			text.onclick = selectAccount.bind(undefined, accountData[username]);
+			
+			li.appendChild(checkbox);
+			li.appendChild(text)
+			
+			list.appendChild(li);
+		}
+	}
+	
+	function selectAccount (account) {
+		elements.popup.appendChild(dialog);
+		
+		dialog.elements.username.value = account.username,
+		dialog.elements.password.value = account.password;
+		
+		dialog.elements.username.select();
 	};
 	
-	window.getTypeMap = function () {
-		return typeMap;
+	window.initAccount = function () {
+		sendRequest({
+			command: "pull",
+			database: "account"
+		}, onResponse);
 	};
 	
-	window.createDeviceID = function () {
-		return "-"+ tmpID++;
+}) (window);
+
+// profile 관리
+(function (window, undefined) {
+	var form = document.getElementById("profile"),
+		list = document.querySelector("#profile+ul"),
+		dialog = document.getElementById("profile_dialog"),
+		profileData;
+	
+	// 추가
+	form.addEventListener("submit", function (e) {
+		e.preventDefault();
+		
+		elements.popup.appendChild(dialog);
+		
+		dialog.elements.name.focus();
+	}, false);
+	
+	// 삭제
+	form.addEventListener("reset", function (e) {
+		e.preventDefault();
+		
+		var profileList = list.getElementsByTagName("input"),
+			length=profileList.length;
+		
+		if (!confirm("remove "+ length +" profile(s)?")) {
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {
+			delete profileData[profileList[i].value];
+		}
+		
+		resetList();	
+			
+	}, false);
+
+	// 적용
+	dialog.addEventListener("submit", function (e) {
+		e.preventDefault();
+		
+		profileData[dialog.elements.name.value] = {
+			name: dialog.elements.name.value,
+			udp: dialog.elements.udp.value,
+			version: dialog.elements.version.value,
+			community: dialog.elements.community.value
+		};
+		
+		dialog.reset();
+		
+		resetList();
+		
+	}, false);
+	
+	// 취소
+	dialog.addEventListener("reset", function (e) {
+		elements.popup.removeChild(dialog);
+	}, false);
+	
+	function onResponse(data, status) {
+		if (status != 200) {
+			return;
+		}
+		
+		profileData = data;
+		
+		resetList();
+	}
+	
+	function resetList() {
+		var li, checkbox, text, profile;
+		
+		while(li = list.firstChild) {
+			list.removeChild(li);
+		}
+		
+		for (var name in profileData) {
+			profile = profileData[name];
+			li = document.createElement("li");
+			
+			checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.value = name;
+			
+			text = document.createElement("h4");
+			text.textContent = name;
+			text.onclick = selectProfiile.bind(undefined, profileData[name]);
+			
+			li.appendChild(checkbox);
+			li.appendChild(text);			
+			
+			list.appendChild(li);
+		}
+	}
+	
+	function selectProfiile(profile) {
+		elements.popup.appendChild(dialog);
+		
+		dialog.elements.name.value = profile.name,
+		dialog.elements.udp.value = profile.udp;
+		dialog.elements.version.value = profile.version;
+		dialog.elements.community.value = profile.community;
+		
+		dialog.elements.name.select();
+	}
+	
+	window.initProfile = function () {
+		sendRequest({
+			command: "pull",
+			database: "profile"
+		}, onResponse);
+	};
+	
+	window.getProfileData = function () {
+		return profileData;
+	};
+	
+}) (window);
+
+// icon 관리
+(function (window, undefined) {
+	var iconData = {},
+		customData = {},
+		types = [],
+		index;
+	/*
+	function loadIcon() {
+		var img = customData[types[index]],
+			icon = new Image();
+		
+		icon.setAttribute("id", img.id);
+		icon.setAttribute("class", img.group);
+		icon.setAttribute("alt", img.alt);
+		icon.setAttribute("src", img.src);
+		icon.onload = onLoadIcon;
+	}
+	
+	// callback
+	
+	// img.onload
+	function onLoadIcon() {
+		var icon = this;
+		
+		iconData[icon.id] = icon;
+		
+		if (++index < types.length) {
+			loadIcon()
+		}
+		else {
+			onIconLoaded(iconData);
+		}
+		
+	}
+	*/
+	// frame.onload
+	function onLoadFrame() {console.log("!2");
+		var images = this.document.getElementsByTagName("img"),
+			icon;
+		
+		for (var i=0, length=images.length; i<length; i++) {
+			icon = images[i];
+			
+			iconData[icon.getAttribute("id")] = icon;
+		}
+		
+		// 모든 frame load
+		var frame;
+		for (var name in elements.frame) {
+			frame = elements.frame[name];
+			frame.src = name+".html";
+			frame.contentWindow.addEventListener("load", onFrameLoad, false);
+		}
+		
+		/*
+		// 이미 확보한 customData icon 전환
+		types = Object.keys(data);
+		
+		if (types.length > 0) {
+			loadIcon();
+		}
+		else {
+			onIconLoaded(iconData);
+		}*/
+		
+		
+	}
+	
+	function onResponse(data, status) {
+		if (status === 200) {
+			customData = data;
+			
+			var frame = document.getElementById("frame_icon");
+			console.log("!1");
+			frame.src = "icon.html";
+			frame.contentWindow.addEventListener("load", function () {
+				console.log("load");
+			}, false);
+			//frame.contentWindow.onload = onLoadFrame;
+			frame.contentWindow.onload = function () {
+				console.log("load");
+			};
+			console.log(frame);
+			console.log(frame.contentWindow);
+			console.log(frame.contentWindow.document);
+		}
+		else if (status === 401) {
+			unauthorized();
+		}
+		else {
+			throw "";
+		}
+	}
+	
+	window.initIcon = function () {
+		top.sendRequest({
+			command: "pull",
+			database: "icon"
+		}, onResponse, true);
+	};
+	
+	window.getCustomIcon = function () {
+		return customData;
+	};
+	
+}) (window);
+
+//device 관리
+(function (window, undefined) {
+	var dialog = document.getElementById("device_dialog"),
+		deviceData,
+		tmpID = -1,
+		applyDevice;
+	
+	// 적용
+	dialog.addEventListener("submit", function (e) {
+		e.preventDefault();
+		
+		applyDevice();		
+	}, false);
+	
+	// 취소
+	dialog.addEventListener("reset", function (e) {
+		elements.popup.removeChild(dialog);
+	}, false);
+	
+	// private method
+	
+	// callback
+	function onResponse(data, status) {
+		if (status != 200) {
+			return;
+		}
+		
+		deviceData = data;
+		
+		// profile data가 반드시 존재 해야함
+		var profileData = getProfileData();
+	}
+	
+	function onApply(id) {
+		deviceData[id] = {
+			name: dialog.elements.name.value,
+			ip: dialog.elements.ip.value,
+			type: dialog.elements.type.value,
+			label: dialog.elements.label.value,
+			profile: dialog.elements.profile.value
+		};
+		
+		dialog.reset();
+	}
+	
+	window.onFrameLoad = function () {
+		if (this.id === "frame_device") {
+			console.log("success");
+		} 
+	}
+	
+	window.getDeviceList = function () {
+		return deviceData;
+	};
+	
+	window.addDevice = function () {
+		applyDevice = onApply.bind(undefined, tmpID--);
+		
+		elements.popup.appendChild(dialog);
+		
+		dialog.elements.name.focus();
+	};
+	
+	window.editDevice = function (id) {
+		var device = deviceData[id];
+		
+		applyDevice = onApply.bind(undefined, id);
+		
+		elements.popup.appendChild(dialog);
+		
+		dialog.elements.name.value = device.name;
+		dialog.elements.ip.value = device.ip;
+		dialog.elements.type.value = device.type;
+		dialog.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
+		dialog.elements.profile.value = device.profile;
+		
+		dialog.elements.name.select();
+	};
+	
+	window.removeDevice = function (idList) {
+		for (var i=0, length=idList.length; i<length; i++) {
+			delete deviceData[idList[i]];
+		}
+	};
+	
+	window.initDevice = function () {
+		sendRequest({
+			command: "pull",
+			database: "device"
+		}, onResponse);
 	};
 	
 }) (window);

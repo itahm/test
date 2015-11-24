@@ -217,7 +217,7 @@ form {
 	}
 	
 	function onAdd(e) {
-		top.getFrame("device").resetDevice();
+		top.addDevice();
 	}
 	
 	function onSearch(e) {
@@ -257,18 +257,17 @@ form {
 	}
 	
 	function onRemove() {
-		var checked = list.checked,
-			length = checked.length;
+		var length = list.checked.length;
 		
 		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
 			return;
 		}
 		
-		for(var i=0; i<length; i++) {
-			removeDevice(checked[i].dataset.id);
-		}
+		top.removeDevice(list.getCheckedList());
 		
 		top.getFrame("map").reload();
+		
+		reload();
 	}
 	
 	function onChangeLabel(e) {
@@ -353,10 +352,20 @@ form {
 			
 			return fragment;
 		};
-		
 
 		this.getLabels = function() {
 			return Object.keys(label);
+		};
+
+		this.getCheckedList = function () {
+			var list = [],
+				length = this.checked.length;
+			
+			for(var i=0; i<length; i++) {
+				list[i] = this.checked[i].dataset.id;
+			}
+			
+			return list;
 		};
 		
 		function onCheckItem(e) {

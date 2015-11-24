@@ -379,9 +379,9 @@ function format(milliseconds) {
 			}
 			else if (mode === "offline") {
 				this.resetTPP();
+				
+				this.invalidate();
 			}
-			
-			this.invalidate();
 		},
 		
 		/**
@@ -391,6 +391,7 @@ function format(milliseconds) {
 		 * @returns {undefined}
 		 */
 		update: function (dateMills, value) {
+			
 			this.realtimeData[dateMills] = value;
 			
 			this.invalidate();

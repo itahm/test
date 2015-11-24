@@ -234,7 +234,7 @@ input[disabled] {
 			device: canvas.add()
 		},
 		deviceList = top.getDeviceList(),
-		iconMap = top.getIconMap(),
+		iconData = top.getIconData(),
 		isDragging = false;
 	
 	/** event */
@@ -303,7 +303,7 @@ input[disabled] {
 	 */
 	
 	function onDrawDevice(context, hitContext, device) {
-		var icon = iconMap[device.type],
+		var icon = iconData[device.type],
 			width = icon.width,
 			height = icon.height,
 			x, y;

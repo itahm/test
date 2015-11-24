@@ -353,28 +353,8 @@ img.button:hover {
 	elements.edit.addEventListener("click", onEdit, false);
 	elements.save.addEventListener("click", onSave, false);
 	elements.cancel.addEventListener("click", onCancel, false);
-		
-	parseType();
 	
 	resetDevice();
-	
-	function parseType() {
-		var type = elements.form.elements.type,
-			map = top.getTypeMap(),
-			group, option;
-		
-		for (var name in map) {
-			group = map[name];
-			
-			option = document.createElement("optgroup");
-			option.setAttribute("label", name);
-			type.add(option);
-			
-			for (var i=0, length=group.length; i<length; i++) {
-				option.appendChild(document.createElement("option")).text = group[i];
-			}
-		}
-	}
 	
 	/**
 	 * callback method
@@ -385,6 +365,7 @@ img.button:hover {
 	}
 	
 	function onEdit(e) {
+		//top.editDevice(id);
 		edit();
 	}
 	

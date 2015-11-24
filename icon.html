@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+	</head>
+
+	<body>
+		<img id="server" class="server" alt="server" src="img/server.png">
+		<img id="mainframe" class="server" alt="mainframe" src="img/mainframe.png">
+		<img id="database" class="server" alt="database" src="img/database.png">
+		<img id="storage" class="server" alt="storage" src="img/storage.png">
+		<img id="www" class="server" alt="web server" src="img/www.png">
+		<img id="network" class="network" alt="network" src="img/network.png">
+		<img id="workgroup" class="network" alt="workgroup switch" src="img/workgroup.png">
+		<img id="dummy" class="network" alt="dummy hub" src="img/hub.png">
+		<img id="l3switch" class="network" alt="layer4 switch" src="img/l3switch.png">
+		<img id="l4switch" class="network" alt="layer4 switch" src="img/l4switch.png">
+		<img id="router" class="network" alt="router" src="img/router.png">
+		<img id="firewall" class="network" alt="firewall" src="img/firewall.png">
+		<img id="vpn" class="network" alt="vpn gateway" src="img/gateway.png">
+		<img id="concentrator" class="network" alt="vpn concentrator" src="img/concentrator.png">
+		<img id="wireless" class="network" alt="wireless device" src="img/wireless.png">
+		<img id="accesspoint" class="network" alt="accesspoint" src="img/accesspoint.png">
+		<img id="office" class="etc" alt="office" src="img/office.png">
+		<img id="cloud" class="etc" alt="cloud" src="img/cloud.png">
+		<img id="unknown" class="etc" alt="unknown" src="img/unknown.png">
+		<script>
+if (top === window) {
+	throw "";
+}
+			
+(function (window, undefined) {
+	var customData = top.getCustomIcon(),
+		icon, data;
+	
+	for (var type in customData) {
+		data = customData[type];
+		
+		icon = document.getElementById(type);
+		
+		if (!icon) {
+			icon = document.body.appendChild(document.createElement("img"));
+			icon.id = data.id;
+		}
+		
+		icon.src = data.src;
+		icon.alt = data.alt;
+		icon.className = data.group;
+	}
+	 
+}) (window);
+			
+		</script>
+	</body>
+</html>
