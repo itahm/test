@@ -904,8 +904,8 @@ var elements = {
 	}
 	*/
 	// frame.onload
-	function onLoadFrame() {console.log("!2");
-		var images = this.document.getElementsByTagName("img"),
+	function onLoadFrame() {
+		var images = this.contentWindow.document.getElementsByTagName("img"),
 			icon;
 		
 		for (var i=0, length=images.length; i<length; i++) {
@@ -921,19 +921,6 @@ var elements = {
 			frame.src = name+".html";
 			frame.contentWindow.addEventListener("load", onFrameLoad, false);
 		}
-		
-		/*
-		// 이미 확보한 customData icon 전환
-		types = Object.keys(data);
-		
-		if (types.length > 0) {
-			loadIcon();
-		}
-		else {
-			onIconLoaded(iconData);
-		}*/
-		
-		
 	}
 	
 	function onResponse(data, status) {
@@ -941,18 +928,9 @@ var elements = {
 			customData = data;
 			
 			var frame = document.getElementById("frame_icon");
-			console.log("!1");
+			
+			frame.onload = onLoadFrame;
 			frame.src = "icon.html";
-			frame.contentWindow.addEventListener("load", function () {
-				console.log("load");
-			}, false);
-			//frame.contentWindow.onload = onLoadFrame;
-			frame.contentWindow.onload = function () {
-				console.log("load");
-			};
-			console.log(frame);
-			console.log(frame.contentWindow);
-			console.log(frame.contentWindow.document);
 		}
 		else if (status === 401) {
 			unauthorized();
