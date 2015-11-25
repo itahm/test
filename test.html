@@ -1,136 +1,160 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+	<head>
+		<meta charset="UTF-8">
+		<title>Insert title here</title>
 
-	<style>
-
-	</style>
-</head>
-
-<body>
-<iframe width="300px" height="300px"></iframe>
-
-<script>
-var frame = document.querySelector("iframe");
-
-frame.contentWindow.onload = function () {console.log("outter");
-	var customData = {},
-		images = this.document.getElementsByTagName("img"),
-		icon;
-	
-	for (var i=0, length=images.length; i<length; i++) {
-		icon = images[i];
-		
-		customData[icon.getAttribute("id")] = icon;
-	}
-
-	console.log(customData);
-};
-
-frame.src="icon.html";
-
-function getCustomIcon() {
-	return {
-	    "server": {
-	        "group": "server",
-	        "alt": "server",
-	        "src": "img/server.png"
-	    },
-	    "mainframe": {
-	        "group": "server",
-	        "alt": "mainframe",
-	        "src": "img/mainframe.png"
-	    },
-	    "database": {
-	        "group": "server",
-	        "alt": "database",
-	        "src": "img/database.png"
-	    },
-	    "storage": {
-	        "group": "server",
-	        "alt": "storage",
-	        "src": "img/storage.png"
-	    },
-	    "www": {
-	        "group": "server",
-	        "alt": "web server",
-	        "src": "img/www.png"
-	    },
-	    "network": {
-	        "group": "network",
-	        "alt": "network",
-	        "src": "img/network.png"
-	    },
-	    "workgroup": {
-	        "group": "network",
-	        "alt": "workgroup switch",
-	        "src": "img/workgroup.png"
-	    },
-	    "dummy": {
-	        "group": "network",
-	        "alt": "dummy hub",
-	        "src": "img/hub.png"
-	    },
-	    "l4switch": {
-	        "group": "network",
-	        "alt": "layer4 switch",
-	        "src": "img/l4switch.png"
-	    },
-	    "l3switch": {
-	        "group": "network",
-	        "alt": "layer3 switch",
-	        "src": "img/l3switch.png"
-	    },
-	    "router": {
-	        "group": "network",
-	        "alt": "router",
-	        "src": "img/router.png"
-	    },
-	    "firewall": {
-	        "group": "network",
-	        "alt": "firewall",
-	        "src": "img/firewall.png"
-	    },
-	    "vpn": {
-	        "group": "network",
-	        "alt": "vpn gateway",
-	        "src": "img/gateway.png"
-	    },
-	    "concentrator": {
-	        "group": "network",
-	        "alt": "vpn concentrator",
-	        "src": "img/concentrator.png"
-	    },
-	    "wireless": {
-	        "group": "network",
-	        "alt": "wireless device",
-	        "src": "img/wireless.png"
-	    },
-	    "accesspoint": {
-	        "group": "network",
-	        "alt": "accesspoint",
-	        "src": "img/accesspoint.png"
-	    },
-	    "office": {
-	        "group": "etc",
-	        "alt": "office",
-	        "src": "img/office.png"
-	    },
-	    "cloud": {
-	        "group": "etc",
-	        "alt": "cloud",
-	        "src": "img/cloud.png"
-	    },
-	    "unknown": {
-	        "group": "etc",
-	        "alt": "unknown",
-	        "src": "img/unknown.png"
-	    }
-	};
+		<style>
+#dialog {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(255, 255, 255, .9);
+	border: 0;
+	margin: 0;
+	padding: 0;
 }
-</script>
 
-</body>
+.hide {
+	display: none;
+}
+		</style>
+	</head>
+
+	<body>
+		<button>test</button>
+		<iframe id="dialog" class="hide"></iframe>
+
+	<script>
+
+(function (window, undefined) {
+	var dialog = document.getElementById("dialog");
+	
+	dialog.onload = function () {
+		dialog.classList.remove("hide");
+	}
+	
+	window.showDialog = function (url) {
+		dialog.src = url;
+	};
+	
+	window.closeDialog = function () {
+		dialog.classList.add("hide");
+	};
+	
+	window.getSelectedDevice = function () {
+		return {
+			"ip":"127.0.0.1","x":0,"name":"localhost","y":0,"id":"0","snmp": true, "profile":"public","type":"server"
+		};
+	}
+	
+	window.getIconData = function () {
+		return {
+		    "server": {
+		        "group": "server",
+		        "alt": "server",
+		        "src": "img/server.png"
+		    },
+		    "mainframe": {
+		        "group": "server",
+		        "alt": "mainframe",
+		        "src": "img/mainframe.png"
+		    },
+		    "database": {
+		        "group": "server",
+		        "alt": "database",
+		        "src": "img/database.png"
+		    },
+		    "storage": {
+		        "group": "server",
+		        "alt": "storage",
+		        "src": "img/storage.png"
+		    },
+		    "www": {
+		        "group": "server",
+		        "alt": "web server",
+		        "src": "img/www.png"
+		    },
+		    "network": {
+		        "group": "network",
+		        "alt": "network",
+		        "src": "img/network.png"
+		    },
+		    "workgroup": {
+		        "group": "network",
+		        "alt": "workgroup switch",
+		        "src": "img/workgroup.png"
+		    },
+		    "dummy": {
+		        "group": "network",
+		        "alt": "dummy hub",
+		        "src": "img/hub.png"
+		    },
+		    "l4switch": {
+		        "group": "network",
+		        "alt": "layer4 switch",
+		        "src": "img/l4switch.png"
+		    },
+		    "l3switch": {
+		        "group": "network",
+		        "alt": "layer3 switch",
+		        "src": "img/l3switch.png"
+		    },
+		    "router": {
+		        "group": "network",
+		        "alt": "router",
+		        "src": "img/router.png"
+		    },
+		    "firewall": {
+		        "group": "network",
+		        "alt": "firewall",
+		        "src": "img/firewall.png"
+		    },
+		    "vpn": {
+		        "group": "network",
+		        "alt": "vpn gateway",
+		        "src": "img/gateway.png"
+		    },
+		    "concentrator": {
+		        "group": "network",
+		        "alt": "vpn concentrator",
+		        "src": "img/concentrator.png"
+		    },
+		    "wireless": {
+		        "group": "network",
+		        "alt": "wireless device",
+		        "src": "img/wireless.png"
+		    },
+		    "accesspoint": {
+		        "group": "network",
+		        "alt": "accesspoint",
+		        "src": "img/accesspoint.png"
+		    },
+		    "office": {
+		        "group": "etc",
+		        "alt": "office",
+		        "src": "img/office.png"
+		    },
+		    "cloud": {
+		        "group": "etc",
+		        "alt": "cloud",
+		        "src": "img/cloud.png"
+		    },
+		    "unknown": {
+		        "group": "etc",
+		        "alt": "unknown",
+		        "src": "img/unknown.png"
+		    }
+		};
+	};
+	
+}) (window);
+
+document.querySelector("button").onclick = function () {
+	showDialog("dialog/device.html");
+}
+
+	</script>
+
+	</body>
 </html>

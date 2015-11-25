@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>dialog</title>
+		
+		<style>
+td, input, label, h2, select {
+	font-family: tahoma, arial, "맑은 고딕";
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	display: flex;
+	flex-direction:row;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(255, 255, 255, .9);
+}
+
+.dialog {
+	padding: 20px;
+	background-color: #fff;
+	box-shadow: 0px 0px 20px 10px #ddd;
+}
+
+td, input, label, select {
+	font-size: 14px;
+}
+
+input,
+select {
+	padding: .5em;
+}
+
+input[type="radio"] {
+	margin: .5em;
+}
+
+select {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+table, label {
+	margin-bottom: 5px;
+}
+.flex {
+	display: flex;
+}
+
+.flex>input {
+	flex: 1;
+}
+
+.hide {
+	display: none;
+}
+
+#profile:hover {
+	cursor: default;
+	text-decoration: underline;
+}
+
+div.advanced {
+	box-sizing: border-box;
+	height: 200px;
+	background-color: #fefefe;
+	overflow: auto;
+}
+
+body:not(.advanced) .advanced {
+	display: none;
+}
+
+		</style>
+		
+	</head>
+	
+	<body>
+	
+		<div class="dialog">
+			<form>
+				<h2>device</h2>
+				<table>
+					<tbody>
+						<tr>
+							<td>name</td>
+							<td>
+								<input type="text" name="name" placeholder="device name" required autofocus>
+							</td>
+						</tr>
+						<tr>
+							<td>ip address</td>
+							<td>
+								<input type="text" name="ip" title="valid ip v4 address required" placeholder="device ip address"
+									pattern="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" required>
+							</td>
+						</tr>
+						<tr>
+							<td>type</td>
+							<td>
+								<select name="type"></select>
+							</td>
+						</tr>
+						<tr>
+							<td>label</td>
+							<td>
+								<input type="text" name="label">
+							</td>
+						</tr>
+						<tr>
+							<td id="profile">snmpⓘ</td>
+							<td>
+								<input type="radio" name="snmp" value="true">on
+								<input type="radio" name="snmp" value="" checked>off
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<label><input type="checkbox" id="advanced">advanced</label>
+				<div class="advanced">
+				</div>
+				<div class="flex">
+					<input type="reset" value="cancel">
+					<input type="submit" value="apply">
+				</div>
+			</form>
+		</div>
+		
+		<script>
+
+(function (window, undefined){
+	
+	var form = document.querySelector("form"),
+		iconData = top.getIconData(),
+		device = top.getSelectedDevice();
+	
+	form.addEventListener("submit", onApply, false);
+	form.addEventListener("reset", onCancel, false);
+	document.getElementById("advanced").addEventListener("click", onAdvanced, false);
+	
+	initType();
+	
+	if (device) {
+		initDevice();
+	}
+	
+	function initDevice() {
+		form.elements.name.value = device.name;
+		form.elements.ip.value = device.ip;
+		form.elements.type.value = device.type;
+		// 저장할때는 trim으로 다 붙여서 넣지만 보여줄때는 보기 좋게 한칸씩 띈다.
+		form.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
+		
+		if (device.snmp) {
+			document.getElementById("profile").title = "working profile:\n" +device.profile;
+			
+			form.elements.snmp.value = "true";
+			
+			// interface 정보 획득 목적
+			top.sendRequest({
+				command: "select",
+				ip: device.ip
+			}, onResponse, true);
+		}
+		else {
+			form.elements.snmp.value = "";
+		}
+	}
+	
+	function initType() {
+		var control = form.elements.type,
+			fragment = document.createDocumentFragment(),
+			group = {}, optgroup, groupName, icon, option;
+		
+		for (var type in iconData) {
+			icon = iconData[type];
+			
+			groupName = icon.group;
+			optgroup = group[groupName];
+			if (!optgroup) {
+				optgroup = document.createElement("optgroup");
+				optgroup.label = groupName;
+				
+				group[groupName] = optgroup;
+				
+				fragment.appendChild(optgroup);
+			}
+			
+			optgroup.appendChild(document.createElement("option")).text = type;
+		}
+		
+		control.appendChild(fragment);
+	}
+	
+	function initInterface(snmp) {
+		console.log(snmp);
+	}
+	
+	/**
+	 * call back
+	 */
+	function onApply(e) {
+		e.preventDefault();
+		
+		form.reset();
+	}
+	
+	function onCancel(e) {
+		e.preventDefault();
+		console.log(form.elements.snmp.value);
+		//top.closeDialog();
+	}
+	
+	function onAdvanced(e) {
+		var checkbox = e.currentTarget;
+		
+		if (checkbox.checked) {
+			document.body.classList.add("advanced");
+		}
+		else {
+			document.body.classList.remove("advanced");
+		}
+	}
+	
+	function onResponse(data, status) {
+		if (status === 200) {
+			initInterface(data);
+		}
+		else if (status === 401) {
+			top.unauthorized();
+		}
+		else {
+			throw "";
+		}
+	}
+	
+}) (window);
+
+		</script>
+	
+	</body>
+	
+</html>

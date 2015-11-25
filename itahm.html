@@ -192,6 +192,17 @@ input[type="checkbox"] +h4:hover:after {
 	flex: 1;
 }
 
+#dialog {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(255, 255, 255, .9);
+	border: 0;
+	margin: 0;
+	padding: 0;
+	
+}
+
 body.maximized #maximize,
 body.connected #form_agent,
 body.setting>:not(header):not(.setting),
@@ -269,6 +280,8 @@ body:not(.loading) .loading,
 		
 		<div id="popup"></div>
 		<div class="loading"></div>
+		
+		<iframe id="dialog" class="hide"></iframe>
 		
 		<div class="hide">
 			<div id="toolbar" class="minimized">
@@ -364,13 +377,14 @@ body:not(.loading) .loading,
 						<tr>
 							<td>name</td>
 							<td>
-								<input type="text" name="name">
+								<input type="text" name="name" placeholder="device name" required autofocus>
 							</td>
 						</tr>
 						<tr>
 							<td>ip address</td>
 							<td>
-								<input type="text" name="ip">
+								<input type="text" name="ip" title="valid ip v4 address required" placeholder="device ip address"
+									pattern="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" required>
 							</td>
 						</tr>
 						<tr>
@@ -407,6 +421,7 @@ body:not(.loading) .loading,
 
 var elements = {
 		popup: document.getElementById("popup"),
+		fragment: document.getElementById("fragment"),
 		frame: {
 			list: document.getElementById("frame_list"),
 			map : document.getElementById("frame_map"),
@@ -947,8 +962,12 @@ var elements = {
 		}, onResponse, true);
 	};
 	
-	window.getCustomIcon = function () {
+	window.getCustomIconData = function () {
 		return customData;
+	};
+	
+	window.getIconData = function () {
+		return iconData;
 	};
 	
 }) (window);
@@ -957,6 +976,7 @@ var elements = {
 (function (window, undefined) {
 	var dialog = document.getElementById("device_dialog"),
 		deviceData,
+		selectedDevice,
 		tmpID = -1,
 		applyDevice;
 	
@@ -1016,7 +1036,7 @@ var elements = {
 		dialog.elements.name.focus();
 	};
 	
-	window.editDevice = function (id) {
+	window._editDevice = function (id) {
 		var device = deviceData[id];
 		
 		applyDevice = onApply.bind(undefined, id);
@@ -1032,6 +1052,12 @@ var elements = {
 		dialog.elements.name.select();
 	};
 	
+	window.editDevice = function (id) {
+		selectedDevice = deviceData[id];
+		
+		showDialog("dialog/device.html");
+	}
+	
 	window.removeDevice = function (idList) {
 		for (var i=0, length=idList.length; i<length; i++) {
 			delete deviceData[idList[i]];
@@ -1043,6 +1069,32 @@ var elements = {
 			command: "pull",
 			database: "device"
 		}, onResponse);
+	};
+	
+	window.getSelectedDevice = function () {
+		return selectedDevice;
+	};
+	
+}) (window);
+
+/**
+ * dialog
+ */
+(function (window, undefined) {
+	var dialog = document.getElementById("dialog");
+	
+	function showDialog() {
+		dialog.classList.remove("hide");
+	}
+	
+	dialog.onload = showDialog;
+	
+	window.showDialog = function (url) {
+		dialog.src = url;
+	};
+	
+	window.closeDialog = function () {
+		dialog.classList.add("hide");
 	};
 	
 }) (window);
