@@ -9,6 +9,10 @@ td, input, label, h2, select {
 	font-family: tahoma, arial, "맑은 고딕";
 }
 
+td, input, label, select, li {
+	font-size: 14px;
+}
+
 body {
 	margin: 0;
 	padding: 0;
@@ -26,10 +30,6 @@ body {
 	box-shadow: 0px 0px 20px 10px #ddd;
 }
 
-td, input, label, select {
-	font-size: 14px;
-}
-
 input,
 select {
 	padding: .5em;
@@ -44,9 +44,21 @@ select {
 	width: 100%;
 }
 
-table, label {
+table {
 	margin-bottom: 5px;
 }
+
+ul {
+	list-style: none;
+	padding: 0;
+}
+
+li {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .flex {
 	display: flex;
 }
@@ -66,13 +78,19 @@ table, label {
 
 div.advanced {
 	box-sizing: border-box;
-	height: 200px;
+	max-height: 200px;
 	background-color: #fefefe;
 	overflow: auto;
 }
 
-body:not(.advanced) .advanced {
+body:not(.advanced) .advanced,
+body.snmp .advanced >*:not(.snmp),
+body:not(.snmp) .advanced >.snmp {
 	display: none;
+}
+
+.footer {
+	margin-top: 5px;
 }
 
 		</style>
@@ -122,8 +140,14 @@ body:not(.advanced) .advanced {
 				</table>
 				<label><input type="checkbox" id="advanced">advanced</label>
 				<div class="advanced">
+					<div>
+						<input type="button" name="add" value="add" title = "add virtual interface">
+						<input type="button" name="remove" value="remove" title="remove interface">
+						 <ul id="custom_list"></ul>
+					</div>
+					 <ul id="snmp_list" class="snmp"></ul>
 				</div>
-				<div class="flex">
+				<div class="flex footer">
 					<input type="reset" value="cancel">
 					<input type="submit" value="apply">
 				</div>
@@ -136,16 +160,27 @@ body:not(.advanced) .advanced {
 	
 	var form = document.querySelector("form"),
 		iconData = top.getIconData(),
-		device = top.getSelectedDevice();
+		device = top.getSelectedDevice(),
+		snmpList = document.getElementById("snmp_list"),
+		customList = document.getElementById("custom_list");
 	
-	form.addEventListener("submit", onApply, false);
-	form.addEventListener("reset", onCancel, false);
-	document.getElementById("advanced").addEventListener("click", onAdvanced, false);
-	
+	setEvent();
+	initDevice();
 	initType();
+	onSnmpChanged();
 	
-	if (device) {
-		initDevice();
+	function setEvent() {
+		form.addEventListener("submit", onApply, false);
+		form.addEventListener("reset", onCancel, false);
+		document.getElementById("advanced").addEventListener("click", onAdvanced, false);
+		form.elements["add"].addEventListener("click", onAdd, false);
+		form.elements["remove"].addEventListener("click", onRemove, false);
+		
+		var snmp = form.elements.snmp;
+		
+		for (var i=0, length = snmp.length; i<length; i++) {
+			snmp[i].onchange = onSnmpChanged;
+		}
 	}
 	
 	function initDevice() {
@@ -197,7 +232,21 @@ body:not(.advanced) .advanced {
 	}
 	
 	function initInterface(snmp) {
-		console.log(snmp);
+		var entry = snmp.ifEntry,
+			ifData, li, fragment = document.createDocumentFragment();
+		
+		for (var index in entry) {
+			ifData = entry[index];
+		
+			//TODO 어떻게 보여줄 것인가
+			li = document.createElement("li");
+			//li.textContent = ifData.ifDescr;
+			li.textContent = ifData.ifName;
+			
+			fragment.appendChild(li);
+		}
+		
+		snmpList.appendChild(fragment);
 	}
 	
 	/**
@@ -206,13 +255,64 @@ body:not(.advanced) .advanced {
 	function onApply(e) {
 		e.preventDefault();
 		
+		if (!device) {
+			device = top.createDevice();
+		}
+		
+		device.name = form.elements.name.value;
+		device.ip = form.elements..value;
+		device.type = form.elements.type.value;
+		device.label = form.elements.label.value.split(",").map(function (value) {
+			return value.trim();
+		}).join(",");
+		device.snmp = !!form.elements.snmp.value;
+		
+		if (!device.snmp) {
+			customList
+		}
+		
 		form.reset();
 	}
 	
 	function onCancel(e) {
-		e.preventDefault();
-		console.log(form.elements.snmp.value);
-		//top.closeDialog();
+		top.closeDialog();
+	}
+	
+	function onAdd() {
+		var li = document.createElement("li"),
+			checkbox = document.createElement("input"),
+			input = document.createElement("input");
+		
+		checkbox.type = "checkbox";
+		checkbox.value = "";
+		input.type = "input";
+		
+		li.appendChild(checkbox);
+		li.appendChild(input);
+		
+		input.required = true;
+		
+		customList.appendChild(li);
+		
+		input.focus();
+	}
+	
+	function onRemove() {
+		var checkbox = customList.getElementsByTagName("input"),
+			checked;
+		
+		for (var i=0, length=checkbox.length; i<length; i++) {
+			checked = checkbox[i];
+			
+			if (checked.type === "checkbox" && checked.checked) {
+				
+				if (checked.value) {
+					delete device.ifEntry[checked.value];
+				}
+				
+				customList.removeChild(checked.parentNode);
+			}
+		}
 	}
 	
 	function onAdvanced(e) {
@@ -223,6 +323,15 @@ body:not(.advanced) .advanced {
 		}
 		else {
 			document.body.classList.remove("advanced");
+		}
+	}
+	
+	function onSnmpChanged() {
+		if (form.elements.snmp.value) {
+			document.body.classList.add("snmp");
+		}
+		else {
+			document.body.classList.remove("snmp");
 		}
 	}
 	

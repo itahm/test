@@ -443,7 +443,6 @@ var elements = {
 	
 	var communicator = new Communicator(),
 		snmpData,
-		tmpID = 1,
 		agent;
 		
 	// event 등록
@@ -1036,6 +1035,13 @@ var elements = {
 		dialog.elements.name.focus();
 	};
 	
+	window.createDevice = function () {
+		return {
+			id: tmpID--,
+			x: 0,
+			y: 0
+		};
+	}
 	window._editDevice = function (id) {
 		var device = deviceData[id];
 		
