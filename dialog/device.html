@@ -83,6 +83,14 @@ div.advanced {
 	overflow: auto;
 }
 
+#snmp_list li:nth-child(odd) {
+	background-color: #fafafa;
+}
+
+#snmp_list li input {
+	display: block;
+}
+
 body:not(.advanced) .advanced,
 body.snmp .advanced >*:not(.snmp),
 body:not(.snmp) .advanced >.snmp {
@@ -165,7 +173,9 @@ body:not(.snmp) .advanced >.snmp {
 		customList = document.getElementById("custom_list");
 	
 	setEvent();
-	initDevice();
+	if (device) {
+		initDevice();
+	}
 	initType();
 	onSnmpChanged();
 	
@@ -190,8 +200,12 @@ body:not(.snmp) .advanced >.snmp {
 		// 저장할때는 trim으로 다 붙여서 넣지만 보여줄때는 보기 좋게 한칸씩 띈다.
 		form.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
 		
+		if (device.ifEntry) {
+			initCustomInterface();
+		}
+		
 		if (device.snmp) {
-			document.getElementById("profile").title = "working profile:\n" +device.profile;
+			document.getElementById("profile").title = "working profile:\n" + device.profile;
 			
 			form.elements.snmp.value = "true";
 			
@@ -231,22 +245,57 @@ body:not(.snmp) .advanced >.snmp {
 		control.appendChild(fragment);
 	}
 	
-	function initInterface(snmp) {
+	function initCustomInterface() {
+		var entry = device.ifEntry,
+			li, speed, fragment = document.createDocumentFragment();
+		
+		for (var name in entry) {
+			li = createListElement();
+			
+			li.firstChild.value = name;
+			li.lastChild.value = name;
+			
+			fragment.appendChild(li);
+		}
+		
+		customList.appendChild(fragment);
+	}
+	
+	function initSnmpInterface(snmp) {
 		var entry = snmp.ifEntry,
-			ifData, li, fragment = document.createDocumentFragment();
+			ifData, li, speed, fragment = document.createDocumentFragment();
 		
 		for (var index in entry) {
 			ifData = entry[index];
 		
 			//TODO 어떻게 보여줄 것인가
 			li = document.createElement("li");
+			speed = document.createElement("input");
+			speed.value = ifData.ifSpeed;
 			//li.textContent = ifData.ifDescr;
 			li.textContent = ifData.ifName;
+			li.appendChild(speed);
 			
 			fragment.appendChild(li);
 		}
 		
 		snmpList.appendChild(fragment);
+	}
+	
+	function createListElement() {
+		var li = document.createElement("li"),
+			checkbox = document.createElement("input"),
+			input = document.createElement("input");
+		
+		checkbox.type = "checkbox";
+		checkbox.value = "";
+		
+		li.appendChild(checkbox);
+		li.appendChild(input);
+		
+		input.required = true;
+		
+		return li;
 	}
 	
 	/**
@@ -260,18 +309,49 @@ body:not(.snmp) .advanced >.snmp {
 		}
 		
 		device.name = form.elements.name.value;
-		device.ip = form.elements..value;
+		device.ip = form.elements.ip.value;
 		device.type = form.elements.type.value;
 		device.label = form.elements.label.value.split(",").map(function (value) {
 			return value.trim();
 		}).join(",");
 		device.snmp = !!form.elements.snmp.value;
 		
-		if (!device.snmp) {
-			customList
+		if (device.snmp) {
+			// snmpList 수정사항 적용
+			var list = snmpList.getElementsByTagName("li"),
+				entry = device.ifEntry,
+				li, speed;
+		
+			for (var i=0, length=list.length; i<length; i++) {
+				li = list[i];
+				
+				speed = li.lastChild.value;
+				if (!isNaN(speed)) {
+					entry[li.textContent] = Number(speed);
+				}
+			}
+		}
+		else {
+			// customList 수정사항 적용
+			var list = customList.getElementsByTagName("li"),
+				entry = device.ifEntry,
+				speed;
+		
+			if (!entry) {
+				entry = {};
+				
+				device.ifEntry = entry;
+			}
+			
+			for (var i=0, length=list.length; i<length; i++) {
+				speed = list[i].lastChild.value;
+				if (speed) {
+					entry[speed] = null;
+				}
+			}
 		}
 		
-		form.reset();
+		//form.reset();
 	}
 	
 	function onCancel(e) {
@@ -279,38 +359,23 @@ body:not(.snmp) .advanced >.snmp {
 	}
 	
 	function onAdd() {
-		var li = document.createElement("li"),
-			checkbox = document.createElement("input"),
-			input = document.createElement("input");
-		
-		checkbox.type = "checkbox";
-		checkbox.value = "";
-		input.type = "input";
-		
-		li.appendChild(checkbox);
-		li.appendChild(input);
-		
-		input.required = true;
-		
-		customList.appendChild(li);
-		
-		input.focus();
+		customList.appendChild(createListElement()).lastChild.focus();
 	}
 	
 	function onRemove() {
-		var checkbox = customList.getElementsByTagName("input"),
-			checked;
+		var inputs = [].slice.call(customList.getElementsByTagName("input"), 0),
+			checkbox;
 		
-		for (var i=0, length=checkbox.length; i<length; i++) {
-			checked = checkbox[i];
+		for (var i=0, length=inputs.length; i<length; i++) {
+			checkbox = inputs[i];
 			
-			if (checked.type === "checkbox" && checked.checked) {
+			if (checkbox.type === "checkbox" && checkbox.checked) {
 				
-				if (checked.value) {
-					delete device.ifEntry[checked.value];
+				if (checkbox.value) {
+					delete device.ifEntry[checkbox.value];
 				}
 				
-				customList.removeChild(checked.parentNode);
+				customList.removeChild(checkbox.parentNode);
 			}
 		}
 	}
@@ -337,7 +402,7 @@ body:not(.snmp) .advanced >.snmp {
 	
 	function onResponse(data, status) {
 		if (status === 200) {
-			initInterface(data);
+			initSnmpInterface(data);
 		}
 		else if (status === 401) {
 			top.unauthorized();
