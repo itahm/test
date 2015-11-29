@@ -140,30 +140,28 @@ form {
 		</section>
 		
 		<script>
+if (window === top) {
+	throw "";
+}
 
-(function (window, top) {
-	
-	if (window === top) {
-		throw "";
-	}
-	
+(function (window, top) {	
 	var deviceList = top.getDeviceList(),
+		form = document.getElementById("form"),
 		elements = {
-			form: document.getElementById("form"),
 			tbody: document.getElementById("tbody")
 		},
 		list;
 	
-	elements.form.elements.add.addEventListener("click", onAdd, false);
-	elements.form.elements.remove.addEventListener("click", onRemove, false);
-	elements.form.elements.label.addEventListener("change", onChangeLabel, false);
-	elements.form.addEventListener("submit", onSearch, false);
+	form.elements.add.addEventListener("click", onAdd, false);
+	form.elements.remove.addEventListener("click", onRemove, false);
+	form.elements.label.addEventListener("change", onChangeLabel, false);
+	form.addEventListener("submit", onSearch, false);
 	
 	resetList();
 	
 	function resetList() {
 		var array,
-			select = elements.form.elements.label,
+			select = form.elements.label,
 			option = document.createElement("option");
 		
 		list = new List(onSelect);
@@ -223,9 +221,9 @@ form {
 	function onSearch(e) {
 		e.preventDefault();
 		
-		var keyword = elements.form.elements.keyword.value;
+		var keyword = form.elements.keyword.value;
 		
-		changeLabel(elements.form.elements.label.value);
+		changeLabel(form.elements.label.value);
 		
 		if (!keyword) {	
 			return;
@@ -271,7 +269,7 @@ form {
 	}
 	
 	function onChangeLabel(e) {
-		elements.form.elements.keyword.value = "";
+		form.elements.keyword.value = "";
 		
 		changeLabel(this.value);
 	}

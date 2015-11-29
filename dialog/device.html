@@ -122,7 +122,7 @@ body:not(.snmp) .advanced >.snmp {
 							<td>ip address</td>
 							<td>
 								<input type="text" name="ip" title="valid ip v4 address required" placeholder="device ip address"
-									pattern="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" required>
+									pattern="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)">
 							</td>
 						</tr>
 						<tr>
@@ -223,12 +223,10 @@ body:not(.snmp) .advanced >.snmp {
 	function initType() {
 		var control = form.elements.type,
 			fragment = document.createDocumentFragment(),
-			group = {}, optgroup, groupName, icon, option;
+			group = {}, optgroup, groupName, option;
 		
 		for (var type in iconData) {
-			icon = iconData[type];
-			
-			groupName = icon.group;
+			groupName = iconData[type].className;
 			optgroup = group[groupName];
 			if (!optgroup) {
 				optgroup = document.createElement("optgroup");
@@ -351,7 +349,7 @@ body:not(.snmp) .advanced >.snmp {
 			}
 		}
 		
-		//form.reset();
+		form.reset();
 	}
 	
 	function onCancel(e) {

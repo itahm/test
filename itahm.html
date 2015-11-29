@@ -1034,12 +1034,22 @@ var elements = {
 		dialog.elements.name.focus();
 	};
 	
+	window.addDevice = function () {
+		selectedDevice = undefined;
+		
+		showDialog("dialog/device.html");
+	};
+	
 	window.createDevice = function () {
-		return {
-			id: tmpID--,
-			x: 0,
-			y: 0
-		};
+		var device = {
+				id: tmpID--,
+				x: 0,
+				y: 0
+			};
+		
+		deviceData[device.id] = device;
+		
+		return device;
 	}
 	window._editDevice = function (id) {
 		var device = deviceData[id];
