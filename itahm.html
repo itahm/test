@@ -45,28 +45,6 @@ div[role="main"].setting input {
 	box-sizing: border-box;
 }
 
-div[role="main"].setting input[name="ip"] {
-	background: transparent url("img/home.png") no-repeat 10px center;
-	width: 160px;
-	padding-left: 36px;
-}
-
-div[role="main"].setting input[name="port"] {
-	background: transparent url("img/port.png") no-repeat 10px center;
-	width: 100px;
-	padding-left: 36px;
-}
-
-div[role="main"].setting input[name="username"] {
-	background: transparent url("img/user.png") no-repeat 10px center;
-	padding-left: 36px;
-}
-
-div[role="main"].setting input[name="password"] {
-	background: transparent url("img/lock.png") no-repeat 10px center;
-	padding-left: 36px;
-}
-
 iframe {
 	width: 100%; height: 100%;
 	margin: 0;
@@ -139,46 +117,27 @@ header img:hover,
 	cursor: pointer;
 }
 
-input[type="checkbox"] {
-	vertical-align: middle;
-}
-
-input[type="checkbox"] +h4 {
-	display: inline-block;
-	cursor: pointer;
-	margin: 5px;
-}
-
-input[type="checkbox"] +h4:hover {
-	text-decoration: underline;
-}
-
-input[type="checkbox"] +h4:hover:after {
-	/*position: absolute;
-	content: "edit";*/
-}
-
-#popup:not(:empty) {
+#dialog:not(:empty) {
 	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 	display: flex;
 	flex-direction:row;
 	justify-content: center;
 	align-items: center;
-	background-color: rgba(255, 255, 255, .9);
+	background-color: rgba(255, 255, 255, .8);
 }
 
-#popup>form {
+#dialog>form {
 	padding: 20px;
 	background-color: #fff;
 	box-shadow: 0px 0px 20px 10px #ddd;
 }
 
-#popup input,
-#popup select {
+#dialog input,
+#dialog select {
 	padding: .5em;
 }
 
-#popup select {
+#dialog select {
 	box-sizing: border-box;
 	width: 100%;
 }
@@ -192,15 +151,19 @@ input[type="checkbox"] +h4:hover:after {
 	flex: 1;
 }
 
-#dialog {
+#dialog,
+#view {
 	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 	width: 100%;
 	height: 100%;
-	background-color: rgba(255, 255, 255, .9);
+	background-color: rgba(255, 255, 255, .8);
 	border: 0;
 	margin: 0;
 	padding: 0;
-	
+}
+
+#view {
+	background-color: #fff;
 }
 
 body.maximized #maximize,
@@ -208,10 +171,8 @@ body.connected #form_agent,
 body.setting>:not(header):not(.setting),
 body:not(.maximized) #minimize,
 body:not(.setting)>.setting,
-body.authorized #form_signin,
 body:not(.connected) .connected,
 body:not(.authorized) .authorized,
-body:not(.connected) #form_signin,
 body:not(.loading) .loading, 
 .hide {
 	display: none;
@@ -222,7 +183,7 @@ body:not(.loading) .loading,
 		
 	</head>
 	
-	<body class="setting">
+	<body>
 	
 		<header>
 			<img src="img/gear_w.png" id="setting">
@@ -247,39 +208,9 @@ body:not(.loading) .loading,
 			</section>
 		</div>
 		
-		<div role="main" class="setting">
-			<h3>agent</h3>
-			<h2 class="connected"><span id="agent"></span><button id="disconnect">disconnect</button></h2>
-			<form id="form_agent">
-				<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address">
-				<input type="text" name="port" value="2014" placeholder="tcp port">
-				<input type="submit" value="connect">
-			</form>
-			<form id="form_signin">
-				<input type="text" name="username" value="root" placeholder="username">
-				<input type="password" name="password" value="root" placeholder="password">
-				<input type="submit" value="sign in">
-			</form>
-			
-			<div class="authorized">
-				<h3>user account</h3>
-				<form id="account">
-					<input type="submit" value="add">
-					<input type="reset" value="remove">
-				</form>
-				<ul></ul>
-				
-				<h3>snmp profile</h3>
-				<form id="profile">
-					<input type="submit" value="add">
-					<input type="reset" value="remove">
-				</form>
-				<ul></ul>
-			</div>
-		</div>
-		
-		<div id="popup"></div>
 		<div class="loading"></div>
+		
+		<iframe id="view" src="view/setting.html"></iframe>
 		
 		<iframe id="dialog" class="hide"></iframe>
 		
@@ -291,84 +222,7 @@ body:not(.loading) .loading,
 			
 			<iframe id="frame_icon"></iframe>
 			
-			<form id="account_dialog" autocomplete="off">
-				<h2>account</h2>
-				<table>
-					<tbody>
-						<tr>
-							<td>username</td>
-							<td>
-								<input type="text" name="username" class="table text" required>
-							</td>
-						</tr>
-						<tr>
-							<td>password</td>
-							<td>
-								<input type="password" name="password"
-									class="table text"
-									placeholder="new password"
-									pattern="[a-zA-Z0-9]{6,}"
-									required>
-							</td>
-						</tr>
-						<tr>
-							<td>confirm password</td>
-							<td>
-								<input type="password" name="confirm"
-									class="table text"
-									placeholder="confirm password"
-									pattern="[a-zA-Z0-9]{6,}"
-									required>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="flex">
-					<input type="reset" value="cancel">
-					<input type="submit" value="apply">
-				</div>
-			</form>
 			
-			<form id="profile_dialog" autocomplete="off">
-				<h2>snmp profile</h2>
-				<table>
-					<tbody>
-						<tr>
-							<td>profile name: </td>
-							<td>
-								<input type="text" name="name" class="table text"
-									placeholder="snmp profile name" required autofocus>
-							</td>
-						</tr>
-						<tr>
-							<td>udp port: </td>
-							<td>
-								<input type="number" min="1" step="1" value="161" name="udp" class="table text"
-									placeholder="snmp udp port" pattern="\d*" required>
-							</td>
-						</tr>
-						<tr>
-							<td>snmp version: </td>
-							<td>
-								<label><input type="radio" value="v1" name="version" disabled>v1</label>
-								<label><input type="radio" value="v2c" name="version" checked>v2c</label>
-								<label><input type="radio" value="v3" name="version" disabled>v3</label>
-							</td>
-						</tr>
-						<tr>
-							<td>community: </td>
-							<td>
-								<input type="text" name="community" value="public" class="table text"
-									placeholder="snmp community string" required>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="flex">
-					<input type="reset" value="cancel">
-					<input type="submit" value="apply">
-				</div>
-			</form>
 			
 			<form id="device_dialog">
 				<h2>device</h2>
@@ -420,38 +274,29 @@ body:not(.loading) .loading,
 		<script>
 
 var elements = {
-		popup: document.getElementById("popup"),
+		dialog: document.getElementById("dialog"),
 		fragment: document.getElementById("fragment"),
 		frame: {
 			list: document.getElementById("frame_list"),
 			map : document.getElementById("frame_map"),
 			device: document.getElementById("frame_device")
 		},
-		agent: document.getElementById("agent"),
 		toolbar: document.getElementById("toolbar"),
 		maximize: document.getElementById("maximize"),
 		minimize: document.getElementById("minimize"),
-		setting: document.getElementById("setting"),
-		form: {
-			agent: document.getElementById("form_agent"),
-			signin: document.getElementById("form_signin")
-		}
+		setting: document.getElementById("setting")
 	};
 
+/**
+ * 공통
+ */
 (function (window, undefined){
+	var agent;
 	
-	var communicator = new Communicator(),
-		snmpData,
-		agent;
-		
 	// event 등록
 	elements.setting.addEventListener("click", onSetting, false);
 	elements.maximize.addEventListener("click", onMaximize, false);
 	elements.minimize.addEventListener("click", onMinimize, false);
-	elements.form.agent.addEventListener("submit", onConnect, false);
-	elements.form.signin.addEventListener("submit", onSignin, false);
-	
-	document.getElementById("disconnect").addEventListener("click", onDisconnect, false);
 	
 	// 각 frame들에게 event 등록
 	(function (frame) {
@@ -464,7 +309,7 @@ var elements = {
 	/**
 	 * load
 	 * agent가 결정되고 signin 하면 호출된다.
-	 * deviceData, snmpData, iconData 초기화
+	 * deviceData, iconData 초기화
 	 */
 	function load() {
 		document.body.classList.add("authorized");
@@ -479,66 +324,11 @@ var elements = {
 	/**
 	 * callback method
 	 */
-	function onConnect(e) {
-		e.preventDefault();
 		
-		var ip = elements.form.agent.elements["ip"].value,
-			port = elements.form.agent.elements["port"].value;
 		
-		communicator.connect(ip, port);
-		
-		sendRequest({
-			command: "echo"
-		}, onEcho);
-	}
-	
-	function onEcho(data, status) {
-		// agent에 연결 가능하나 session 없음
-		if (status === 401) {
-			setAgent();
-			
-			elements.form.signin.reset();
-			elements.form.signin.elements["username"].focus();
-		}
-		// agent에 연결 가능하고 이미 session 있음
-		else if (status === 200) {
-			setAgent();
-
-			load();
-		}
-		else {
-			alert("can not connect to server");
-			
-			communicator.close();
-		}
-	}
-	
-	function onDisconnect(e) {
-		document.location.reload();
-	}
-	
-	function onSignin(e) {
-		e.preventDefault();
-		
-		sendRequest({
-			command: "signin",
-			username: elements.form.signin.elements["username"].value,
-			password: elements.form.signin.elements["password"].value
-		}, function (data, status) {
-			if (status === 200) {
-				load();
-			}
-			else {
-				alert("Incorrect username or password");
-				
-				elements.form.signin.elements["username"].select();
-			}
-		});
-	}
-	
 	function onSetting(e) {
-		
-		document.body.classList.toggle("setting");
+		showView("view/setting.html");
+		//document.body.classList.toggle("setting");
 	}
 	
 	function onMaximize(e) {
@@ -563,32 +353,9 @@ var elements = {
 		e.preventDefault();
 	}	
 	
-	
-	
-	
-	/*
-	function onInitSnmp(data, status) {
-		if (status != 200) {
-			return;
-		}
-		
-		snmpData = data;
-		
-	}
-	*/
-	
 	/**
 	 * private method
 	 */
-	function setAgent() {
-		var ip = elements.form.agent.elements["ip"].value,
-			port = elements.form.agent.elements["port"].value;
-		
-		elements.agent.textContent = ip +" : "+ port;
-		agent = ip +":"+ port;
-		
-		document.body.classList.add("connected");
-	}
 	
 	function maximize(frame) {
 		for (var id in elements.frame) {
@@ -610,20 +377,14 @@ var elements = {
 		document.body.classList.remove("maximized");
 	}
 	
-	function sendRequest(data, callback, background) {
-		communicator.send(data, callback, background);
-	}
-	
 	/**
 	 * public method
 	 */
-	window.sendRequest = sendRequest;
 	
 	window.unauthorized = function () {
 		var classList = document.body.classList;
 		
-		classList.remove("authorized");
-		classList.add("setting");
+		showView("view/setting.html");
 	};
 	
 	window.selectDevice = function (id) {
@@ -645,241 +406,45 @@ var elements = {
 		return elements.frame[frameName].contentWindow;
 	};
 	
-}) (window);
-
-// account 관리
-(function (window, undefined) {
-	var form = document.getElementById("account"),
-		list = document.querySelector("#account+ul"),
-		dialog = document.getElementById("account_dialog"),
-		accountData;
-	
-	// 추가
-	form.addEventListener("submit", function (e) {
-		e.preventDefault();
-		
-		elements.popup.appendChild(dialog);
-		
-		dialog.elements.username.focus();
-	}, false);
-	
-	// 삭제
-	form.addEventListener("reset", function (e) {
-		e.preventDefault();
-		
-		var accountList = list.getElementsByTagName("input"),
-			length=accountList.length;
-		
-		if (!confirm("remove "+ length +" account(s)?")) {
-			return;
-		}
-		
-		for (var i=0; i<length; i++) {
-			delete accountData[accountList[i].value];
-		}
-		
-		resetList();
-	}, false);
-	
-	// 적용
-	dialog.addEventListener("submit", function (e) {
-		e.preventDefault();
-		
-		var username = dialog.elements.username.value,
-			password = dialog.elements.password.value,
-			confirm = dialog.elements.confirm;
-			
-		if (password === confirm.value) {
-			accountData[dialog.elements.username.value] = {
-				username: username,
-				password: password
-			};
-			
-			dialog.reset();
-			
-			resetList();
-		}
-		else {
-			alert("password does not match the confirm password");
-			
-			confirm.select();
-		}
-	}, false);
-	
-	// 취소
-	dialog.addEventListener("reset", function (e) {
-		elements.popup.removeChild(dialog);
-	}, false);
-	
-	function onResponse(data, status) {
-		if (status != 200) {
-			return;
-		}
-		
-		accountData = data;
-		
-		resetList();
-	}
-	
-	function resetList() {
-		var li, checkbox, text;
-		
-		while(li = list.firstChild) {
-			list.removeChild(li);
-		}
-		
-		for (var username in accountData) {
-			li = document.createElement("li");
-			
-			checkbox = document.createElement("input");
-			checkbox.type = "checkbox";
-			checkbox.value = username;
-			
-			text = document.createElement("h4");
-			text.textContent = username;
-			text.onclick = selectAccount.bind(undefined, accountData[username]);
-			
-			li.appendChild(checkbox);
-			li.appendChild(text)
-			
-			list.appendChild(li);
-		}
-	}
-	
-	function selectAccount (account) {
-		elements.popup.appendChild(dialog);
-		
-		dialog.elements.username.value = account.username,
-		dialog.elements.password.value = account.password;
-		
-		dialog.elements.username.select();
+	window.reload = function () {
+		location.reload();
 	};
 	
-	window.initAccount = function () {
-		sendRequest({
-			command: "pull",
-			database: "account"
-		}, onResponse);
+	window.refresh = function () {
+		
 	};
+	
+	window.authorized = function (address) {
+		// 여기에서 초기화
+		initAccount();
+		initProfile();
+		initDevice();
+		initIcon();
+	};
+	
+	window.getAgent = function () {
+		return agent;
+	};
+	
+	window.tryEcho = function (address, onecho) {console.log(address);
+		var communicator = new Communicator();
+		
+		agent = address;
+		
+		address = address.split(":");
+		communicator.connect(address[0], address[1]);
+		
+		communicator.send({
+			command: "echo"
+		}, onecho);
+		
+		window.sendRequest = communicator.send;
+	}
 	
 }) (window);
 
-// profile 관리
-(function (window, undefined) {
-	var form = document.getElementById("profile"),
-		list = document.querySelector("#profile+ul"),
-		dialog = document.getElementById("profile_dialog"),
-		profileData;
-	
-	// 추가
-	form.addEventListener("submit", function (e) {
-		e.preventDefault();
-		
-		elements.popup.appendChild(dialog);
-		
-		dialog.elements.name.focus();
-	}, false);
-	
-	// 삭제
-	form.addEventListener("reset", function (e) {
-		e.preventDefault();
-		
-		var profileList = list.getElementsByTagName("input"),
-			length=profileList.length;
-		
-		if (!confirm("remove "+ length +" profile(s)?")) {
-			return;
-		}
-		
-		for (var i=0; i<length; i++) {
-			delete profileData[profileList[i].value];
-		}
-		
-		resetList();	
-			
-	}, false);
 
-	// 적용
-	dialog.addEventListener("submit", function (e) {
-		e.preventDefault();
-		
-		profileData[dialog.elements.name.value] = {
-			name: dialog.elements.name.value,
-			udp: dialog.elements.udp.value,
-			version: dialog.elements.version.value,
-			community: dialog.elements.community.value
-		};
-		
-		dialog.reset();
-		
-		resetList();
-		
-	}, false);
-	
-	// 취소
-	dialog.addEventListener("reset", function (e) {
-		elements.popup.removeChild(dialog);
-	}, false);
-	
-	function onResponse(data, status) {
-		if (status != 200) {
-			return;
-		}
-		
-		profileData = data;
-		
-		resetList();
-	}
-	
-	function resetList() {
-		var li, checkbox, text, profile;
-		
-		while(li = list.firstChild) {
-			list.removeChild(li);
-		}
-		
-		for (var name in profileData) {
-			profile = profileData[name];
-			li = document.createElement("li");
-			
-			checkbox = document.createElement("input");
-			checkbox.type = "checkbox";
-			checkbox.value = name;
-			
-			text = document.createElement("h4");
-			text.textContent = name;
-			text.onclick = selectProfiile.bind(undefined, profileData[name]);
-			
-			li.appendChild(checkbox);
-			li.appendChild(text);			
-			
-			list.appendChild(li);
-		}
-	}
-	
-	function selectProfiile(profile) {
-		elements.popup.appendChild(dialog);
-		
-		dialog.elements.name.value = profile.name,
-		dialog.elements.udp.value = profile.udp;
-		dialog.elements.version.value = profile.version;
-		dialog.elements.community.value = profile.community;
-		
-		dialog.elements.name.select();
-	}
-	
-	window.initProfile = function () {
-		sendRequest({
-			command: "pull",
-			database: "profile"
-		}, onResponse);
-	};
-	
-	window.getProfileData = function () {
-		return profileData;
-	};
-	
-}) (window);
+
 
 // icon 관리
 (function (window, undefined) {
@@ -954,7 +519,7 @@ var elements = {
 	}
 	
 	window.initIcon = function () {
-		top.sendRequest({
+		sendRequest({
 			command: "pull",
 			database: "icon"
 		}, onResponse, true);
@@ -987,7 +552,7 @@ var elements = {
 	
 	// 취소
 	dialog.addEventListener("reset", function (e) {
-		elements.popup.removeChild(dialog);
+		elements.dialog.removeChild(dialog);
 	}, false);
 	
 	// private method
@@ -1029,7 +594,7 @@ var elements = {
 	window.addDevice = function () {
 		applyDevice = onApply.bind(undefined, tmpID--);
 		
-		elements.popup.appendChild(dialog);
+		elements.dialog.appendChild(dialog);
 		
 		dialog.elements.name.focus();
 	};
@@ -1040,23 +605,22 @@ var elements = {
 		showDialog("dialog/device.html");
 	};
 	
-	window.createDevice = function () {
-		var device = {
-				id: tmpID--,
-				x: 0,
-				y: 0
-			};
+	window.createDevice = function (device) {
+		var id = tmpID--;
 		
-		deviceData[device.id] = device;
+		device.id = id;
+		device.x = 0;
+		device.y = 0;
 		
-		return device;
+		deviceData[id] = device;
 	}
+	
 	window._editDevice = function (id) {
 		var device = deviceData[id];
 		
 		applyDevice = onApply.bind(undefined, id);
 		
-		elements.popup.appendChild(dialog);
+		elements.dialog.appendChild(dialog);
 		
 		dialog.elements.name.value = device.name;
 		dialog.elements.ip.value = device.ip;
@@ -1088,6 +652,105 @@ var elements = {
 	
 	window.getSelectedDevice = function () {
 		return selectedDevice;
+	};
+	
+}) (window);
+
+
+/**
+ * account
+ */
+(function (window, undefined) {
+	var accountData,
+		selectedAccount;
+	
+	function onResponse(data, status) {
+		if (status != 200) {
+			return;
+		}
+		
+		accountData = data;
+	}
+	
+	window.initAccount = function () {
+		sendRequest({
+			command: "pull",
+			database: "account"
+		}, onResponse);
+	};
+	
+	window.getAccountData = function () {
+		return accountData;
+	};
+	
+	window.getSelectedAccount = function (profile) {
+		return selectedProfile;
+	};
+	
+	window.selectAccount = function (account) {
+		selectedAccount = account;
+
+		showDialog("../dialog/account.html");
+	};
+	
+}) (window);
+
+/**
+ * profile
+ */
+(function (window, undefined) {
+	var profileData,
+		selectedProfile;
+	
+	function onResponse(data, status) {
+		if (status != 200) {
+			return;
+		}
+		
+		profileData = data;
+	}
+	
+	window.initProfile = function () {
+		sendRequest({
+			command: "pull",
+			database: "profile"
+		}, onResponse);
+	};
+	
+	window.getProfileData = function () {
+		return profileData;
+	};
+	
+	window.getSelectedProfile = function (profile) {
+		return selectedProfile;
+	};
+	
+	window.selectProfile = function (profile) {
+		selectedProfile = profile;
+			
+		showDialog("../dialog/profile.html");
+	};
+	
+}) (window);
+
+/**
+ * view
+ */
+(function (window, undefined) {
+	var view = document.getElementById("view");
+	
+	function showView() {
+		view.classList.remove("hide");
+	}
+	
+	view.onload = showView;
+	
+	window.showView = function (url) {
+		view.src = url;
+	};
+	
+	window.closeView = function () {
+		view.classList.add("hide");
 	};
 	
 }) (window);

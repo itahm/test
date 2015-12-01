@@ -12,7 +12,12 @@ function Communicator() {
 	
 	function send(data, background) {
 		if (!xhr) {
-			xhr = new XMLHttpRequest();
+			if (url) {
+				xhr = new XMLHttpRequest();
+			}
+			else {
+				throw "closed.";
+			}
 		}
 		
 		if (!background) {

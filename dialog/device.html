@@ -303,7 +303,7 @@ body:not(.snmp) .advanced >.snmp {
 		e.preventDefault();
 		
 		if (!device) {
-			device = top.createDevice();
+			device = {};
 		}
 		
 		device.name = form.elements.name.value;
@@ -348,6 +348,10 @@ body:not(.snmp) .advanced >.snmp {
 				}
 			}
 		}
+		
+		top.createDevice(device);
+		
+		top.refresh();
 		
 		form.reset();
 	}

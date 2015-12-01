@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>dialog</title>
+		
+		<style>
+body, td, input, label, h2, li {
+	font-family: tahoma, arial, "맑은 고딕";
+}
+
+body, td, input, label,  li {
+	font-size: 14px;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	display: flex;
+	flex-direction:row;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(255, 255, 255, .9);
+}
+
+.dialog {
+	padding: 20px;
+	background-color: #fff;
+	box-shadow: 0px 0px 20px 10px #ddd;
+}
+
+input {
+	padding: .5em;
+}
+
+input[type="radio"] {
+	margin: .5em;
+}
+
+table {
+	margin-bottom: 5px;
+}
+
+.flex {
+	display: flex;
+}
+
+.flex>input {
+	flex: 1;
+}
+
+		</style>
+		
+	</head>
+	
+	<body>
+	
+		<div class="dialog">
+			<form autocomplete="off">
+				<h2>snmp profile</h2>
+				<table>
+					<tbody>
+						<tr>
+							<td>profile name: </td>
+							<td>
+								<input type="text" name="name" class="table text"
+									placeholder="snmp profile name" required autofocus>
+							</td>
+						</tr>
+						<tr>
+							<td>udp port: </td>
+							<td>
+								<input type="number" min="1" step="1" value="161" name="udp" class="table text"
+									placeholder="snmp udp port" pattern="\d*" required>
+							</td>
+						</tr>
+						<tr>
+							<td>snmp version: </td>
+							<td>
+								<label><input type="radio" value="v1" name="version" disabled>v1</label>
+								<label><input type="radio" value="v2c" name="version" checked>v2c</label>
+								<label><input type="radio" value="v3" name="version" disabled>v3</label>
+							</td>
+						</tr>
+						<tr>
+							<td>community: </td>
+							<td>
+								<input type="text" name="community" value="public" class="table text"
+									placeholder="snmp community string" required>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="flex">
+					<input type="reset" value="cancel">
+					<input type="submit" value="apply">
+				</div>
+			</form>
+		</div>
+		
+		<script>
+	
+if (top === window) {
+	throw "";
+}
+
+(function (window, undefined) {
+	var form = document.querySelector("form"),
+		profileData = top.getProfileData(),
+		selectedProfile = top.getSelectedProfile();
+
+	/**
+	 * 초기화
+	 */
+	initEvent();
+	
+	if(selectedProfile) {
+		form.elements.name.value = selectedProfile.name,
+		form.elements.udp.value = selectedProfile.udp;
+		form.elements.version.value = selectedProfile.version;
+		form.elements.community.value = selectedProfile.community;
+	}
+	
+	form.elements.name.select();
+	
+	/**
+	 * private method
+	 */
+	function initEvent() {
+		// 적용
+		form.addEventListener("submit", onApply, false);
+		
+		// 취소
+		form.addEventListener("reset", onCancel, false);
+	}
+	
+	/**
+	 * callback method
+	 */
+	 function onApply(e) {
+		e.preventDefault();
+		
+		var name = form.elements.name.value;
+		
+		profileData[name] = {
+			name: name,
+			udp: form.elements.udp.value,
+			version: form.elements.version.value,
+			community: form.elements.community.value
+		};
+		
+		top.closeDialog();
+		
+		top.showView("../view/setting.html");
+	}
+	
+	function onCancel(e) {
+		top.closeDialog();
+	}
+	
+}) (window);
+
+		</script>
+	
+	</body>
+	
+</html>
