@@ -144,276 +144,208 @@ if (window === top) {
 	throw "";
 }
 
-(function (window, top) {	
-	var deviceList = top.getDeviceList(),
-		form = document.getElementById("form"),
-		elements = {
-			tbody: document.getElementById("tbody")
-		},
-		list;
+/**
+ * control
+ */
+(function (window, undefined) {
+	var form = document.getElementById("form");
 	
-	form.elements.add.addEventListener("click", onAdd, false);
-	form.elements.remove.addEventListener("click", onRemove, false);
-	form.elements.label.addEventListener("change", onChangeLabel, false);
-	form.addEventListener("submit", onSearch, false);
+	initEvent();
 	
-	resetList();
-	
-	function resetList() {
-		var array,
-			select = form.elements.label,
-			option = document.createElement("option");
-		
-		list = new List(onSelect);
-		
-		// label select 초기화
-		array = list.getLabels();
-		select.length = 0;
-		
-		option.value = "";
-		option.text = "all labels";
-		
-		select.add(option);
-		
-		for (var i=0, length=array.length; i<length; i++) {
-			option = document.createElement("option");
-			
-			option.text = array[i];
-			
-			select.add(option);
-		}
-		
-		changeLabel("");
+	/**
+	 * private method
+	 */
+	function initEvent() {
+		form.elements.add.addEventListener("click", top.addDevice, false);
+		form.elements.remove.addEventListener("click", onRemove, false);
+		form.elements.label.addEventListener("change", onChangeLabel, false);
+		form.addEventListener("submit", onSearch, false);
 	}
 	
-	function removeDevice(id) {
-		var device = deviceList[id],
-			iFace = device.iFace,
-			deviceFrame;
-		
-		for (var name in iFace) {
-			removeIFace(deviceList[iFace[name]], id);
-		}
-		
-		delete deviceList[id];
-		
-		deviceFrame = top.getFrame("device");
-		// 선택된 device가 삭제되는 경우
-		if (id == deviceFrame.getDeviceID()) {
-			deviceFrame.resetDevice(0);
-		}
-	}
-	
-	function removeIFace(peer, id) {
-		var iFace = peer.iFace;
-		
-		for (var name in iFace) {
-			if (iFace[name] == id) {
-				delete iFace[name];
-			}
-		}
-	}
-	
-	function onAdd(e) {
-		top.addDevice();
-	}
-	
+	/**
+	 * callback method
+	 */
 	function onSearch(e) {
 		e.preventDefault();
-		
-		var keyword = form.elements.keyword.value;
-		
-		changeLabel(form.elements.label.value);
 		
 		if (!keyword) {	
 			return;
 		}
 		
-		var row = elements.tbody.children,
-			fragment = document.createDocumentFragment(),
-			matched = [],
-			device;
-		
-		for (var i=0, length=row.length; i<length; i++) {
-			device = deviceList[row[i].dataset.id];
-			
-			if (device.name.indexOf(keyword) === -1 && device.ip.indexOf(keyword) === -1 && device.type.indexOf(keyword) === -1) {
-				matched[matched.length] = row[i];
-			}
-		}
-		
-		for (var i=0, length=matched.length; i<length; i++) {
-			fragment.appendChild(matched[i]);
-		}
-	}
-	
-	function onSelect(id) {
-		top.getFrame("map").selectDevice(id);
-		top.getFrame("device").resetDevice(id);
-		
-		top.minimize();
-	}
-	
-	function onRemove() {
-		var length = list.checked.length;
-		
-		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
-			return;
-		}
-		
-		top.removeDevice(list.getCheckedList());
-		
-		top.getFrame("map").reload();
-		
-		reload();
+		filterDeviceList(form.elements.keyword.value);
 	}
 	
 	function onChangeLabel(e) {
-		form.elements.keyword.value = "";
+		//form.elements.keyword.value = "";
 		
-		changeLabel(this.value);
+		//changeLabel(this.value);
 	}
 	
-	function changeLabel(label) {
-		elements.tbody.appendChild(list.getRowsByLabel(label));
+	function onRemove() {
+		removeDeviceList();
 	}
+	/*
+	 * public method
+	 */
+	window.initLabels = function (labels) {
+		var select = form.elements.label,
+			option = document.createElement("option");
 	
-	function List(onselect) {
-		var list = this,
-			rowMap = {},
-			label = {};
+		// label select 초기화
+		select.length = 0;
 		
-		this.checked = [];
+		option.value = "";
+		option.text = "all labels";
+		option.selected = true;
 		
-		(function () {
-			var row, device, checkbox;
-			
-			for (var id in deviceList) {
-				row = document.createElement("ul");
-				device = deviceList[id];
-				
-				checkbox = document.createElement("input");
-				checkbox.type = "checkbox";
-				checkbox.onclick = onCheckItem;
-				
-				row.appendChild(checkbox);
-				row.appendChild(document.createElement("li")).textContent = device.name;
-				row.appendChild(document.createElement("li")).textContent = device.type;
-				row.appendChild(document.createElement("li")).textContent = device.ip;
-				row.appendChild(document.createElement("li")).textContent = "";
-				row.appendChild(document.createElement("li")).textContent = "";
-				row.appendChild(document.createElement("li")).textContent = "";
-				row.appendChild(document.createElement("li")).textContent = "";
-				
-				row.dataset.id = id;
-				
-				row.onclick = onSelectRow;
-				
-				rowMap[id] = row;
-				
-				parseLabel(row, device);
-			}
-		})();
+		select.add(option);
 		
-		this.reset = function (id) {
-			var row = rowMap[id],
-				col = row.children,
-				device = deviceList[id];
+		for (var i=0, length=labels.length; i<length; i++) {
+			option = document.createElement("option");
 			
-			col[1].textContent = device.name;
-			col[2].textContent = device.type;
-			col[3].textContent = device.ip;
-			col[4].textContent = "";
-			col[5].textContent = "";
-			col[6].textContent = "";
-			col[7].textContent = "";
-		};
-		
-		this.getRowsByLabel = function (labelName) {
-			var fragment = document.createDocumentFragment();
+			option.text = labels[i];
 			
-			for (var id in rowMap) {
-				fragment.appendChild(rowMap[id]);
-			}
-			
-			if (labelName) {
-				array = label[labelName];
-				
-				fragment = document.createDocumentFragment();
-				
-				if (array) {
-					for (var i=0, length=array.length; i<length; i++) {
-						fragment.appendChild(array[i]);
-					}
-				}
-			}
-			
-			return fragment;
-		};
+			select.add(option);
+		}
+	};
+	
+})(window, top);
 
-		this.getLabels = function() {
-			return Object.keys(label);
-		};
-
-		this.getCheckedList = function () {
-			var list = [],
-				length = this.checked.length;
-			
-			for(var i=0; i<length; i++) {
-				list[i] = this.checked[i].dataset.id;
-			}
-			
-			return list;
-		};
+/**
+ * list
+ */
+(function (window, undefined) {
+	var deviceData = top.getDeviceData(),
+		table = document.getElementById("tbody"),
+		rowMap = {};
+	
+	initDeviceList();
+	
+	function initDeviceList() {
+		var fragment = document.createDocumentFragment(),
+			labels = {},
+			row, device, checkbox, label;
 		
-		function onCheckItem(e) {
-			e.stopPropagation();
+		for (var id in deviceData) {
+			row = document.createElement("ul");
+			device = deviceData[id];
 			
-			var checked = list.checked,
-				row = this.parentNode,
-				index = checked.indexOf(row);
+			checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.value = id;
 			
-			if (this.checked) {
-				if (index === -1) {
-					checked[checked.length] = row;
-				}
-			}
-			else {
-				if (index !== -1) {
-					checked.splice(index, 1);
-				}
-			}
-		}
-		
-		function onSelectRow() {
-			list.selected = this;
+			row.appendChild(checkbox);
+			row.appendChild(document.createElement("li")).textContent = device.name;
+			row.appendChild(document.createElement("li")).textContent = device.type;
+			row.appendChild(document.createElement("li")).textContent = device.ip;
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
 			
-			onselect(this.dataset.id);
-		}
-		
-		function parseLabel(row, device) {
-			if (!device.label) {
-				return;
-			}
+			row.onclick = onSelectDevice.bind(undefined, id);
 			
-			var array = device.label.split(","),
-				labelName;
+			rowMap[id] = row;
 			
-			for (var i=0, length=array.length; i<length; i++) {
-				labelName = array[i];
+			if (device.label) {
+				label = device.label.split(",");
 				
-				if (!label[labelName]) {
-					label[labelName] = [];
+				for (var i=0, length=label.length; i<length; i++) {
+					row.classList.add(label[i]);
+					
+					labels[label[i]] = null;
 				}
-				
-				label[labelName].push(row);
 			}
+			
+			fragment.appendChild(row);
 		}
 		
+		table.appendChild(fragment);
+		
+		initLabels(Object.keys(labels));
 	}
 	
-	window.reload = function () {
-		document.location.reload();
+	/**
+	 * callback method
+	 */
+	function onSelectDevice(id) {
+		// TODO
+		console.log("selected >> "+ id);
+	}
+	
+	/**
+	 * public method
+	 */
+	this.getRowsByLabel = function (labelName) {
+		var fragment = document.createDocumentFragment();
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (labelName) {
+			array = label[labelName];
+			
+			fragment = document.createDocumentFragment();
+			
+			if (array) {
+				for (var i=0, length=array.length; i<length; i++) {
+					fragment.appendChild(array[i]);
+				}
+			}
+		}
+		
+		return fragment;
+	};
+
+	window.clearDeviceList = function () {
+		var fragment = document.createDocumentFragment(),
+			row;
+		
+		while (row = table.firstChild) {
+			fragment.appendChild(row);
+		}
+		
+		return fragment;
+	};
+	
+	window.filterDeviceList = function (keyword) {
+		var row = clearDeviceList().firstChild,
+			fragment = document.createDocumentFragment(),
+			device;
+		
+		while (row) {
+			device = deviceData[row.firstChild.value];
+			
+			if (device.name.indexOf(keyword) !== -1 || device.ip.indexOf(keyword) !== -1 /*device.type.indexOf(keyword) === -1*/) {
+				fragment.appendChild(row);
+			}
+			
+			row = row.nextSibling;
+		}
+		
+		table.appendChild(fragment);
+	};
+	
+	window.removeDeviceList =function () {
+		var clone = clearDeviceList(),
+			checked = clone.querySelectorAll("input:checked"),
+			length = checked.length;
+			
+		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
+			table.appendChild(clone);
+			
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {console.log(checked[i].value);
+			delete deviceData[checked[i].value];
+		}
+		
+		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
+		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
+		// 일단은 페이지 새로고침으로 해결
+		location.reload();
 	};
 	
 })(window, top);

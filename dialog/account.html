@@ -133,17 +133,17 @@ if (top === window) {
 	function onApply(e) {
 		e.preventDefault();
 		
-		var username = dialog.elements.username.value,
-			password = dialog.elements.password.value,
-			confirm = dialog.elements.confirm;
+		var username = form.elements.username.value,
+			password = form.elements.password.value,
+			confirm = form.elements.confirm;
 			
 		if (password === confirm.value) {
-			accountData[dialog.elements.username.value] = {
+			accountData[form.elements.username.value] = {
 				username: username,
 				password: password
 			};
 			
-			top.showView("../view/account.html");
+			top.showView("view/account.html");
 			
 			top.closeDialog();
 		}

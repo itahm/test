@@ -6,7 +6,7 @@
 
 		<style>
 #dialog {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	position: fixed; top: 30px; right: 0; bottom: 0; left: 30px;
 	width: 100%;
 	height: 100%;
 	background-color: rgba(255, 255, 255, .9);
@@ -23,23 +23,25 @@
 
 	<body>
 		<button>test</button>
-		<iframe id="dialog" class="hide"></iframe>
+		<input type="button" value="test2">
+		<iframe id="dialog" src="test2.html"></iframe>
 
 	<script>
-
-(function (window, undefined) {
-	var dialog = document.getElementById("dialog");
+	var frame = document.getElementById("dialog");
 	
-	dialog.onload = function () {
-		dialog.classList.remove("hide");
+(function (window, undefined) {
+	
+	
+	frame.onload = function () {
+		//frame.classList.remove("hide");
 	}
 	
 	window.showDialog = function (url) {
-		dialog.src = url;
+		frame.src = url;
 	};
 	
 	window.closeDialog = function () {
-		dialog.classList.add("hide");
+		frame.classList.add("hide");
 	};
 	
 	window.getSelectedDevice = function () {
@@ -150,8 +152,28 @@
 	
 }) (window);
 
+window.test = function () {
+	console.log("test good");
+};
+
+function abc () {
+	
+}
+var win;
 document.querySelector("button").onclick = function () {
-	showDialog("dialog/device.html");
+	//win = window.open("test.html", "event", "left=0, top=0, width="+ screen.availWidth+ ", height="+ screen.availHeight +"toolbar=0, location=0, fullscreen=1");
+	//win = window.open("test.html", "event", "left=0, top=0, toolbar=0, location=0, resizable=1, toolbar=0, menubar=0, titlebar=0");
+	frame.src = "about:blank";
+	//win.focus();
+}
+
+document.querySelector("input").onclick = function () {
+	win.focus();
+}
+
+if (opener) {
+	
+	console.log(opener);
 }
 
 	</script>
