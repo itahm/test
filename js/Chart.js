@@ -423,6 +423,10 @@ function format(milliseconds) {
 			return axisValueArray;
 		},
 		
+		capture: function () {
+			this.chart.download();
+		},
+		
 		download: function () {
 			var row, block, date, dateMills, value;
 			

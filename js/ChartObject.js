@@ -219,7 +219,15 @@ function fireEvent(eventType, element) {
 	 * @param {Canvas} canvas
 	 */
 	function drawGraph(chart, canvas) {
-		chart.context.drawImage(canvas, PADDING + chart.axisLeftWidth + MARGIN, PADDING + chart.axisTopHeight + MARGIN);
+		try {
+			chart.context.drawImage(canvas, PADDING + chart.axisLeftWidth + MARGIN, PADDING + chart.axisTopHeight + MARGIN);
+		}
+		catch (e) {
+			console.log(chart);
+			console.log(chart.context);
+			console.log(canvas);
+			console.log(e);
+		}
 	}
 	
 	function cutGraph(chart, canvas) {

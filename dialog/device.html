@@ -349,9 +349,11 @@ body:not(.snmp) .advanced >.snmp {
 			}
 		}
 		
-		top.createDevice(device);
+		if (!device.id) {
+			top.createDevice(device);
+		}
 		
-		top.refresh();
+		top.resetDeviceList();
 		
 		form.reset();
 	}

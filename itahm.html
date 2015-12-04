@@ -7,13 +7,13 @@
 		<title></title>
 		
 		<style>
-body {
+body, header, li, input, button {
 	font-family: tahoma, arial, "맑은 고딕";
 	margin: 0;
 	padding: 0; 
 }
 
-li, input, button, td {
+li, input, button {
 	font-size: 14px;
 }
 
@@ -23,26 +23,16 @@ header {
 	padding: 5px;
 	box-sizing: border-box;
 	font-size: 12px;
-	background-color: #0084ff;
+	background-color: #000;
+	color: #fafafa;
+	font-weight: bold;
+	font-size: 16px;
+	/*background-color: #0084ff;*/
 }
 
-.loading {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	background: rgba(255, 255, 255, .8) url("img/waiting.gif") no-repeat center;
-}
-
-div[role="main"] {
-	position: fixed; top: 40px; right: 0; left: 0; bottom: 0;
-}
-
-div[role="main"].setting {
-	padding: 10px;
-	background-color: rgba(255, 255, 255, 1);
-}
-
-div[role="main"].setting input {
-	padding: 10px;
-	box-sizing: border-box;
+header img {
+	vertical-align: middle;
+	border: 1px solid transparent;
 }
 
 iframe {
@@ -52,100 +42,14 @@ iframe {
 	border: 0;
 }
 
-.iframe {
-	position: absolute; width: 50%; height: 50%;
-}
-
-body.maximized .iframe {
-	width: 100%;
-	height: 100%;
-}
-
-.iframe.tl {
-	top: 0; left: 0;
-}
-
-.iframe.tr {
-	top: 0; right: 0;
-}
-
-.iframe.bl {
-	bottom: 0; left: 0;
-}
-
-.iframe.br {
-	bottom: 0; right: 0;
-}
-
-#profile li div:nth-child(1):before {
-	content: "community string";
-	width : 150px;
-	display: inline-block;
-}
-
-#profile li div:nth-child(2):before {
-	content: "snmp version";
-	width : 150px;
-	display: inline-block;
-}
-
-#profile li div:nth-child(3):before {
-	content: "udp port";
-	width : 150px;
-	display: inline-block;
-}
-
-#toolbar {
-	position: absolute; top: 0; right: 0;
-}
-
-button, input[type="button"] {
-	margin-left: 20px;
-	vertical-align: middle;
-	padding: .5em;
-}
-
-header img,
-#toolbar img {
-	vertical-align: middle;
-	border: 1px solid transparent;
-}
-
-header img:hover,
-#toolbar img:hover {
+header img:hover {
 	border-color: #ddf;
 	cursor: pointer;
-}
-
-#dialog:not(:empty) {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	display: flex;
-	flex-direction:row;
-	justify-content: center;
-	align-items: center;
-	background-color: rgba(255, 255, 255, .8);
-}
-
-#dialog>form {
-	padding: 20px;
-	background-color: #fff;
-	box-shadow: 0px 0px 20px 10px #ddd;
-}
-
-#dialog input,
-#dialog select {
-	padding: .5em;
-}
-
-#dialog select {
-	box-sizing: border-box;
-	width: 100%;
 }
 
 .flex {
 	display: flex;
 }
-
 
 .flex input {
 	flex: 1;
@@ -166,19 +70,117 @@ header img:hover,
 	background-color: #fff;
 }
 
-body.maximized #maximize,
-body.connected #form_agent,
-body.setting>:not(header):not(.setting),
-body:not(.maximized) #minimize,
-body:not(.setting)>.setting,
-body:not(.connected) .connected,
-body:not(.authorized) .authorized,
 body:not(.loading) .loading, 
 .hide {
 	display: none;
 }
 
+.loading {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	background: rgba(255, 255, 255, .8) url("img/waiting.gif") no-repeat center;
+}
 
+/**
+ * device list
+ */
+section {
+	position: fixed; top: 40px; right: 0; left: 0; bottom: 0;
+}
+
+section nav {
+	position: absolute; top: 0; right: 0; left: 0;
+	padding: 5px;
+	box-sizing: border-box;
+	height: 39px;
+	border-bottom: 1px;
+}
+
+section li,
+section input {
+	font-size: 12px;
+}
+
+.table {
+	position: absolute; top: 40px; right: 0; bottom: 0; left: 0;
+}
+
+.table ul {
+	margin: 0;
+	padding: 3px 0;
+	list-style: none;
+	display: flex;
+}
+
+.table li {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.table li:first-child {
+	flex: none;
+	width: 20px;
+}
+
+.thead {
+	position: absolute; top: 0; right: 0; left: 0;
+	height: 26px;
+	box-sizing: border-box;
+	background-color: #0084ff;
+	color: #ddf;
+	padding: 2px;
+}
+
+.thead li {
+	font-weight: bold;
+	text-align: center;
+}
+
+.thead li:not(:first-child) {
+	border-left: 1px solid #0af;
+}
+
+.thead li:last-child {
+	flex: none;
+	/* browser scrollbar의 너비에 따라 달라져야함*/ 
+	width: 17px;
+}
+
+
+.tbody {
+	position: absolute; top: 26px; right: 0; bottom: 0; left: 0;
+	background-color: #fff;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.tbody ul {
+	cursor: pointer;
+}
+
+.tbody ul:hover li:nth-child(2) {
+	text-decoration: underline;
+}
+
+.tbody ul:nth-child(odd) {
+	background-color: #fafafa;
+}
+
+.tbody li {
+	padding: 3px;
+}
+
+input[type=button],
+input[type=submit],
+input[type=text],
+select {
+	padding: .5em;
+}
+
+nav form {
+	white-space: nowrap;
+}
 		</style>
 		
 	</head>
@@ -186,27 +188,39 @@ body:not(.loading) .loading,
 	<body>
 	
 		<header>
+			ITAhM
 			<img src="img/gear_w.png" id="setting">
 			<img src="img/synchronize_w.png">
 		</header>
 		
-		<div role="main">
-			<section class="iframe tl">
-				<iframe id="frame_list"></iframe>
-			</section>
-			
-			<section class="iframe tr">
-				<iframe id="frame_map"></iframe>
-			</section>
-			
-			<section class="iframe bl">
-				<iframe id="frame_device"></iframe>
-			</section>
-			
-			<section class="iframe br">
-				<iframe id="frame_event"></iframe>
-			</section>
-		</div>
+		<section>
+			<nav>
+				<form id="form">
+					<input type="button" value="map" name="map">
+					<input type="button" value="add device" name="add">
+					<input type="button" value="remove device" name="remove">
+					<select name="label"></select>
+					<input type="text" name="keyword">
+					<input type="submit" value="search">
+				</form>
+			</nav>
+			<div class="table">
+				<div class="thead" id="htead">
+					<ul>
+						<li>
+						<li>name
+						<li>type
+						<li>ip address
+						<li>processor load
+						<li>memory usage
+						<li>disk usage
+						<li>interface throughput
+						<li>
+					</ul>
+				</div>
+				<div class="tbody" id="tbody"></div>
+			</div>
+		</section>
 		
 		<div class="loading"></div>
 		
@@ -214,63 +228,11 @@ body:not(.loading) .loading,
 		
 		<iframe id="dialog" class="hide"></iframe>
 		
-		<div class="hide">
-			<div id="toolbar" class="minimized">
-				<img id="maximize" src="img/maximize.png">
-				<img id="minimize" src="img/minimize.png">
-			</div>
-			
-			<iframe id="frame_icon"></iframe>
-			
-			
-			
-			<form id="device_dialog">
-				<h2>device</h2>
-				<table>
-					<tbody>
-						<tr>
-							<td>name</td>
-							<td>
-								<input type="text" name="name" placeholder="device name" required autofocus>
-							</td>
-						</tr>
-						<tr>
-							<td>ip address</td>
-							<td>
-								<input type="text" name="ip" title="valid ip v4 address required" placeholder="device ip address"
-									pattern="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" required>
-							</td>
-						</tr>
-						<tr>
-							<td>type</td>
-							<td>
-								<select name="type"></select>
-							</td>
-						</tr>
-						<tr>
-							<td>label</td>
-							<td>
-								<input type="text" name="label">
-							</td>
-						</tr>
-						<tr>
-							<td>snmp profile</td>
-							<td>
-								<select name="profile"></select>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="flex">
-					<input type="reset" value="cancel">
-					<input type="submit" value="apply">
-				</div>
-			</form>
-			
-		</div>
+		<iframe id="frame_icon" class="hide"></iframe>
 		
 		<script src="js/icon.js"></script>
-		<script src="js/Communicator.js"></script>
+		<!--script src="js/Communicator.js"></script-->
+		<script src="js/Communicator_tmp.js"></script>
 		<script>
 
 var elements = {
@@ -293,88 +255,19 @@ var elements = {
 (function (window, undefined){
 	var agent;
 	
-	// event 등록
-	elements.setting.addEventListener("click", onSetting, false);
-	elements.maximize.addEventListener("click", onMaximize, false);
-	elements.minimize.addEventListener("click", onMinimize, false);
-	
-	// 각 frame들에게 event 등록
-	(function (frame) {
-		for (var id in frame) {
-			frame[id].addEventListener("mouseenter", onFocus, false);
-		}
-		
-	}) (elements.frame);
-	
-	/**
-	 * load
-	 * agent가 결정되고 signin 하면 호출된다.
-	 * deviceData, iconData 초기화
-	 */
-	function load() {
-		document.body.classList.add("authorized");
-		document.body.classList.remove("setting");
-		
-		initAccount();
-		initProfile();
-		initDevice();
-		initIcon();
-	}
-	
+		initEvent();
 	/**
 	 * callback method
-	 */
-		
-		
+	 */	
 	function onSetting(e) {
 		showView("view/setting.html");
-		//document.body.classList.toggle("setting");
 	}
-	
-	function onMaximize(e) {
-		maximize(this.parentNode.parentNode);
-	}
-	
-	function onMinimize(e) {
-		minimize();
-	}
-	
-	function onFocus() {
-		var selected = this.parentNode;
-		
-		selected.appendChild(elements.toolbar);
-	}
-	
-	function onAddAccount (e) {
-		e.preventDefault();
-	}
-	
-	function onRemoveAccount (e) {
-		e.preventDefault();
-	}	
 	
 	/**
 	 * private method
 	 */
-	
-	function maximize(frame) {
-		for (var id in elements.frame) {
-			elements.frame[id].parentNode.classList.add("hide");
-		}
-		
-		frame.classList.remove("hide");
-		
-		document.body.classList.add("maximized");
-	}
-	
-	function minimize() {
-		var frame = elements.frame;
-		
-		for (var id in frame) {
-			frame[id].parentNode.classList.remove("hide");
-		}
-		
-		document.body.classList.remove("maximized");
+	function initEvent() {
+		elements.setting.addEventListener("click", onSetting, false);
 	}
 	
 	/**
@@ -382,36 +275,9 @@ var elements = {
 	 */
 	
 	window.unauthorized = function () {
-		var classList = document.body.classList;
+		document.body.classList.remove("authorized");
 		
 		showView("view/setting.html");
-	};
-	
-	window.selectDevice = function (id) {
-		
-		if (id) {
-			elements.frame.map.contentWindow.selectDevice(id);
-		}
-		
-		elements.frame.device.contentWindow.resetDevice(id);
-	};
-	
-	window.minimize = function () {
-		if (document.body.classList.contains("maximized")) {
-			minimize();
-		}
-	};
-	
-	window.getFrame = function (frameName) {
-		return elements.frame[frameName].contentWindow;
-	};
-	
-	window.reload = function () {
-		location.reload();
-	};
-	
-	window.refresh = function () {
-		
 	};
 	
 	window.authorized = function (address) {
@@ -426,7 +292,7 @@ var elements = {
 		return agent;
 	};
 	
-	window.tryEcho = function (address, onecho) {console.log(address);
+	window.tryEcho = function (address, onecho) {
 		var communicator = new Communicator();
 		
 		agent = address;
@@ -439,12 +305,9 @@ var elements = {
 		}, onecho);
 		
 		window.sendRequest = communicator.send;
-	}
+	};
 	
 }) (window);
-
-
-
 
 // icon 관리
 (function (window, undefined) {
@@ -452,35 +315,7 @@ var elements = {
 		customData = {},
 		types = [],
 		index;
-	/*
-	function loadIcon() {
-		var img = customData[types[index]],
-			icon = new Image();
-		
-		icon.setAttribute("id", img.id);
-		icon.setAttribute("class", img.group);
-		icon.setAttribute("alt", img.alt);
-		icon.setAttribute("src", img.src);
-		icon.onload = onLoadIcon;
-	}
 	
-	// callback
-	
-	// img.onload
-	function onLoadIcon() {
-		var icon = this;
-		
-		iconData[icon.id] = icon;
-		
-		if (++index < types.length) {
-			loadIcon()
-		}
-		else {
-			onIconLoaded(iconData);
-		}
-		
-	}
-	*/
 	// frame.onload
 	function onLoadFrame() {
 		var images = this.contentWindow.document.getElementsByTagName("img"),
@@ -492,13 +327,7 @@ var elements = {
 			iconData[icon.getAttribute("id")] = icon;
 		}
 		
-		// 모든 frame load
-		var frame;
-		for (var name in elements.frame) {
-			frame = elements.frame[name];
-			frame.src = name+".html";
-			frame.contentWindow.addEventListener("load", onFrameLoad, false);
-		}
+		initDeviceList();
 	}
 	
 	function onResponse(data, status) {
@@ -537,66 +366,29 @@ var elements = {
 
 //device 관리
 (function (window, undefined) {
-	var dialog = document.getElementById("device_dialog"),
-		deviceData,
+	var deviceData,
 		selectedDevice,
 		tmpID = -1,
 		applyDevice;
 	
-	// 적용
-	dialog.addEventListener("submit", function (e) {
-		e.preventDefault();
-		
-		applyDevice();		
-	}, false);
-	
-	// 취소
-	dialog.addEventListener("reset", function (e) {
-		elements.dialog.removeChild(dialog);
-	}, false);
-	
-	// private method
-	
-	// callback
+	// callback method
 	function onResponse(data, status) {
-		if (status != 200) {
-			return;
+		if (status === 200) {
+			deviceData = data;
 		}
-		
-		deviceData = data;
-		
-		// profile data가 반드시 존재 해야함
-		var profileData = getProfileData();
+		else if (status === 401) {
+			unauthorized();
+		}
+		else {
+			throw "";
+		}
 	}
 	
-	function onApply(id) {
-		deviceData[id] = {
-			name: dialog.elements.name.value,
-			ip: dialog.elements.ip.value,
-			type: dialog.elements.type.value,
-			label: dialog.elements.label.value,
-			profile: dialog.elements.profile.value
-		};
-		
-		dialog.reset();
-	}
-	
-	window.onFrameLoad = function () {
-		if (this.id === "frame_device") {
-			console.log("success");
-		} 
-	}
-	
+	/**
+	 * public method
+	 */
 	window.getDeviceData = function () {
 		return deviceData;
-	};
-	
-	window.addDevice = function () {
-		applyDevice = onApply.bind(undefined, tmpID--);
-		
-		elements.dialog.appendChild(dialog);
-		
-		dialog.elements.name.focus();
 	};
 	
 	window.addDevice = function () {
@@ -615,26 +407,8 @@ var elements = {
 		deviceData[id] = device;
 	}
 	
-	window._editDevice = function (id) {
-		var device = deviceData[id];
-		
-		applyDevice = onApply.bind(undefined, id);
-		
-		elements.dialog.appendChild(dialog);
-		
-		dialog.elements.name.value = device.name;
-		dialog.elements.ip.value = device.ip;
-		dialog.elements.type.value = device.type;
-		dialog.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
-		dialog.elements.profile.value = device.profile;
-		
-		dialog.elements.name.select();
-	};
-	
-	window.editDevice = function (id) {
-		selectedDevice = deviceData[id];
-		
-		showDialog("dialog/device.html");
+	window.selectDevice = function (device) {
+		selectedDevice = device;
 	}
 	
 	window.removeDevice = function (idList) {
@@ -751,6 +525,8 @@ var elements = {
 	
 	window.closeView = function () {
 		view.classList.add("hide");
+		
+		
 	};
 	
 }) (window);
@@ -776,6 +552,288 @@ var elements = {
 	};
 	
 }) (window);
+
+/**
+ * control
+ */
+(function (window, undefined) {
+	var form = document.getElementById("form");
+	
+	initEvent();
+	
+	/**
+	 * private method
+	 */
+	function initEvent() {
+		form.elements.add.addEventListener("click", addDevice, false);
+		form.elements.remove.addEventListener("click", onRemove, false);
+		form.elements.label.addEventListener("change", onChangeLabel, false);
+		form.addEventListener("submit", onSearch, false);
+		form.elements.map.addEventListener("click", onShowMap, false);
+	}
+	
+	/**
+	 * callback method
+	 */
+	function onSearch(e) {
+		e.preventDefault();
+		
+		selectLabel(form.elements.label.value);
+
+		filterDeviceList(form.elements.keyword.value);
+	}
+	
+	function onChangeLabel(e) {
+		form.elements.keyword.value = "";
+		
+		selectLabel(form.elements.label.value);
+	}
+	
+	function onRemove() {
+		removeDeviceList();
+	}
+	
+	function onShowMap() {
+		showView("view/map.html");
+	}
+	
+	/*
+	 * public method
+	 */
+	window.initLabels = function (labels) {
+		var select = form.elements.label,
+			option = document.createElement("option");
+	
+		// label select 초기화
+		select.length = 0;
+		
+		option.value = "";
+		option.text = "all labels";
+		option.selected = true;
+		
+		select.add(option);
+		
+		for (var i=0, length=labels.length; i<length; i++) {
+			option = document.createElement("option");
+			
+			option.text = labels[i];
+			
+			select.add(option);
+		}
+	};
+	
+})(window);
+
+/**
+ * list
+ */
+(function (window, undefined) {
+	var deviceData,
+		table = document.getElementById("tbody"),
+		rowMap = {};
+	
+	/**
+	 * callback method
+	 */
+	function onSelectDevice(id) {
+		var device = deviceData[id];
+		
+		selectDevice(device);
+		
+		if (device.snmp) {
+			window.open("view/chart.html", id, "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0");
+		}
+		else {
+			showDialog("dialog/device.html");
+		}
+	}
+	
+	function onStopPropagation(e) {
+		e.stopPropagation();
+	}
+	
+	function setDeviceList() {
+		var fragment = document.createDocumentFragment(),
+			labels = {},
+			row, device, checkbox, label;
+		
+		for (var id in deviceData) {
+			row = document.createElement("ul");
+			device = deviceData[id];
+			
+			checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.value = id;
+			checkbox.onclick = onStopPropagation;
+			
+			row.appendChild(document.createElement("li")).appendChild(checkbox);
+			row.appendChild(document.createElement("li")).textContent = device.name;
+			row.appendChild(document.createElement("li")).textContent = device.type;
+			row.appendChild(document.createElement("li")).textContent = device.ip;
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			
+			row.onclick = onSelectDevice.bind(undefined, id);
+			
+			rowMap[id] = row;
+			
+			if (device.label) {
+				label = device.label.split(",");
+				
+				for (var i=0, length=label.length; i<length; i++) {
+					row.classList.add(label[i]);
+					
+					labels[label[i]] = null;
+				}
+			}
+			
+			fragment.appendChild(row);
+		}
+		
+		table.appendChild(fragment);
+		
+		initLabels(Object.keys(labels));
+}
+	/**
+	 * public method
+	 */
+	this.getRowsByLabel = function (labelName) {
+		var fragment = document.createDocumentFragment();
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (labelName) {
+			array = label[labelName];
+			
+			fragment = document.createDocumentFragment();
+			
+			if (array) {
+				for (var i=0, length=array.length; i<length; i++) {
+					fragment.appendChild(array[i]);
+				}
+			}
+		}
+		
+		return fragment;
+	};
+
+	window.clearDeviceList = function () {
+		var fragment = document.createDocumentFragment(),
+			row;
+		
+		while (row = table.firstChild) {
+			fragment.appendChild(row);
+		}
+		
+		return fragment;
+	};
+	
+	window.filterDeviceList = function (keyword) {
+		var row = clearDeviceList().firstChild,
+			next,
+			fragment = document.createDocumentFragment(),
+			device;
+		
+		while (row) {
+			next = row.nextSibling;
+			
+			device = deviceData[row.firstChild.value];
+			
+			if (device.name.indexOf(keyword) !== -1 || device.ip.indexOf(keyword) !== -1 /*device.type.indexOf(keyword) === -1*/) {
+				fragment.appendChild(row);
+			}
+			
+			row = next;
+		}
+		
+		table.appendChild(fragment);
+	};
+	
+	window.selectLabel = function (label) {
+		var fragment = document.createDocumentFragment(),
+			rows;
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (label) {
+			rows = [].slice.call(fragment.querySelectorAll("."+ label), 0);
+			
+			fragment = document.createDocumentFragment();
+			
+			for (var i=0, length=rows.length; i<length; i++) {
+				fragment.appendChild(rows[i]);
+			}
+		}
+		
+		table.appendChild(fragment);
+	};
+	
+	window._removeDeviceList =function () {
+		var clone = clearDeviceList(),
+			checked = clone.querySelectorAll("input:checked"),
+			length = checked.length;
+			
+		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
+			table.appendChild(clone);
+			
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {
+			delete deviceData[checked[i].value];
+		}
+		
+		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
+		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
+		// 일단은 페이지 새로고침으로 해결
+		location.reload();
+	};
+	
+	window.removeDeviceList =function () {
+		var checked = document.querySelectorAll("#tbody input:checked"),
+			length = checked.length;
+			
+		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {
+			delete deviceData[checked[i].value];
+		}
+		
+		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
+		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
+		// 일단은 페이지 새로고침으로 해결
+		location.reload();
+	};
+	
+	window.initDeviceList = function () {
+		deviceData = getDeviceData();
+		
+		setDeviceList();
+	};
+	
+	window.resetDeviceList = function () {
+		var row;
+		
+		while(row = table.firstChild) {
+			table.removeChild(row);
+		}
+		
+		setDeviceList();
+		
+		if (getSelectedDevice()) {
+			showView("view/chart.html");
+		}
+	};
+	
+})(window);
 
 		</script>
 	

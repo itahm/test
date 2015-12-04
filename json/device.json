@@ -7,7 +7,7 @@
         "y": 330.4400000000001,
         "id": "0",
         "type": "server",
-        "iFace": {}
+        "ifEntry": {}
     },
     "4": {
         "ip": "10.5.100.99",
@@ -18,7 +18,7 @@
         "label": "",
         "community": "",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "eth1": "73",
             "eth2": "5"
         }
@@ -31,7 +31,7 @@
         "id": "5",
         "community": "",
         "type": "router",
-        "iFace": {
+        "ifEntry": {
             "e1/0": "4"
         }
     },
@@ -43,7 +43,7 @@
         "id": "10",
         "type": "storage",
         "community": "",
-        "iFace": {
+        "ifEntry": {
             "eth2": "62"
         }
     },
@@ -56,7 +56,7 @@
         "label": "",
         "type": "server",
         "community": "",
-        "iFace": {
+        "ifEntry": {
             "eth0": "62"
         }
     },
@@ -67,7 +67,7 @@
         "y": -164.84000000000003,
         "id": "15",
         "type": "concentrator",
-        "iFace": {
+        "ifEntry": {
             "eth7": "47",
             "eth8": "46"
         }
@@ -79,7 +79,7 @@
         "y": -104.84000000000003,
         "id": "40",
         "type": "firewall",
-        "iFace": {
+        "ifEntry": {
             "eth1": "53",
             "eth2": "46",
             "eth3": "68",
@@ -93,7 +93,7 @@
         "y": -104.84000000000003,
         "id": "41",
         "type": "firewall",
-        "iFace": {
+        "ifEntry": {
             "eth1": "52",
             "eth2": "47",
             "eth3": "68",
@@ -108,7 +108,7 @@
         "id": "46",
         "label": "idc,public",
         "type": "router",
-        "iFace": {
+        "ifEntry": {
             "g2/21": "40",
             "g0/8": "80",
             "g1/1": "47",
@@ -123,7 +123,7 @@
         "id": "47",
         "label": "public,idc",
         "type": "router",
-        "iFace": {
+        "ifEntry": {
             "g2/21": "41",
             "g1/2": "46",
             "g1/11": "15"
@@ -136,7 +136,7 @@
         "y": 20.160000000000025,
         "id": "52",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "g0/1": "41",
             "g0/2": "58",
             "g0/3": "73",
@@ -150,7 +150,7 @@
         "y": 20.160000000000025,
         "id": "53",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "g0/1": "40",
             "g0/2": "58",
             "g0/3": "73",
@@ -165,7 +165,7 @@
         "y": 181.24,
         "id": "57",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "ge3": "53"
         }
     },
@@ -176,7 +176,7 @@
         "y": 176.92,
         "id": "58",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "f0/2": "53",
             "f0/3": "52"
         }
@@ -188,7 +188,7 @@
         "y": 270.80000000000007,
         "id": "62",
         "type": "workgroup",
-        "iFace": {
+        "ifEntry": {
             "fe24": "73",
             "fe1": "11",
             "fe23": "10"
@@ -202,7 +202,7 @@
         "id": "68",
         "label": "idc,dmz",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "g2/47": "40",
             "g2/48": "41"
         }
@@ -214,7 +214,7 @@
         "y": -62.839999999999975,
         "id": "69",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "g2/47": "40",
             "g2/48": "41"
         }
@@ -226,7 +226,7 @@
         "y": 175.16,
         "id": "73",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "g3/1": "53",
             "g3/2": "52",
             "f1/1": "62",
@@ -240,7 +240,7 @@
         "y": 175.16,
         "id": "74",
         "type": "l3switch",
-        "iFace": {
+        "ifEntry": {
             "g2/1": "53",
             "g2/2": "52"
         }
@@ -252,7 +252,7 @@
         "y": -344.84000000000003,
         "id": "80",
         "type": "cloud",
-        "iFace": {
+        "ifEntry": {
             "kt": "46"
         }
     }

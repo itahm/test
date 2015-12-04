@@ -124,17 +124,21 @@ input[disabled] {
 }
 
 #menu_link {
-	background: #fff url("img/link.png") no-repeat 5px center;
+	background: #fff url("../img/link.png") no-repeat 5px center;
 }
 
 #menu_select {
-	background: #fff url("img/select.png") no-repeat 5px center;
+	background: #fff url("../img/select.png") no-repeat 5px center;
+}
+
+nav.button {
+	position: fixed; top: 10px; right: 10px;
 }
 
 		</style>
 	
-		<script src="js/Draggable.js"></script>
-		<script src="js/Canvas.js"></script>
+		<script src="../js/Draggable.js"></script>
+		<script src="../js/Canvas.js"></script>
 			
 	</head>
 	
@@ -176,6 +180,12 @@ input[disabled] {
 			<input type="button" value="link" id="link">
 			<input type="button" value="cancel" id="cancel">
 		</aside>
+		
+		<nav class="button">
+			<a id="detach" title="open new window"><img src="../img/stick.png"></a>
+			<a id="close" title="close window"><img src="../img/close.png"></a>
+		</nav>
+		
 		
 		<div class="hide">
 			<div id="menu">
@@ -248,6 +258,7 @@ input[disabled] {
 	elements.cancel.addEventListener("click", onCancel, false);
 	elements.peer1.reset.addEventListener("click", resetPeer.bind(undefined, elements.peer1), false);
 	elements.peer2.reset.addEventListener("click", resetPeer.bind(undefined, elements.peer2), false);
+	document.getElementById("close").addEventListener("click", onClose, false);
 	
 	/** test 
 	document.getElementById("test").addEventListener("click", function () {
@@ -481,6 +492,10 @@ input[disabled] {
 				list.appendChild(li);
 			}
 		}
+	}
+	
+	function onClose() {
+		top.closeView();
 	}
 	
 	function onSelectDevice() {

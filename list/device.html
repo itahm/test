@@ -18,7 +18,7 @@ li {
 	font-size: 12px;
 }
 
-header {
+nav {
 	position: fixed; top: 0; right: 0; left: 0;
 	padding: 5px;
 	box-sizing: border-box;
@@ -26,25 +26,25 @@ header {
 	border-bottom: 1px;
 }
 
-section {
+.table {
 	position: fixed; top: 40px; right: 0; bottom: 0; left: 0;
 }
 
-ul {
+.table ul {
 	margin: 0;
 	padding: 3px 0;
 	list-style: none;
 	display: flex;
 }
 
-li {
+.table li {
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-li:first-child {
+.table li:first-child {
 	flex: none;
 	width: 20px;
 }
@@ -104,7 +104,7 @@ select {
 	padding: .5em;
 }
 
-form {
+header form {
 	white-space: nowrap;
 }
 		</style>
@@ -168,17 +168,15 @@ if (window === top) {
 	function onSearch(e) {
 		e.preventDefault();
 		
-		if (!keyword) {	
-			return;
-		}
-		
+		selectLabel(form.elements.label.value);
+
 		filterDeviceList(form.elements.keyword.value);
 	}
 	
 	function onChangeLabel(e) {
-		//form.elements.keyword.value = "";
+		form.elements.keyword.value = "";
 		
-		//changeLabel(this.value);
+		selectLabel(form.elements.label.value);
 	}
 	
 	function onRemove() {
@@ -233,6 +231,7 @@ if (window === top) {
 			checkbox = document.createElement("input");
 			checkbox.type = "checkbox";
 			checkbox.value = id;
+			checkbox.onclick = onStopPropagation;
 			
 			row.appendChild(checkbox);
 			row.appendChild(document.createElement("li")).textContent = device.name;
@@ -273,6 +272,9 @@ if (window === top) {
 		console.log("selected >> "+ id);
 	}
 	
+	function onStopPropagation(e) {
+		e.stopPropagation();
+	}
 	/**
 	 * public method
 	 */
@@ -311,23 +313,47 @@ if (window === top) {
 	
 	window.filterDeviceList = function (keyword) {
 		var row = clearDeviceList().firstChild,
+			next,
 			fragment = document.createDocumentFragment(),
 			device;
 		
 		while (row) {
+			next = row.nextSibling;
+			
 			device = deviceData[row.firstChild.value];
 			
 			if (device.name.indexOf(keyword) !== -1 || device.ip.indexOf(keyword) !== -1 /*device.type.indexOf(keyword) === -1*/) {
 				fragment.appendChild(row);
 			}
 			
-			row = row.nextSibling;
+			row = next;
 		}
 		
 		table.appendChild(fragment);
 	};
 	
-	window.removeDeviceList =function () {
+	window.selectLabel = function (label) {
+		var fragment = document.createDocumentFragment(),
+			rows;
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (label) {
+			rows = [].slice.call(fragment.querySelectorAll("."+ label), 0);
+			
+			fragment = document.createDocumentFragment();
+			
+			for (var i=0, length=rows.length; i<length; i++) {
+				fragment.appendChild(rows[i]);
+			}
+		}
+		
+		table.appendChild(fragment);
+	};
+	
+	window._removeDeviceList =function () {
 		var clone = clearDeviceList(),
 			checked = clone.querySelectorAll("input:checked"),
 			length = checked.length;
@@ -338,7 +364,25 @@ if (window === top) {
 			return;
 		}
 		
-		for (var i=0; i<length; i++) {console.log(checked[i].value);
+		for (var i=0; i<length; i++) {
+			delete deviceData[checked[i].value];
+		}
+		
+		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
+		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
+		// 일단은 페이지 새로고침으로 해결
+		location.reload();
+	};
+	
+	window.removeDeviceList =function () {
+		var checked = document.querySelectorAll("#tbody input:checked"),
+			length = checked.length;
+			
+		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {
 			delete deviceData[checked[i].value];
 		}
 		
