@@ -184,7 +184,7 @@ body:not(.snmp) .advanced >.snmp {
 		form.addEventListener("reset", onCancel, false);
 		document.getElementById("advanced").addEventListener("click", onAdvanced, false);
 		form.elements["add"].addEventListener("click", onAdd, false);
-		form.elements["remove"].addEventListener("click", onRemove, false);
+		form.elements.remove.addEventListener("click", onRemove, false);
 		
 		var snmp = form.elements.snmp;
 		
@@ -367,20 +367,20 @@ body:not(.snmp) .advanced >.snmp {
 	}
 	
 	function onRemove() {
-		var inputs = [].slice.call(customList.getElementsByTagName("input"), 0),
-			checkbox;
+		var checkedElements = [].slice.call(document.querySelectorAll("#custom_list input:checked"), 0),
+			length = checkedElements.length,
+			checked;
 		
-		for (var i=0, length=inputs.length; i<length; i++) {
-			checkbox = inputs[i];
+		if (!confirm("remove "+ length +"interface(s)?")) {
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {
+			checked = checkedElements[i];
 			
-			if (checkbox.type === "checkbox" && checkbox.checked) {
-				
-				if (checkbox.value) {
-					delete device.ifEntry[checkbox.value];
-				}
-				
-				customList.removeChild(checkbox.parentNode);
-			}
+			delete device.ifEntry[checked.value];
+			
+			customList.removeChild(checked.parentNode);
 		}
 	}
 	

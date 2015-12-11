@@ -184,7 +184,7 @@ function getPos(canvas, e) {
 		hitTest: function (x, y) {
 			var node;
 			
-			for (var i=0, length=this.layers.length; i<length; i++) {
+			for (var i=this.layers.length; i-->0;) {
 				node = this.layers[i].hitTest(x, y);
 				
 				if (node) {

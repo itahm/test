@@ -5,177 +5,511 @@
 		<title>Insert title here</title>
 
 		<style>
-#dialog {
-	position: fixed; top: 30px; right: 0; bottom: 0; left: 30px;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(255, 255, 255, .9);
-	border: 0;
-	margin: 0;
-	padding: 0;
+svg {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	width: 100%; height: 100%;
 }
 
-.hide {
-	display: none;
+image {
+	fill: #f00;
+}
+
+line {
+	stroke: #0f0;
+	stroke-width: 2;
+}
+
+text {
+	font-family: tahoma, arial, "맑은 고딕";
+	font-size: 10px;
+	fill: #000;
+	text-anchor: middle;
 }
 		</style>
 	</head>
 
 	<body>
-		<button>test</button>
-		<input type="button" value="test2">
-		<iframe id="dialog" src="test2.html"></iframe>
-
+		<svg id="svg">
+			<g id="canvas" transform="translate(0, 0) translate(0, 0) scale(1, 1) translate(0, 0)">
+				<g id="line" transform="translate(20, 20)"></g>
+				<g id="if_name" transform="translate(20, 20)"></g>
+				<g id="device"></g>
+			</g>
+		</svg>
+	<script src="js/Draggable.js"></script>
 	<script>
-	var frame = document.getElementById("dialog");
+	var svgNS = "http://www.w3.org/2000/svg",
+		xlinkNS = "http://www.w3.org/1999/xlink",
+		svg = document.getElementById("svg"),
+		canvas = document.getElementById("canvas"),
+		transformList = canvas.transform.baseVal,
+		transform = {
+			base: transformList.getItem(0),
+			translate: transformList.getItem(1),
+			scale: transformList.getItem(2),
+			tmp: transformList.getItem(3)
+		},
+		scale = 1;
 	
+	window.addEventListener("resize", function (e) {
+		resetBase();
+	}, false);
+	
+	svg.addEventListener("wheel", function (e) {
+		if (e.deltaY < 0) {
+			//확대
+			scale *= 1.1;
+		}
+		else {
+			//축소
+			scale /= 1.1;
+		}
+		
+		transform.scale.setScale(scale, scale);
+	}, false);
+	
+	svg.addEventListener("dragstart", function (e) {
+		var data = e.detail,
+			target = data.target;
+		
+		if (target == this) {
+			
+		}
+		else if (e.target.tagName === "image") {
+			
+		}
+	}, false);
+	
+	svg.addEventListener("dragmove", function (e) {
+		var data = e.detail,
+			target = data.target;
+		
+		if (target == this) {
+			transform.tmp.setTranslate(data.dragX / scale, data.dragY / scale);
+		}
+		else if (target.tagName === "image") {
+			target.transform.baseVal.getItem(1).setTranslate(data.dragX / scale, data.dragY / scale);
+		}
+	}, false);
+	
+	svg.addEventListener("dragend", function (e) {
+		var data = e.detail,
+			target = data.target;
+		
+		if (target == this) {
+			transform.tmp.setTranslate(0, 0);
+			transform.translate.setMatrix(transform.translate.matrix.translate(data.dragX, data.dragY));
+		}
+		else if (target.tagName === "image") {
+			var transformList = target.transform.baseVal,
+				base = transformList.getItem(0),
+				tmp = transformList.getItem(1),
+				x = data.dragX / scale,
+				y = data.dragY / scale;
+	
+			tmp.setTranslate(0, 0);
+			base.setMatrix(base.matrix.translate(x, y));
+			
+			moveLine(target.getAttributeNS(null, "id"), x, y);
+		}
+	}, false);
+	
+	function resetBase() {
+		rect = svg.getBoundingClientRect();
+		
+		transform.base.setTranslate(rect.width /2, rect.height /2);
+	}
+	
+	new Draggable(svg);
+	
+	resetBase();
+	
+	
+	
+	
+
 (function (window, undefined) {
 	
+	var canvas = document.getElementById("device"),
+		svgDevice, device;
+
+	window.initDevice = function () {
+		for (var id in deviceData) {
+			svgDevice = document.createElementNS(svgNS, "image");
+			
+			device = deviceData[id];
+			
+			svgDevice.setAttributeNS(null, "id", device.id);
+			svgDevice.setAttributeNS(null, "x", device.x);
+			svgDevice.setAttributeNS(null, "y", device.y);
+			svgDevice.setAttributeNS(xlinkNS, "xlink:href", "img/router.svg");
+			svgDevice.setAttributeNS(null, "width", "40px");
+			svgDevice.setAttributeNS(null, "height", "40px");
+			svgDevice.setAttributeNS(null, "transform", "translate(0, 0) translate(0, 0)");
+			
+			canvas.appendChild(svgDevice);
+			
+			setLine(device);
+		}
+	};
+		
+}) (window);
+
+(function (window, undefined) {
+	var canvas = document.getElementById("if_name");
 	
-	frame.onload = function () {
-		//frame.classList.remove("hide");
-	}
-	
-	window.showDialog = function (url) {
-		frame.src = url;
+	window.setLabel = function (name, x1, y1, x2, y2) {
+		var nameSvg = document.createElementNS(svgNS, "text");
+		
+		nameSvg.textContent = name;
+		nameSvg.setAttributeNS(null, "x", (x1 *2 + x2) /3);
+		nameSvg.setAttributeNS(null, "y", (y1 *2 + y2) /3);
+		
+		canvas.appendChild(nameSvg);
 	};
 	
-	window.closeDialog = function () {
-		frame.classList.add("hide");
-	};
-	
-	window.getSelectedDevice = function () {
-		return {
-			"ip":"127.0.0.1","x":0,"name":"localhost","y":0,"id":"0","snmp": true, "profile":"public","type":"server"
-		};
-	}
-	
-	window.getIconData = function () {
-		return {
-		    "server": {
-		        "group": "server",
-		        "alt": "server",
-		        "src": "img/server.png"
-		    },
-		    "mainframe": {
-		        "group": "server",
-		        "alt": "mainframe",
-		        "src": "img/mainframe.png"
-		    },
-		    "database": {
-		        "group": "server",
-		        "alt": "database",
-		        "src": "img/database.png"
-		    },
-		    "storage": {
-		        "group": "server",
-		        "alt": "storage",
-		        "src": "img/storage.png"
-		    },
-		    "www": {
-		        "group": "server",
-		        "alt": "web server",
-		        "src": "img/www.png"
-		    },
-		    "network": {
-		        "group": "network",
-		        "alt": "network",
-		        "src": "img/network.png"
-		    },
-		    "workgroup": {
-		        "group": "network",
-		        "alt": "workgroup switch",
-		        "src": "img/workgroup.png"
-		    },
-		    "dummy": {
-		        "group": "network",
-		        "alt": "dummy hub",
-		        "src": "img/hub.png"
-		    },
-		    "l4switch": {
-		        "group": "network",
-		        "alt": "layer4 switch",
-		        "src": "img/l4switch.png"
-		    },
-		    "l3switch": {
-		        "group": "network",
-		        "alt": "layer3 switch",
-		        "src": "img/l3switch.png"
-		    },
-		    "router": {
-		        "group": "network",
-		        "alt": "router",
-		        "src": "img/router.png"
-		    },
-		    "firewall": {
-		        "group": "network",
-		        "alt": "firewall",
-		        "src": "img/firewall.png"
-		    },
-		    "vpn": {
-		        "group": "network",
-		        "alt": "vpn gateway",
-		        "src": "img/gateway.png"
-		    },
-		    "concentrator": {
-		        "group": "network",
-		        "alt": "vpn concentrator",
-		        "src": "img/concentrator.png"
-		    },
-		    "wireless": {
-		        "group": "network",
-		        "alt": "wireless device",
-		        "src": "img/wireless.png"
-		    },
-		    "accesspoint": {
-		        "group": "network",
-		        "alt": "accesspoint",
-		        "src": "img/accesspoint.png"
-		    },
-		    "office": {
-		        "group": "etc",
-		        "alt": "office",
-		        "src": "img/office.png"
-		    },
-		    "cloud": {
-		        "group": "etc",
-		        "alt": "cloud",
-		        "src": "img/cloud.png"
-		    },
-		    "unknown": {
-		        "group": "etc",
-		        "alt": "unknown",
-		        "src": "img/unknown.png"
-		    }
-		};
+	window.moveLabel = function (nameSvg, x, y) {
+		nameSvg.setAttributeNS(null, "x", Number(nameSvg.getAttributeNS(null, "x")) + x);
+		nameSvg.setAttributeNS(null, "y", Number(nameSvg.getAttributeNS(null, "y")) + y);
 	};
 	
 }) (window);
 
-window.test = function () {
-	console.log("test good");
-};
-
-function abc () {
+(function (window, undefined) {
 	
-}
-var win;
-document.querySelector("button").onclick = function () {
-	//win = window.open("test.html", "event", "left=0, top=0, width="+ screen.availWidth+ ", height="+ screen.availHeight +"toolbar=0, location=0, fullscreen=1");
-	//win = window.open("test.html", "event", "left=0, top=0, toolbar=0, location=0, resizable=1, toolbar=0, menubar=0, titlebar=0");
-	frame.src = "about:blank";
-	//win.focus();
-}
-
-document.querySelector("input").onclick = function () {
-	win.focus();
-}
-
-if (opener) {
+	var canvas = document.getElementById("line"),
+		map = {};
 	
-	console.log(opener);
-}
+	window.setLine = function (device) {
+		var ifEntry = device.ifEntry,
+			peerMap = {},
+			peer, data, lineSvg,
+			nameSvg;
+		
+		map[device.id] = peerMap;
+		
+		for (var name in ifEntry) {
+			peer = deviceData[ifEntry[name]];
+			
+			setLabel(name, device.x, device.y, peer.x, peer.y);
+			
+			data = map[peer.id];
+			
+			if (data) {
+				data = data[device.id];
+				
+				data.name2 = nameSvg;
+			}
+			else {
+				lineSvg = document.createElementNS(svgNS, "line");
+				
+				lineSvg.setAttributeNS(null, "x1", device.x);
+				lineSvg.setAttributeNS(null, "y1", device.y);
+				lineSvg.setAttributeNS(null, "x2", peer.x);
+				lineSvg.setAttributeNS(null, "y2", peer.y);
+				
+				data = {
+					peer1: device.id,
+					name1: nameSvg,
+					peer2: peer.id,
+					svg: canvas.appendChild(lineSvg)
+				};
+			}
+			
+			peerMap[peer.id] = data;
+		}
+	};
+	
+	window.moveLine = function (id, x, y) {
+		var peerMap = map[id],
+			data, svg;
+		
+		for (var peerID in peerMap) {
+			data = peerMap[peerID];
+			svg = data.svg;
+			
+			if (data.peer1 === id) {
+				svg.setAttributeNS(null, "x1", Number(svg.getAttributeNS(null, "x1")) + x);
+				svg.setAttributeNS(null, "y1", Number(svg.getAttributeNS(null, "y1")) + y);
+			}
+			else {
+				svg.setAttributeNS(null, "x2", Number(svg.getAttributeNS(null, "x2")) + x);
+				svg.setAttributeNS(null, "y2", Number(svg.getAttributeNS(null, "y2")) + y);
+			}
+			console.log(data);
+			moveLabel(data.name1, x, y);
+			moveLabel(data.name2, x, y);
+		}
+	};
+	
+}) (window);
 
+var deviceData = getDeviceData();
+
+initDevice();
+
+function getDeviceData() {
+	return {
+	    "0": {
+	        "ip": "127.0.0.1",
+	        "x": 27,
+	        "name": "itahm",
+	        "snmp": true,
+	        "profile": "public",
+	        "y": 330,
+	        "id": "0",
+	        "type": "server",
+	        "ifEntry": {}
+	    },
+	    "4": {
+	        "ip": "10.5.100.99",
+	        "name": "2nd floor",
+	        "x": 119,
+	        "y": 262,
+	        "id": "4",
+	        "label": "",
+	        "community": "",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "eth1": "73",
+	            "eth2": "5"
+	        }
+	    },
+	    "5": {
+	        "ip": "1.2.3.47",
+	        "name": "router",
+	        "x": 244,
+	        "y": 262,
+	        "id": "5",
+	        "community": "",
+	        "type": "router",
+	        "ifEntry": {
+	            "e1/0": "4"
+	        }
+	    },
+	    "10": {
+	        "ip": "192.168.0.250",
+	        "x": -73,
+	        "name": "server",
+	        "y": 398,
+	        "id": "10",
+	        "type": "storage",
+	        "community": "",
+	        "ifEntry": {
+	            "eth2": "62"
+	        }
+	    },
+	    "11": {
+	        "ip": "8.8.8.88",
+	        "x": -190,
+	        "name": "web server",
+	        "y": 340,
+	        "id": "11",
+	        "label": "",
+	        "type": "server",
+	        "community": "",
+	        "ifEntry": {
+	            "eth0": "62"
+	        }
+	    },
+	    "15": {
+	        "ip": "192.168.100.100",
+	        "name": "vpn main(A)",
+	        "x": 227,
+	        "y": -164,
+	        "id": "15",
+	        "type": "concentrator",
+	        "ifEntry": {
+	            "eth7": "47",
+	            "eth8": "46"
+	        }
+	    },
+	    "40": {
+	        "ip": "1.0.0.100",
+	        "x": -147,
+	        "name": "firewall(active)",
+	        "y": -104,
+	        "id": "40",
+	        "type": "firewall",
+	        "ifEntry": {
+	            "eth1": "53",
+	            "eth2": "46",
+	            "eth3": "68",
+	            "eth4": "69"
+	        }
+	    },
+	    "41": {
+	        "ip": "10.0.0.200",
+	        "x": 52,
+	        "name": "firewall(standby)",
+	        "y": -104,
+	        "id": "41",
+	        "type": "firewall",
+	        "ifEntry": {
+	            "eth1": "52",
+	            "eth2": "47",
+	            "eth3": "68",
+	            "eth4": "69"
+	        }
+	    },
+	    "46": {
+	        "ip": "172.16.0.10",
+	        "x": -147.76,
+	        "name": "internet router 1",
+	        "y": -224.84000000000003,
+	        "id": "46",
+	        "label": "idc,public",
+	        "type": "router",
+	        "ifEntry": {
+	            "g2/21": "40",
+	            "g0/8": "80",
+	            "g1/1": "47",
+	            "g1/11": "15"
+	        }
+	    },
+	    "47": {
+	        "ip": "172.16.0.20",
+	        "x": 51.24000000000001,
+	        "name": "internet router 2",
+	        "y": -224.84000000000003,
+	        "id": "47",
+	        "label": "public,idc",
+	        "type": "router",
+	        "ifEntry": {
+	            "g2/21": "41",
+	            "g1/2": "46",
+	            "g1/11": "15"
+	        }
+	    },
+	    "52": {
+	        "ip": "",
+	        "x": 52.24000000000001,
+	        "name": "backbone switch",
+	        "y": 20.160000000000025,
+	        "id": "52",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "g0/1": "41",
+	            "g0/2": "58",
+	            "g0/3": "73",
+	            "g0/4": "74"
+	        }
+	    },
+	    "53": {
+	        "ip": "",
+	        "x": -147.76,
+	        "name": "backbone switch",
+	        "y": 20.160000000000025,
+	        "id": "53",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "g0/1": "40",
+	            "g0/2": "58",
+	            "g0/3": "73",
+	            "g0/4": "74",
+	            "g0/5": "57"
+	        }
+	    },
+	    "57": {
+	        "ip": "",
+	        "x": -260.48,
+	        "name": "server farm (A)",
+	        "y": 181.24,
+	        "id": "57",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "ge3": "53"
+	        }
+	    },
+	    "58": {
+	        "ip": "",
+	        "x": -88.92000000000004,
+	        "name": "server farm (S)",
+	        "y": 176.92,
+	        "id": "58",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "f0/2": "53",
+	            "f0/3": "52"
+	        }
+	    },
+	    "62": {
+	        "ip": "",
+	        "x": -74.16000000000014,
+	        "name": "workgroup 1",
+	        "y": 270.80000000000007,
+	        "id": "62",
+	        "type": "workgroup",
+	        "ifEntry": {
+	            "fe24": "73",
+	            "fe1": "11",
+	            "fe23": "10"
+	        }
+	    },
+	    "68": {
+	        "ip": "",
+	        "x": 202.24,
+	        "name": "dmz (A)",
+	        "y": 33.160000000000025,
+	        "id": "68",
+	        "label": "idc,dmz",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "g2/47": "40",
+	            "g2/48": "41"
+	        }
+	    },
+	    "69": {
+	        "ip": "",
+	        "x": 280.24,
+	        "name": "dmz (S)",
+	        "y": -62.839999999999975,
+	        "id": "69",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "g2/47": "40",
+	            "g2/48": "41"
+	        }
+	    },
+	    "73": {
+	        "ip": "",
+	        "x": 2.240000000000009,
+	        "name": "user (A)",
+	        "y": 175.16,
+	        "id": "73",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "g3/1": "53",
+	            "g3/2": "52",
+	            "f1/1": "62",
+	            "f1/2": "4"
+	        }
+	    },
+	    "74": {
+	        "ip": "",
+	        "x": 217.24,
+	        "name": "user (S)",
+	        "y": 175.16,
+	        "id": "74",
+	        "type": "l3switch",
+	        "ifEntry": {
+	            "g2/1": "53",
+	            "g2/2": "52"
+	        }
+	    },
+	    "80": {
+	        "ip": "",
+	        "x": -147.76,
+	        "name": "isp KT",
+	        "y": -344.84000000000003,
+	        "id": "80",
+	        "type": "cloud",
+	        "ifEntry": {
+	            "kt": "46"
+	        }
+	    }
+	};
+}
 	</script>
 
 	</body>

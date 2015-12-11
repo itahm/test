@@ -442,6 +442,8 @@ if (!opener) throw "";
 	
 	function onEdit() {
 		opener.showDialog("dialog/device.html");
+		
+		opener.focus();
 	}
 	
 	function onSNMP(snmp, status) {

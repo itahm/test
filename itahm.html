@@ -157,10 +157,12 @@ section input {
 
 .tbody ul {
 	cursor: pointer;
+	position: relative;
 }
 
 .tbody ul:hover li:nth-child(2) {
 	text-decoration: underline;
+	color: #0084ff;
 }
 
 .tbody ul:nth-child(odd) {
@@ -199,6 +201,11 @@ nav form {
 					<input type="button" value="map" name="map">
 					<input type="button" value="add device" name="add">
 					<input type="button" value="remove device" name="remove">
+					<select name="mode">
+						<option>chart
+						<option>map
+						<option>edit
+					</select>
 					<select name="label"></select>
 					<input type="text" name="keyword">
 					<input type="submit" value="search">
@@ -224,7 +231,7 @@ nav form {
 		
 		<div class="loading"></div>
 		
-		<iframe id="view" src="view/setting.html"></iframe>
+		<iframe id="view"></iframe>
 		
 		<iframe id="dialog" class="hide"></iframe>
 		
@@ -317,8 +324,8 @@ var elements = {
 		index;
 	
 	// frame.onload
-	function onLoadFrame() {
-		var images = this.contentWindow.document.getElementsByTagName("img"),
+	function onLoadFrame(frame) {
+		var images = frame.contentWindow.document.getElementsByTagName("img"),
 			icon;
 		
 		for (var i=0, length=images.length; i<length; i++) {
@@ -336,7 +343,7 @@ var elements = {
 			
 			var frame = document.getElementById("frame_icon");
 			
-			frame.onload = onLoadFrame;
+			frame.onload = onLoadFrame.bind(undefined, frame);
 			frame.src = "icon.html";
 		}
 		else if (status === 401) {
@@ -525,8 +532,6 @@ var elements = {
 	
 	window.closeView = function () {
 		view.classList.add("hide");
-		
-		
 	};
 	
 }) (window);
@@ -589,6 +594,10 @@ var elements = {
 		selectLabel(form.elements.label.value);
 	}
 	
+	function onChangeMode(e) {
+		console.log(e.currentTarget.value);
+	}
+	
 	function onRemove() {
 		removeDeviceList();
 	}
@@ -622,6 +631,10 @@ var elements = {
 		}
 	};
 	
+	window.getMode = function () {
+		return form.mode.value;
+	};
+	
 })(window);
 
 /**
@@ -629,13 +642,15 @@ var elements = {
  */
 (function (window, undefined) {
 	var deviceData,
+		hover = document.querySelector(".hover"),
 		table = document.getElementById("tbody"),
+		specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0",
 		rowMap = {};
 	
 	/**
 	 * callback method
 	 */
-	function onSelectDevice(id) {
+	function _onSelectDevice(id) {
 		var device = deviceData[id];
 		
 		selectDevice(device);
@@ -645,6 +660,23 @@ var elements = {
 		}
 		else {
 			showDialog("dialog/device.html");
+		}
+	}
+	
+	function onSelectDevice(id) {
+		var device = deviceData[id],
+			mode = getMode();
+		
+		selectDevice(device);
+		
+		if (mode === "map") {
+			window.open("view/map.html", "map", specs);
+		}
+		else if (mode === "edit") {
+			showDialog("dialog/device.html");
+		}
+		else if (mode === "chart" && device.snmp) {
+			window.open("view/chart.html", id, specs);
 		}
 	}
 	
@@ -699,7 +731,7 @@ var elements = {
 	/**
 	 * public method
 	 */
-	this.getRowsByLabel = function (labelName) {
+	getRowsByLabel = function (labelName) {
 		var fragment = document.createDocumentFragment();
 		
 		for (var id in rowMap) {
@@ -835,6 +867,7 @@ var elements = {
 	
 })(window);
 
+showView("view/setting.html");
 		</script>
 	
 	</body>

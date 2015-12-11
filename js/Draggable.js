@@ -1,89 +1,90 @@
 ; "use strict";
 
-function Draggable(container) {
-	var eventHandler = {},
-		isDragging = false,
-		event;
+function Draggable(target) {
+	var isDragging = false,
+		originX, originY,
+		lastX, lastY,
+		draggable;
 	
-	container.addEventListener("mousedown", function (e) {
+	function onMouseDown(e) {
 		if (e.button !== 0) {
 			return;
 		}
 		
-		var x = e.clientX,
-			y = e.clientY;
+		originX = lastX = e.clientX;
+		originY = lastY = e.clientY;
 		
-		event = {
-			x: x,
-			y: y,
-		};
-	}, false);
+		draggable = e.target;
+	}
 	
-	container.addEventListener("mousemove", function (e) {
-		if (!event) {
+	function onMouseMove(e) {
+		if (!draggable || lastX === x && lastY === y) {
 			return;
 		}
 		
 		var x = e.clientX,
 			y = e.clientY,
-			lastX = event.lastX || event.x,
-			lastY = event.lastY || event.y;
-		
-		if (lastX === x && lastY === y) {
-			return;
-		}
-		
+			data;
+			
 		if (!isDragging) {
-			fireEvent("dragstart");
+			data = {
+				target: draggable
+			};
+			
+			target.dispatchEvent(createEvent("dragstart", data));
 			
 			isDragging = true;
 		}
 		
-		event.dragX = x - event.x;
-		event.dragY = y - event.y;
-		event.moveX = x - lastX;
-		event.moveY = y - lastY;
-		event.lastX = x;
-		event.lastY = y;
+		data = {
+			target: draggable,
+			dragX: x - originX,
+			dragY: y - originY,
+			moveX: x - lastX,
+			moveY: y - lastY
+		};
 		
-		fireEvent("dragmove");
-	}, false);
+		lastX = x;
+		lastY = y;
+		
+		target.dispatchEvent(createEvent("dragmove", data));
+	}
 	
-	container.addEventListener("mouseup", onDragEnd, false);
-	container.addEventListener("mouseout", onDragEnd, false);
-	
-	function onDragEnd(e) {
-		event = undefined;
+	function onMouseUp(e) {
+		var x = e.clientX,
+			y = e.clientY,
+			data = {
+				target: draggable,
+				dragX: x - originX,
+				dragY: y - originY,
+				moveX: x - lastX,
+				moveY: y - lastY
+			};
+		
+		draggable = undefined;
 		
 		if (!isDragging) {
 			return;
 		}
 		
-		fireEvent("dragend");
+		target.dispatchEvent(createEvent("dragend", data));
 		
 		isDragging = false;
 	}
 	
-	function fireEvent(name) {
-		var handler = eventHandler[name],
-			index, length;
-		
-		if (handler) {
-			for (var i=0, _i=handler.length; i<_i; i++) {
-				handler[i](event);
-			}
-		}
+	function initEvent() {
+		target.addEventListener("mousedown", onMouseDown, false);
+		target.addEventListener("mousemove", onMouseMove, false);
+		target.addEventListener("mouseup", onMouseUp, false);
 	}
 	
-	this.on = function (type, callback) {
-		var handler = eventHandler[type];
+	function createEvent(type, data) {
+		var event = document.createEvent("CustomEvent", true, true);
 		
-		if (!handler) {
-			eventHandler[type] = handler = [];
-		}
+		event.initCustomEvent(type, true, true, data || null);
 		
-		handler[handler.length] = callback;
-		
-		return this;
-	};
+		return event;
+	}
+	
+	initEvent();
 };
