@@ -38,6 +38,7 @@ function Draggable(target) {
 		
 		data = {
 			target: draggable,
+			destination: e.target,
 			dragX: x - originX,
 			dragY: y - originY,
 			moveX: x - lastX,
@@ -55,6 +56,7 @@ function Draggable(target) {
 			y = e.clientY,
 			data = {
 				target: draggable,
+				destination: e.target,
 				dragX: x - originX,
 				dragY: y - originY,
 				moveX: x - lastX,

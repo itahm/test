@@ -96,7 +96,7 @@ var deviceData = {
         "id": "4",
         "label": "",
         "community": "",
-        "type": "l3switch",
+        "type": "l4switch",
         "ifEntry": {
             "eth1": "73",
             "eth2": "5"

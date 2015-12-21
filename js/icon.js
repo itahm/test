@@ -14,7 +14,8 @@ ITAhM.iconData = {
     "database": {
         "group": "server",
         "alt": "database",
-        "src": "img/database.png"
+        //"src": "img/database.png"
+        "src": "img/svg/database.svg"
     },
     "storage": {
         "group": "server",
@@ -34,7 +35,8 @@ ITAhM.iconData = {
     "workgroup": {
         "group": "network",
         "alt": "workgroup switch",
-        "src": "img/workgroup.png"
+        //"src": "img/workgroup.png"
+        "src": "img/svg/workgroup.svg"
     },
     "dummy": {
         "group": "network",
@@ -44,22 +46,26 @@ ITAhM.iconData = {
     "l4switch": {
         "group": "network",
         "alt": "layer4 switch",
-        "src": "img/l4switch.png"
+        //"src": "img/l4switch.png"
+        "src": "img/svg/l4switch.svg"
     },
     "l3switch": {
         "group": "network",
-        "alt": "layer4 switch",
-        "src": "img/l4switch.png"
+        "alt": "layer3 switch",
+       // "src": "img/l3switch.png"
+        "src": "img/svg/l3switch.svg"
     },
     "router": {
         "group": "network",
         "alt": "router",
-        "src": "img/router.png"
+        //"src": "img/router.png"
+        "src": "img/svg/router.svg"
     },
     "firewall": {
         "group": "network",
         "alt": "firewall",
-        "src": "img/firewall.png"
+        //"src": "img/firewall.png"
+        "src": "img/svg/firewall.svg"
     },
     "vpn": {
         "group": "network",
@@ -69,7 +75,8 @@ ITAhM.iconData = {
     "concentrator": {
         "group": "network",
         "alt": "vpn concentrator",
-        "src": "img/concentrator.png"
+        //"src": "img/concentrator.png"
+        "src": "img/svg/concentrator.svg"
     },
     "wireless": {
         "group": "network",
@@ -79,7 +86,8 @@ ITAhM.iconData = {
     "accesspoint": {
         "group": "network",
         "alt": "accesspoint",
-        "src": "img/accesspoint.png"
+        //"src": "img/accesspoint.png"
+        "src": "img/accesspoint.svg"
     },
     "office": {
         "group": "etc",
@@ -89,7 +97,8 @@ ITAhM.iconData = {
     "cloud": {
         "group": "etc",
         "alt": "cloud",
-        "src": "img/cloud.png"
+        //"src": "img/cloud.png"
+        "src": "img/svg/cloud.svg"
     },
     "unknown": {
         "group": "etc",

@@ -237,6 +237,7 @@ nav form {
 		
 		<iframe id="frame_icon" class="hide"></iframe>
 		
+		<script src="js/ITAhM.js"></script>
 		<script src="js/icon.js"></script>
 		<!--script src="js/Communicator.js"></script-->
 		<script src="js/Communicator_tmp.js"></script>
@@ -318,33 +319,13 @@ var elements = {
 
 // icon 관리
 (function (window, undefined) {
-	var iconData = {},
-		customData = {},
-		types = [],
-		index;
-	
-	// frame.onload
-	function onLoadFrame(frame) {
-		var images = frame.contentWindow.document.getElementsByTagName("img"),
-			icon;
-		
-		for (var i=0, length=images.length; i<length; i++) {
-			icon = images[i];
-			
-			iconData[icon.getAttribute("id")] = icon;
-		}
-		
-		initDeviceList();
-	}
+	var iconData = ITAhM.iconData;
 	
 	function onResponse(data, status) {
 		if (status === 200) {
-			customData = data;
-			
-			var frame = document.getElementById("frame_icon");
-			
-			frame.onload = onLoadFrame.bind(undefined, frame);
-			frame.src = "icon.html";
+			for (var type in data) {
+				iconData[type] = data[type];
+			}
 		}
 		else if (status === 401) {
 			unauthorized();
@@ -359,10 +340,6 @@ var elements = {
 			command: "pull",
 			database: "icon"
 		}, onResponse, true);
-	};
-	
-	window.getCustomIconData = function () {
-		return customData;
 	};
 	
 	window.getIconData = function () {
@@ -381,7 +358,7 @@ var elements = {
 	// callback method
 	function onResponse(data, status) {
 		if (status === 200) {
-			deviceData = data;
+			initDeviceList(deviceData = data);
 		}
 		else if (status === 401) {
 			unauthorized();
@@ -675,8 +652,8 @@ var elements = {
 		else if (mode === "edit") {
 			showDialog("dialog/device.html");
 		}
-		else if (mode === "chart" && device.snmp) {
-			window.open("view/chart.html", id, specs);
+		else if (mode === "chart") {
+			showChart(id);
 		}
 	}
 	
@@ -806,27 +783,6 @@ var elements = {
 		table.appendChild(fragment);
 	};
 	
-	window._removeDeviceList =function () {
-		var clone = clearDeviceList(),
-			checked = clone.querySelectorAll("input:checked"),
-			length = checked.length;
-			
-		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
-			table.appendChild(clone);
-			
-			return;
-		}
-		
-		for (var i=0; i<length; i++) {
-			delete deviceData[checked[i].value];
-		}
-		
-		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
-		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
-		// 일단은 페이지 새로고침으로 해결
-		location.reload();
-	};
-	
 	window.removeDeviceList =function () {
 		var checked = document.querySelectorAll("#tbody input:checked"),
 			length = checked.length;
@@ -845,8 +801,8 @@ var elements = {
 		location.reload();
 	};
 	
-	window.initDeviceList = function () {
-		deviceData = getDeviceData();
+	window.initDeviceList = function (data) {
+		deviceData = data;
 		
 		setDeviceList();
 	};
@@ -861,7 +817,15 @@ var elements = {
 		setDeviceList();
 		
 		if (getSelectedDevice()) {
-			showView("view/chart.html");
+			showView("/view/chart.html");
+		}
+	};
+	
+	window.showChart = function (id) {
+		var device = deviceData[id];
+		
+		if (device.snmp) {
+			window.open("/view/chart.html", id, specs);
 		}
 	};
 	

@@ -174,7 +174,7 @@ body.detached nav.button {
 	<body>
 		
 		<aside>
-			<h3>device information<button id="edit" style="float:right">edit</button></h3>
+			<h3>device information</h3>
 			<div class="table information">
 				<div id="information">
 					<ul>
@@ -328,14 +328,7 @@ if (!opener) throw "";
 			}
 		},
 		device;
-	
-	/**
-	 * 초기화
-	 */
-	initEvent();
-	
-	initDevice();
-	
+
 	/**
 	 * callback method
 	 */
@@ -422,11 +415,13 @@ if (!opener) throw "";
 	 * private method
 	 */
 	function initEvent() {
-		document.getElementById("edit").addEventListener("click", onEdit, false);
+		
 	}
 	
 	function initDevice() {
 		device = opener.getDeviceData()[window.name];
+		
+		document.title = device.name +"["+ device.ip +"]";
 		
 		elements.name.textContent = device.name;
 		elements.ip.textContent = device.ip;
@@ -438,12 +433,6 @@ if (!opener) throw "";
 			command: "select",
 			ip: device.ip
 		}, onSNMP);
-	}
-	
-	function onEdit() {
-		opener.showDialog("dialog/device.html");
-		
-		opener.focus();
 	}
 	
 	function onSNMP(snmp, status) {
@@ -628,6 +617,12 @@ if (!opener) throw "";
 	 * public method
 	 */
 	
+	window.initialize = function () {
+		initEvent();
+
+		initDevice();
+	};
+
 })(window);
 
 /**
@@ -817,34 +812,12 @@ if (!opener) throw "";
 
 })(window);
 
+
 /**
- * navigation
+ * 초기화
  */
- /*
-(function (window, undefined) {
-	initEvent();
-	
-	function initEvent() {
-		document.getElementById("close").addEventListener("click", onClose, false);
-		document.getElementById("detach").addEventListener("click", onDetach, false); 
-	}
-	
-	
-	// callback method
-	function onClose() {
-		top.selectDevice();
-		
-		top.closeView();
-	}
-	
-	function onDetach() {
-		top.showThread("chart.html");
-		
-		top.
-	}
-	
-})(window);
-*/
+initialize();
+
 		</script>
 	
 	</body>

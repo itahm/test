@@ -291,7 +291,8 @@ var ITAhM = {};
 		toBytesString: toBytesString,
 		enterpriseFromOID: enterpriseFromOID,
 		toDateString: toDateString,
-		toDateFormatString: toDateFormatString
+		toDateFormatString: toDateFormatString,
+		createCustomEvent: createCustomEvent
 	};
 	
 	function enterpriseFromOID(oid) {
@@ -420,6 +421,14 @@ var ITAhM = {};
 		
 		event.initEvent(type, true, true);
 		element.dispatchEvent(event);
+	}
+	
+	function createCustomEvent(type, data) {
+		var event = document.createEvent("CustomEvent");
+		
+		event.initCustomEvent(type, true, true, data);
+		
+		return event;
 	}
 	
 }) (window);

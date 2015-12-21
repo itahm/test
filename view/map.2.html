@@ -124,17 +124,17 @@ input[disabled] {
 }
 
 #menu_link {
-	background: #fff url("img/link.png") no-repeat 5px center;
+	background: #fff url("../img/link.png") no-repeat 5px center;
 }
 
 #menu_select {
-	background: #fff url("img/select.png") no-repeat 5px center;
+	background: #fff url("../img/select.png") no-repeat 5px center;
 }
 
 		</style>
 	
-		<script src="js/Draggable.2.js"></script>
-		<script src="js/Canvas.js"></script>
+		<script src="../js/Draggable.2.js"></script>
+		<script src="../js/Canvas.js"></script>
 			
 	</head>
 	
@@ -186,18 +186,10 @@ input[disabled] {
 		</div>
 		
 		<script>	
+	
+if (!opener) throw "";
 
-		function allowDrag(e) {
-			e.preventDefault();
-			
-		}
-		
-(function (window, top) {
-	
-	if (window === top) {
-		throw "";
-	}
-	
+(function (window, undefined) {
 	var elements = {
 			map: document.getElementById("map"),
 			form: document.getElementById("form"),
@@ -228,13 +220,23 @@ input[disabled] {
 			}
 		},
 		canvas = new Canvas(elements.map),
+		token = {
+			x: 0,
+			y: 0,
+			from: {
+				x: 0,
+				y: 0
+			}
+		},
 		menu = new Menu(elements.map, elements.menu.balloon),
 		layer = {
 			line: canvas.add(),
-			device: canvas.add()
+			device: canvas.add(),
+			link: canvas.add()
 		},
-		deviceList = top.getDeviceData(),
-		iconData = top.getIconData(),
+		deviceList = opener.getDeviceData(),
+		iconData = opener.getIconData(),
+		draggable,
 		isDragging = false;
 	
 	/** event */
@@ -260,14 +262,15 @@ input[disabled] {
 	canvas.ondragend = onDragEnd;
 	//canvas.onselect = onSelect;
 	canvas.onenter = onEnter;
-	canvas.onleave;
+	canvas.onleave = onLeave;
 	canvas.ondragstart;
 	
 	layer.device.ondraw = onDrawDevice;
 	layer.line.ondraw = onDrawLine;
+	layer.link.ondraw = onDrawLink;
 	
 	/** constructor */
-	(function () {		
+	(function () {
 		var device;
 		
 		for (var id in deviceList) {
@@ -291,6 +294,17 @@ input[disabled] {
 			context.strokeStyle = "#888";
 		}) (layer.line.context);
 		
+		(function (context) {
+			context.lineWidth = 2;
+			context.strokeStyle = "#f00";
+			context.fillStyle = "#f00";
+		}) (layer.link.context);
+		
+		device = opener.getSelectedDevice();
+			
+		moveMap(-device.x, -device.y);
+		
+		layer.link.add(token);
 		
 		layer.device.invalidate();
 		layer.line.invalidate();
@@ -320,7 +334,6 @@ input[disabled] {
 		
 		hitContext.fillRect(device.x - x, device.y - y, width, height);
 	}
-	
 
 	function onDrawLine(context, hitContext, device) {
 		var ifEntry = device.ifEntry,
@@ -338,12 +351,55 @@ input[disabled] {
 		}
 	}
 	
-	function onDragStart() {
+	function onDrawLink(context, hitContext, token) {
+		if (token.hide) {
+			return;
+		}
+		
+		context.beginPath();
+		context.arc(token.x, token.y, 10, 0, 2* Math.PI);
+		context.fill();
+		
+		context.beginPath();
+		context.moveTo(token.from.x, token.from.y);
+		
+		if (token.to) {
+			context.lineTo(token.to.x, token.to.y);
+		}
+		else {
+			context.lineTo(token.x, token.y);
+		}
+		context.stroke();
+		
+		if (!isDragging) {
+			hitContext.beginPath();
+			hitContext.arc(token.x, token.y, 10, 0, 2* Math.PI);
+			hitContext.fill();
+		}
+	}
+	
+	function onDragStart(e) {
 		isDragging = true;
+		
+		draggable = e.node;
+		
+		// token 이동이 아닌 경우 (map 이동 또는 node 이동) token clear
+		if (!draggable || draggable.data !== token) {
+			layer.link.clear();
+		}
 	}
 	
 	function onDragMove(e) {
 		if (e.node) {
+			// token 이동
+			if (e.node.data === token) {
+				
+			}
+			// node 이동
+			else {
+				
+			}
+			
 			e.node.data.x += e.moveX;
 			e.node.data.y += e.moveY;
 			
@@ -352,25 +408,27 @@ input[disabled] {
 			
 			canvas.invalidate();
 		}
+		// map 이동
 		else {
 			canvas.translate(e.dragX, e.dragY);
 		}
 	}
 	
-	function onDragEnd(e) {//console.log("drag end");
+	function onDragEnd(e) {
 		isDragging = false;
+		draggable = undefined;
 		
 		if (e.node) {
-			return;
+			layer.link.clear();
 		}
 		else {
 			moveMap(e.dragX, e.dragY);
 			
 			layer.device.invalidate();
 			layer.line.invalidate();
-			
-			canvas.invalidate();
 		}
+		
+		canvas.invalidate();
 	}
 	
 	function onLink() {
@@ -396,17 +454,47 @@ input[disabled] {
 	}
 	
 	function onEnter(node) {
-		if (isDragging) {//console.log("ignore");
+		// token에 enter 한것은 무시
+		if (node.data === token) {
 			return;
 		}
+		/*
+		// 출발지와 목적지가 같으면 무시
+		if (node === draggable) {
+			return;
+		}*/
 		
-		elements.menu.name.textContent = node.data.name;
+		// 목적지
+		if (isDragging) {
+			// drag 대상이 token 아닌 node일때 무시
+			if (draggable.data !== token) {
+				return;
+			}
+			
+			token.to = {
+				x: node.data.x,
+				y: node.data.y
+			};
+		}
+		// 출발지
+		else {
+			token.x = node.data.x +20;
+			token.y = node.data.y -20;
+			
+			token.from.x = node.data.x;
+			token.from.y = node.data.y;
+		}
 		
-		menu.node = node;
-		menu.show();
+		layer.link.invalidate();
+		
+		canvas.invalidate();
 	}
 	
-	function onHideMenu(e) {//console.log(e.button);
+	function onLeave(e) {
+		delete token.to;
+	}
+	
+	function onHideMenu(e) {
 		if (e.button !== 0) {
 			e.preventDefault();
 		}
@@ -484,9 +572,9 @@ input[disabled] {
 	}
 	
 	function onSelectDevice() {
-		top.getFrame("device").resetDevice(menu.node.data.id);
+		opener.getFrame("device").resetDevice(menu.node.data.id);
 		
-		top.minimize();
+		opener.minimize();
 	}
 	
 	function onRemoveLink(device, name) {
@@ -634,23 +722,9 @@ input[disabled] {
 
 	/**
 	 * public method
-	 */ 
-	window.selectDevice = function (id) {
-		var device = deviceList[id];
-		
-		moveMap(-device.x, -device.y);
-		
-		layer.device.invalidate();
-		layer.line.invalidate();
-		
-		canvas.invalidate();
-	};
+	 */
 	
-	window.reload = function () {
-		document.location.reload();
-	};
-	
-}) (window, top);
+}) (window);
 
 		</script>
 	

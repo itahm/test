@@ -5,512 +5,678 @@
 		<title>Insert title here</title>
 
 		<style>
-svg {
+
+body.loading #chart {
+	visibility: hidden;
+}
+
+#chart {
 	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	width: 100%; height: 100%;
+	min-width: 400px;
+	min-height: 400px;
 }
 
-image {
-	fill: #f00;
+.left text {
+	alignment-baseline: middle;
+	text-anchor: end;
 }
 
-line {
-	stroke: #0f0;
-	stroke-width: 2;
+.right text {
+	alignment-baseline: middle;
+	text-anchor: start;
 }
 
-text {
-	font-family: tahoma, arial, "맑은 고딕";
-	font-size: 10px;
-	fill: #000;
+.date text {
+	alignment-baseline: hanging;
 	text-anchor: middle;
+}
+
+path {
+	stroke: #ddd;
+	stroke-width: .5;
+	fill: none;
 }
 		</style>
 	</head>
 
-	<body>
-		<svg id="svg">
-			<g id="canvas" transform="translate(0, 0) translate(0, 0) scale(1, 1) translate(0, 0)">
-				<g id="line" transform="translate(20, 20)"></g>
-				<g id="if_name" transform="translate(20, 20)"></g>
-				<g id="device"></g>
-			</g>
+	<body class="_loading">
+		<svg version="1.1"
+			id="chart"
+			xmlns="http://www.w3.org/2000/svg"
+			width="100%" height="100%">
 		</svg>
+	</body>
+	
 	<script src="js/Draggable.js"></script>
+	<script src="js/ITAhM.js"></script>
 	<script>
-	var svgNS = "http://www.w3.org/2000/svg",
-		xlinkNS = "http://www.w3.org/1999/xlink",
-		svg = document.getElementById("svg"),
-		canvas = document.getElementById("canvas"),
-		transformList = canvas.transform.baseVal,
-		transform = {
-			base: transformList.getItem(0),
-			translate: transformList.getItem(1),
-			scale: transformList.getItem(2),
-			tmp: transformList.getItem(3)
+
+
+
+var svgNS = "http://www.w3.org/2000/svg",
+	MIN_CHART_WIDTH = 100,
+	MIN_CHART_HEIGHT = 100,
+	MIN_AXIS_VSPACE = 50,
+	MIN_AXIS_HSPACE = 160,
+	MAX_AXIS_VAL_CNT = 10,
+	
+	DATE_AXIS_HEIGHT = 50,
+	MARGIN = 20;
+	PADDING = 5;
+
+function Path(parent) {
+	this.initialize(parent);
+}
+
+(function (window, undefined) {
+	
+	Path.prototype = {
+		initialize: function () {
+			this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+			
+			this.beginPath();
 		},
-		scale = 1;
-	
-	window.addEventListener("resize", function (e) {
-		resetBase();
-	}, false);
-	
-	svg.addEventListener("wheel", function (e) {
-		if (e.deltaY < 0) {
-			//확대
-			scale *= 1.1;
-		}
-		else {
-			//축소
-			scale /= 1.1;
-		}
 		
-		transform.scale.setScale(scale, scale);
-	}, false);
-	
-	svg.addEventListener("dragstart", function (e) {
-		var data = e.detail,
-			target = data.target;
-		
-		if (target == this) {
+		moveTo: function (x, y) {
+			this.distance[this.distance.length] = "M"+ x +" "+ y;
 			
-		}
-		else if (e.target.tagName === "image") {
+			return this;
+		},
+		
+		lineTo: function (x, y) {
+			this.distance[this.distance.length] = "L"+ x +" "+ y;
 			
-		}
-	}, false);
-	
-	svg.addEventListener("dragmove", function (e) {
-		var data = e.detail,
-			target = data.target;
+			return this;
+		},
 		
-		if (target == this) {
-			transform.tmp.setTranslate(data.dragX / scale, data.dragY / scale);
-		}
-		else if (target.tagName === "image") {
-			target.transform.baseVal.getItem(1).setTranslate(data.dragX / scale, data.dragY / scale);
-		}
-	}, false);
-	
-	svg.addEventListener("dragend", function (e) {
-		var data = e.detail,
-			target = data.target;
-		
-		if (target == this) {
-			transform.tmp.setTranslate(0, 0);
-			transform.translate.setMatrix(transform.translate.matrix.translate(data.dragX, data.dragY));
-		}
-		else if (target.tagName === "image") {
-			var transformList = target.transform.baseVal,
-				base = transformList.getItem(0),
-				tmp = transformList.getItem(1),
-				x = data.dragX / scale,
-				y = data.dragY / scale;
-	
-			tmp.setTranslate(0, 0);
-			base.setMatrix(base.matrix.translate(x, y));
+		stroke: function (svgElement) {
+			this.path.setAttributeNS(null, "d", this.distance.join(" "));
+			this.path.setAttributeNS(null, "stroke", this.strokeStyle || "#0000");
 			
-			moveLine(target.getAttributeNS(null, "id"), x, y);
-		}
-	}, false);
-	
-	function resetBase() {
-		rect = svg.getBoundingClientRect();
+			svgElement.appendChild(this.path);
+		},
 		
-		transform.base.setTranslate(rect.width /2, rect.height /2);
+		fill: function (svgElement) {
+			this.path.setAttributeNS(null, "d", this.distance.join(" "));
+			this.path.setAttributeNS(null, "fill", this.fillStyle || "#0000");
+		},
+		
+		beginPath: function () {
+			this.distance = [];
+		},
+		
+		closePath: function () {
+			this.distance[this.distance.length] = "Z"
+		}
+	};
+	
+}) (window);
+
+function Chart(svg) {
+	this.initialize(svg);
+}
+
+function valueToString(value) {
+	return value;
+}
+
+(function (window, undefined) {
+	function onResize(chart, e) {
+		clearTimeout(chart.timer);
+		
+		chart.timer = setTimeout(chart.invalidate.bind(chart), 300);
 	}
 	
-	new Draggable(svg);
-	
-	resetBase();
-	
-	
-	
-	
-
-(function (window, undefined) {
-	
-	var canvas = document.getElementById("device"),
-		svgDevice, device;
-
-	window.initDevice = function () {
-		for (var id in deviceData) {
-			svgDevice = document.createElementNS(svgNS, "image");
+	Chart.prototype = {
+		initialize: function (svg) {
+			this.body = svg;
+			this.chart = document.createElementNS(svgNS, "svg");
+			this.container = document.createElementNS(svgNS, "g");
+			this.leftAxis = new LeftAxis(this);
+			this.rightAxis = new RightAxis(this);
+			this.dateAxis = new DateAxis(this);
+			this.graph = new Graph(this);
+			this.grid = new Grid(this);
+			this.data = new ChartSummaryData(createData());
+			this.start = new Date(2015, 10, 6, 0, 0, 0, 0);
+			this.end = new Date(2015, 10, 6, 23, 59, 0, 0);
 			
-			device = deviceData[id];
+			var data = this.data.buildData(this.start, this.end);
+			this.high = data.high;
+			this.low = data.low;
 			
-			svgDevice.setAttributeNS(null, "id", device.id);
-			svgDevice.setAttributeNS(null, "x", device.x);
-			svgDevice.setAttributeNS(null, "y", device.y);
-			svgDevice.setAttributeNS(xlinkNS, "xlink:href", "img/router.svg");
-			svgDevice.setAttributeNS(null, "width", "40px");
-			svgDevice.setAttributeNS(null, "height", "40px");
-			svgDevice.setAttributeNS(null, "transform", "translate(0, 0) translate(0, 0)");
+			this.container.setAttribute("transform", "translate(20, 20)");
 			
-			canvas.appendChild(svgDevice);
+			var transformList = this.container.transform.baseVal;
 			
-			setLine(device);
-		}
-	};
+			this.transform = {
+				translate: transformList.getItem(0)
+			};
+			
+			svg.appendChild(this.chart).appendChild(this.container);
+			
+			window.addEventListener("resize", onResize.bind(undefined, this));
+			
+			this.invalidate();
+		},
 		
-}) (window);
-
-(function (window, undefined) {
-	var canvas = document.getElementById("if_name");
-	
-	window.setLabel = function (name, x1, y1, x2, y2) {
-		var nameSvg = document.createElementNS(svgNS, "text");
-		
-		nameSvg.textContent = name;
-		nameSvg.setAttributeNS(null, "x", (x1 *2 + x2) /3);
-		nameSvg.setAttributeNS(null, "y", (y1 *2 + y2) /3);
-		
-		canvas.appendChild(nameSvg);
-	};
-	
-	window.moveLabel = function (nameSvg, x, y) {
-		nameSvg.setAttributeNS(null, "x", Number(nameSvg.getAttributeNS(null, "x")) + x);
-		nameSvg.setAttributeNS(null, "y", Number(nameSvg.getAttributeNS(null, "y")) + y);
-	};
-	
-}) (window);
-
-(function (window, undefined) {
-	
-	var canvas = document.getElementById("line"),
-		map = {};
-	
-	window.setLine = function (device) {
-		var ifEntry = device.ifEntry,
-			peerMap = {},
-			peer, data, lineSvg,
-			nameSvg;
-		
-		map[device.id] = peerMap;
-		
-		for (var name in ifEntry) {
-			peer = deviceData[ifEntry[name]];
+		invalidate: function () {
+			var rect = this.body.getBoundingClientRect(),
+				width = rect.width,
+				height = rect.height,
+				data = {};
 			
-			setLabel(name, device.x, device.y, peer.x, peer.y);
-			
-			data = map[peer.id];
-			
-			if (data) {
-				data = data[device.id];
-				
-				data.name2 = nameSvg;
-			}
-			else {
-				lineSvg = document.createElementNS(svgNS, "line");
-				
-				lineSvg.setAttributeNS(null, "x1", device.x);
-				lineSvg.setAttributeNS(null, "y1", device.y);
-				lineSvg.setAttributeNS(null, "x2", peer.x);
-				lineSvg.setAttributeNS(null, "y2", peer.y);
-				
-				data = {
-					peer1: device.id,
-					name1: nameSvg,
-					peer2: peer.id,
-					svg: canvas.appendChild(lineSvg)
-				};
+			// high와 low가 결정되지 않았으면 다시 그리지 않음
+			if (typeof this.high !== "number" || typeof this.low !== "number") {
+				throw "";
 			}
 			
-			peerMap[peer.id] = data;
-		}
-	};
-	
-	window.moveLine = function (id, x, y) {
-		var peerMap = map[id],
-			data, svg;
-		
-		for (var peerID in peerMap) {
-			data = peerMap[peerID];
-			svg = data.svg;
+			//window resize 발생 했으나 chart 크기 변화는 없음
+			if (width === this.width && height === this.height) {
+				return;
+			}
 			
-			if (data.peer1 === id) {
-				svg.setAttributeNS(null, "x1", Number(svg.getAttributeNS(null, "x1")) + x);
-				svg.setAttributeNS(null, "y1", Number(svg.getAttributeNS(null, "y1")) + y);
-			}
-			else {
-				svg.setAttributeNS(null, "x2", Number(svg.getAttributeNS(null, "x2")) + x);
-				svg.setAttributeNS(null, "y2", Number(svg.getAttributeNS(null, "y2")) + y);
-			}
-			console.log(data);
-			moveLabel(data.name1, x, y);
-			moveLabel(data.name2, x, y);
+			this.width = width;
+			this.height = height;
+			
+			// padding 제외
+			width -= MARGIN *2;
+			
+			//padding 과 date 축 제외
+			height -= (MARGIN *2 + DATE_AXIS_HEIGHT);
+			
+			//height 확정되면 count, space, grow 계산
+			var count = Math.min(MAX_AXIS_VAL_CNT, Math.round(height / MIN_AXIS_VSPACE)),
+				space = height / count,
+				grow = (this.high - this.low) / count,
+				x, xx;
+			
+			this.tpp = (this.end - this.start / width); 
+			
+			this.leftAxis.draw(count, space, this.high, grow);
+			
+			//x left 축 너비
+			x = this.leftAxis.getSize().width;
+			
+			this.leftAxis.setTranslate(x, 0);
+			
+			this.rightAxis.draw(count, space, this.high, grow)
+			
+			// xx right 축 너비
+			xx = this.rightAxis.getSize().width;
+			
+			this.rightAxis.setTranslate(width - xx, 0);
+			
+			width -= (x + xx);
+			
+			// width
+			this.dateAxis.setSize(width, DATE_AXIS_HEIGHT);
+			this.dateAxis.setTranslate(0, height);
+			this.dateAxis.draw(this.start, this.end, this.tpp);
+			
+			// x, width, height
+//			this.graph.resize(x +PADDING, width - PADDING *2, height);
+			
+			// x, width, height
+			this.grid.setTranslate(x, 0);
+			this.grid.setSize(width, height);
+			
+			this.grid.draw(Math.round(width) -.5, space, count);
+		},
+		
+		add: function (svgElement) {
+			this.container.appendChild(svgElement);
 		}
 	};
 	
 }) (window);
 
-var deviceData = getDeviceData();
+function SVGChart() {
+}
 
-initDevice();
+(function (window, undefined) {
+	
+	function setTransform(svgChart) {
+		var transformList = svgChart.container.transform.baseVal;
+		
+		svgChart.setTranslate = function (x, y) {
+			transformList.getItem(0).setTranslate(x, y);
+		};
+		
+		svgChart.setScale = function (x, y) {
+			transformList.getItem(0).setScale(x, y || x);
+		};
+	}
+	
+	SVGChart.prototype = {
+		initialize: function (chart, config) {
+			this.chart = chart;
+			
+			this.container = document.createElementNS(svgNS, "g");
+			
+			this.container.setAttribute("transform", "translate(0, 0) scale(1, 1)");
+			
+			setTransform(this);
+			
+			chart.add(this.container);
+		},
+		
+		getSize: function () {
+			return this.container.getBBox();
+		},
+		
+		setSize: function (width, height) {
+			this.container.setAttributeNS(null, "width", width);
+			this.container.setAttributeNS(null, "height", height);
+		},
+		
+		clear: function () {
+			var svgElement;
+			
+			while(svgElement = this.container.firstChild) {
+				this.container.removeChild(svgElement);
+			}
+		},
+		
+		addText: function (x, y, text) {
+			var svgText = document.createElementNS(svgNS, "text");
+			
+			svgText.setAttributeNS(null, "x", x);
+			svgText.setAttributeNS(null, "y", y);
+			svgText.textContent = text;
+			
+			this.container.appendChild(svgText);
+		}
+	};
 
-function getDeviceData() {
+}) (window);
+
+function Axis(chart, config) {
+	if(arguments.length > 0) {
+		this.initialize(chart, config || {});
+	}
+}
+
+(function (window, undefined) {
+	
+	Axis.prototype = new SVGChart();
+	
+	Axis.prototype.initialize = function (chart, config) {
+		SVGChart.prototype.initialize.call(this, chart, config);
+	};
+	
+	Axis.prototype.draw = function (count, space, high, grow) {
+		this.clear();
+		
+		for (var i=0; i<=count; i++) {
+			this.addText(0, space * i, (this.valueToString || valueToString) ((high - i * grow), high));
+		}
+	};
+	
+}) (window);
+
+function LeftAxis(chart, config) {
+	this.initialize(chart, config || {});
+}
+
+(function (window, undefined) {
+	
+	LeftAxis.prototype = new Axis();
+	
+	LeftAxis.prototype.initialize = function (chart, config) {
+		Axis.prototype.initialize.call(this, chart, config);
+			
+		this.container.classList.add("left");
+	};
+	
+	LeftAxis.prototype.valueToString = function (value, capacity) {
+		return value.toFixed(2);
+	};
+	
+}) (window);
+
+function RightAxis(chart, config) {
+	this.initialize(chart, config || {});
+}
+
+(function (window, undefined) {
+	
+	RightAxis.prototype = new Axis();
+	
+	RightAxis.prototype.initialize = function (chart, config) {
+		SVGChart.prototype.initialize.call(this, chart, config);
+			
+		this.container.classList.add("right");
+	};
+	
+	RightAxis.prototype.valueToString = function (value, capacity) {
+		return (value / capacity *100).toFixed(2) +"%";
+	};
+	
+}) (window);
+
+function DateAxis(chart, config) {
+	this.initialize(chart, config || {});
+}
+
+(function (window, undefined) {
+	
+	DateAxis.prototype = new SVGChart();
+	
+	DateAxis.prototype.initialize = function (chart, config) {
+		SVGChart.prototype.initialize.call(this, chart, config);
+			
+		this.container.classList.add("date");
+	};
+	
+	DateAxis.prototype.draw = function (start, end, tpp) {
+		var text,
+			mills = start.setHours(start.getHours() +1, 0, 0, 0),
+			offset = start - mills,
+			x;
+		
+		x = offset / tpp;
+		console.log(0);
+		if (x > MIN_AXIS_HSPACE) {console.log(1);
+			addText(x, 0, ITAhM.util.toDateFormatString(new Date(mills)));
+		}this.addText(x, 0, ITAhM.util.toDateFormatString(new Date(mills)));
+		console.log(2);
+		/*
+		
+		this.clear();
+		
+		for (var i=0; i<=count; i++) {
+			text = document.createElementNS(svgNS, "text");
+			
+			text.setAttributeNS(null, "x", 0);
+			text.setAttributeNS(null, "y", space * i);
+			text.textContent = (this.valueToString || valueToString) ((high - i * grow), high);
+			
+			this.container.appendChild(text);
+		}
+		*/
+		//this.container.setAttributeNS(null, "width", width);
+	};
+	
+}) (window);
+
+function Graph(chart, config) {
+	this.initialize(chart, config || {});
+}
+
+(function (window, undefined) {
+	
+	Graph.prototype = new SVGChart();
+	
+	Graph.prototype.initialize = function (chart, config) {
+		SVGChart.prototype.initialize.call(this, chart, config);
+		
+		this.container.classList.add("graph");
+	};
+	
+	Graph.prototype.setDate = function (start, end) {
+		this.start = start;
+		this.end = end;
+		
+		this.tpp = (end - start / this.width);
+	};
+	
+	Graph.prototype.setSize = function (width, height) {
+		SVGChart.prototype.setSize.call(this, width, height);
+		
+		this.width = width;
+		this.tpp = (this.end - this.start / width);
+	};
+	
+	Graph.prototype.draw = function () {
+		//new Path(this.container).moveTo(0, 0).lineTo(0, 500).stroke();
+	};
+			
+}) (window);
+
+function Grid(chart, config) {
+	this.initialize(chart, config || {});
+}
+
+(function (window, undefined) {
+	
+	Grid.prototype = new SVGChart();
+	
+	Grid.prototype.initialize = function (chart, config) {
+		SVGChart.prototype.initialize.call(this, chart, config);
+		
+		this.path = new Path();
+		
+		this.container.classList.add("graph");
+	};
+	
+	Grid.prototype.draw = function (x, space, count) {
+		var rect = this.container.getBBox(),
+			y;
+		
+		this.path.beginPath();
+		
+		for (var i=0; i<=count; i++) {
+			y = Math.round(i * space) -.5;
+			
+			this.path.moveTo(0, y);
+			this.path.lineTo(x, y);
+		}
+		
+		this.path.moveTo(PADDING, 0);
+		this.path.lineTo(PADDING, y);
+		
+		this.path.moveTo(x - PADDING, 0);
+		this.path.lineTo(x - PADDING, y);
+		
+		this.path.strokeStyle = "#cccccc";
+		this.path.stroke(this.container);
+	};
+	
+}) (window);
+
+function ChartData(data) {
+	if (arguments.length > 0) {
+		this.initialize(data);
+	}
+}
+
+(function (window, undefined) {
+	
+	ChartData.prototype = {
+		initialize: function (data) {
+			this.data = data;
+		},
+		
+		next: function (date) {
+			return date.setMinutes(date.getMinutes() +1, 0, 0);
+		},
+		
+		buildData: function (start, end, unit) {
+			var keys = [],
+				tmp = [],
+				date = new Date(start),
+				value, high, low;
+			
+			while (this.next(date) < end) {
+				value = this.data[mills];
+				
+				if (value) {
+					tmp[tmp.length] = mills;
+					
+					high = Math.max(value, high || value);
+					low = Math.min(value, low || value);
+				}
+				else if (tmp.length > 0) {
+					data[data.length] = tmp;
+					
+					tmp = [];
+				}
+			}
+			
+			if (tmp.length > 0) {
+				data[data.length] = tmp;
+			}
+			
+			return {
+				high: high,
+				low: low,
+				keys: keys
+			}
+		}
+		
+	};
+	
+}) (window);
+
+function ChartSummaryData(data) {
+	if (arguments.length > 0) {
+		this.initialize(data);
+	}
+}
+
+(function (window, undefined) {
+	
+	ChartSummaryData.prototype = {
+		initialize: function (data) {
+			this.data = data;
+		},
+		
+		next: function (date) {
+			return date.setHours(date.getHours() +1, 0, 0, 0);
+		},
+		
+		buildData: function (start, end) {
+			var keys = [],
+				tmp = [],
+				date = new Date(start),
+				mills, value, high, low;
+			
+			while ((mills = this.next(date)) < end) {
+				value = this.data[mills];
+				
+				if (value) {
+					tmp[tmp.length] = mills;
+					
+					high = Math.max(value.max, high || value.max);
+					low = Math.min(value.min, low || value.min);
+				}
+				else if (tmp.length > 0) {
+					keys[keys.length] = tmp;
+					
+					tmp = [];
+				}
+			}
+			
+			if (tmp.length > 0) {
+				data[data.length] = tmp;
+			}
+			
+			return {
+				high: high,
+				low: low,
+				keys: keys
+			}
+		}
+	};
+	
+}) (window);
+
+new Chart(chart);
+
+function createData() {
 	return {
-	    "0": {
-	        "ip": "127.0.0.1",
-	        "x": 27,
-	        "name": "itahm",
-	        "snmp": true,
-	        "profile": "public",
-	        "y": 330,
-	        "id": "0",
-	        "type": "server",
-	        "ifEntry": {}
+	    "1446757200000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 2
 	    },
-	    "4": {
-	        "ip": "10.5.100.99",
-	        "name": "2nd floor",
-	        "x": 119,
-	        "y": 262,
-	        "id": "4",
-	        "label": "",
-	        "community": "",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "eth1": "73",
-	            "eth2": "5"
-	        }
+	    "1446760800000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 0
 	    },
-	    "5": {
-	        "ip": "1.2.3.47",
-	        "name": "router",
-	        "x": 244,
-	        "y": 262,
-	        "id": "5",
-	        "community": "",
-	        "type": "router",
-	        "ifEntry": {
-	            "e1/0": "4"
-	        }
+	    "1446746400000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 0
 	    },
-	    "10": {
-	        "ip": "192.168.0.250",
-	        "x": -73,
-	        "name": "server",
-	        "y": 398,
-	        "id": "10",
-	        "type": "storage",
-	        "community": "",
-	        "ifEntry": {
-	            "eth2": "62"
-	        }
+	    "1446771600000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 3
 	    },
-	    "11": {
-	        "ip": "8.8.8.88",
-	        "x": -190,
-	        "name": "web server",
-	        "y": 340,
-	        "id": "11",
-	        "label": "",
-	        "type": "server",
-	        "community": "",
-	        "ifEntry": {
-	            "eth0": "62"
-	        }
+	    "1446742800000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 1
 	    },
-	    "15": {
-	        "ip": "192.168.100.100",
-	        "name": "vpn main(A)",
-	        "x": 227,
-	        "y": -164,
-	        "id": "15",
-	        "type": "concentrator",
-	        "ifEntry": {
-	            "eth7": "47",
-	            "eth8": "46"
-	        }
+	    "1446753600000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 0
 	    },
-	    "40": {
-	        "ip": "1.0.0.100",
-	        "x": -147,
-	        "name": "firewall(active)",
-	        "y": -104,
-	        "id": "40",
-	        "type": "firewall",
-	        "ifEntry": {
-	            "eth1": "53",
-	            "eth2": "46",
-	            "eth3": "68",
-	            "eth4": "69"
-	        }
+	    "1446764400000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 0
 	    },
-	    "41": {
-	        "ip": "10.0.0.200",
-	        "x": 52,
-	        "name": "firewall(standby)",
-	        "y": -104,
-	        "id": "41",
-	        "type": "firewall",
-	        "ifEntry": {
-	            "eth1": "52",
-	            "eth2": "47",
-	            "eth3": "68",
-	            "eth4": "69"
-	        }
+	    "1446775200000": {
+	        "avg": 2,
+	        "min": 0,
+	        "max": 29
 	    },
-	    "46": {
-	        "ip": "172.16.0.10",
-	        "x": -147.76,
-	        "name": "internet router 1",
-	        "y": -224.84000000000003,
-	        "id": "46",
-	        "label": "idc,public",
-	        "type": "router",
-	        "ifEntry": {
-	            "g2/21": "40",
-	            "g0/8": "80",
-	            "g1/1": "47",
-	            "g1/11": "15"
-	        }
+	    "1446782400000": {
+	        "avg": 3,
+	        "min": 0,
+	        "max": 9
 	    },
-	    "47": {
-	        "ip": "172.16.0.20",
-	        "x": 51.24000000000001,
-	        "name": "internet router 2",
-	        "y": -224.84000000000003,
-	        "id": "47",
-	        "label": "public,idc",
-	        "type": "router",
-	        "ifEntry": {
-	            "g2/21": "41",
-	            "g1/2": "46",
-	            "g1/11": "15"
-	        }
+	    "1446739200000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 0
 	    },
-	    "52": {
-	        "ip": "",
-	        "x": 52.24000000000001,
-	        "name": "backbone switch",
-	        "y": 20.160000000000025,
-	        "id": "52",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "g0/1": "41",
-	            "g0/2": "58",
-	            "g0/3": "73",
-	            "g0/4": "74"
-	        }
+	    "1446796800000": {
+	        "avg": 1,
+	        "min": 0,
+	        "max": 17
 	    },
-	    "53": {
-	        "ip": "",
-	        "x": -147.76,
-	        "name": "backbone switch",
-	        "y": 20.160000000000025,
-	        "id": "53",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "g0/1": "40",
-	            "g0/2": "58",
-	            "g0/3": "73",
-	            "g0/4": "74",
-	            "g0/5": "57"
-	        }
+	    "1446750000000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 11
 	    },
-	    "57": {
-	        "ip": "",
-	        "x": -260.48,
-	        "name": "server farm (A)",
-	        "y": 181.24,
-	        "id": "57",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "ge3": "53"
-	        }
+	    "1446786000000": {
+	        "avg": 1,
+	        "min": 0,
+	        "max": 9
 	    },
-	    "58": {
-	        "ip": "",
-	        "x": -88.92000000000004,
-	        "name": "server farm (S)",
-	        "y": 176.92,
-	        "id": "58",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "f0/2": "53",
-	            "f0/3": "52"
-	        }
+	    "1446793200000": {
+	        "avg": 1,
+	        "min": 0,
+	        "max": 7
 	    },
-	    "62": {
-	        "ip": "",
-	        "x": -74.16000000000014,
-	        "name": "workgroup 1",
-	        "y": 270.80000000000007,
-	        "id": "62",
-	        "type": "workgroup",
-	        "ifEntry": {
-	            "fe24": "73",
-	            "fe1": "11",
-	            "fe23": "10"
-	        }
+	    "1446735600000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 1
 	    },
-	    "68": {
-	        "ip": "",
-	        "x": 202.24,
-	        "name": "dmz (A)",
-	        "y": 33.160000000000025,
-	        "id": "68",
-	        "label": "idc,dmz",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "g2/47": "40",
-	            "g2/48": "41"
-	        }
+	    "1446789600000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 8
 	    },
-	    "69": {
-	        "ip": "",
-	        "x": 280.24,
-	        "name": "dmz (S)",
-	        "y": -62.839999999999975,
-	        "id": "69",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "g2/47": "40",
-	            "g2/48": "41"
-	        }
+	    "1446768000000": {
+	        "avg": 0,
+	        "min": 0,
+	        "max": 0
 	    },
-	    "73": {
-	        "ip": "",
-	        "x": 2.240000000000009,
-	        "name": "user (A)",
-	        "y": 175.16,
-	        "id": "73",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "g3/1": "53",
-	            "g3/2": "52",
-	            "f1/1": "62",
-	            "f1/2": "4"
-	        }
-	    },
-	    "74": {
-	        "ip": "",
-	        "x": 217.24,
-	        "name": "user (S)",
-	        "y": 175.16,
-	        "id": "74",
-	        "type": "l3switch",
-	        "ifEntry": {
-	            "g2/1": "53",
-	            "g2/2": "52"
-	        }
-	    },
-	    "80": {
-	        "ip": "",
-	        "x": -147.76,
-	        "name": "isp KT",
-	        "y": -344.84000000000003,
-	        "id": "80",
-	        "type": "cloud",
-	        "ifEntry": {
-	            "kt": "46"
-	        }
+	    "1446778800000": {
+	        "avg": 2,
+	        "min": 0,
+	        "max": 13
 	    }
 	};
 }
 	</script>
-
-	</body>
 </html>
