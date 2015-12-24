@@ -14,6 +14,11 @@ body.loading #chart {
 	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 	min-width: 400px;
 	min-height: 400px;
+	display: flex;
+}
+
+svg {
+	flex: 1;
 }
 
 .left text {
@@ -27,24 +32,20 @@ body.loading #chart {
 }
 
 .date text {
-	alignment-baseline: hanging;
+	alignment-baseline: text-before-edge;
 	text-anchor: middle;
 }
 
 path {
-	stroke: #ddd;
 	stroke-width: .5;
 	fill: none;
 }
+
 		</style>
 	</head>
 
 	<body class="_loading">
-		<svg version="1.1"
-			id="chart"
-			xmlns="http://www.w3.org/2000/svg"
-			width="100%" height="100%">
-		</svg>
+		<div id="chart"></div>
 	</body>
 	
 	<script src="js/Draggable.js"></script>
@@ -59,20 +60,23 @@ var svgNS = "http://www.w3.org/2000/svg",
 	MIN_AXIS_VSPACE = 50,
 	MIN_AXIS_HSPACE = 160,
 	MAX_AXIS_VAL_CNT = 10,
-	
 	DATE_AXIS_HEIGHT = 50,
-	MARGIN = 20;
-	PADDING = 5;
+	MARGIN = 20,
+	PADDING = 5,
+	WHEEL_REPEAT = 20;
 
-function Path(parent) {
-	this.initialize(parent);
+function Path(container) {
+	this.initialize(container);
 }
 
 (function (window, undefined) {
 	
 	Path.prototype = {
-		initialize: function () {
+		initialize: function (container) {
+			this.container = container;
 			this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+			
+			container.appendChild(this.path);
 			
 			this.beginPath();
 		},
@@ -89,16 +93,14 @@ function Path(parent) {
 			return this;
 		},
 		
-		stroke: function (svgElement) {
+		stroke: function () {
 			this.path.setAttributeNS(null, "d", this.distance.join(" "));
-			this.path.setAttributeNS(null, "stroke", this.strokeStyle || "#0000");
-			
-			svgElement.appendChild(this.path);
+			this.path.setAttributeNS(null, "stroke", this.strokeStyle || "#000000");
 		},
 		
-		fill: function (svgElement) {
+		fill: function () {
 			this.path.setAttributeNS(null, "d", this.distance.join(" "));
-			this.path.setAttributeNS(null, "fill", this.fillStyle || "#0000");
+			this.path.setAttributeNS(null, "fill", this.fillStyle || "#000000");
 		},
 		
 		beginPath: function () {
@@ -122,110 +124,198 @@ function valueToString(value) {
 
 (function (window, undefined) {
 	function onResize(chart, e) {
-		clearTimeout(chart.timer);
+		clearTimeout(chart.resizeTimer);
 		
-		chart.timer = setTimeout(chart.invalidate.bind(chart), 300);
+		chart.resizeTimer = setTimeout(chart.resize.bind(chart), 300);
+	}
+	
+	function onWheel(chart, e) {
+		clearTimeout(chart.wheelTimer);
+		
+		chart.wheelTimer = setTimeout(chart.zoom.bind(chart, e.deltaY < 0), 100);
+	}
+	
+	function onDragStart(chart, e) {
+		chart.dragStart = chart.start;
+		chart.dragEnd = chart.end;
+	}
+	
+	function onDragMove(chart, e) {
+		chart.move(e.detail.dragX);
 	}
 	
 	Chart.prototype = {
-		initialize: function (svg) {
-			this.body = svg;
-			this.chart = document.createElementNS(svgNS, "svg");
+		initialize: function (root) {
+			this.svgChart = document.createElementNS(svgNS, "svg");
 			this.container = document.createElementNS(svgNS, "g");
+			this.rect = {};
+			/*this.graphPath = document.createElementNS(svgNS, "clipPath");
+			this.graphRect = document.createElementNS(svgNS, "rect");
+			this.datePath = document.createElementNS(svgNS, "clipPath");
+			this.dateRect = document.createElementNS(svgNS, "rect");*/
 			this.leftAxis = new LeftAxis(this);
 			this.rightAxis = new RightAxis(this);
 			this.dateAxis = new DateAxis(this);
 			this.graph = new Graph(this);
-			this.grid = new Grid(this);
+			this.grid = new Path(this.container);
 			this.data = new ChartSummaryData(createData());
-			this.start = new Date(2015, 10, 6, 0, 0, 0, 0);
-			this.end = new Date(2015, 10, 6, 23, 59, 0, 0);
+			this.start = new Date(2015, 10, 10, 3, 0, 0, 0).getTime();
+			this.end = new Date(2015, 10, 11, 0, 0, 0, 0).getTime();
 			
-			var data = this.data.buildData(this.start, this.end);
-			this.high = data.high;
-			this.low = data.low;
+			this.grid.strokeStyle = "#ffff00";
 			
 			this.container.setAttribute("transform", "translate(20, 20)");
 			
+			/*var svgDefs = document.createElementNS(svgNS, "defs");
+			
+			this.container.appendChild(svgDefs);
+			svgDefs.appendChild(this.graphPath).setAttributeNS(null, "id", "path_graph_"+ "1");
+			svgDefs.appendChild(this.datePath).setAttributeNS(null, "id", "path_date_"+ "1");
+			
+			this.clipPath.appendChild(this.clipRect);
+			*/
 			var transformList = this.container.transform.baseVal;
 			
 			this.transform = {
 				translate: transformList.getItem(0)
 			};
 			
-			svg.appendChild(this.chart).appendChild(this.container);
+			root.appendChild(this.svgChart).appendChild(this.container);
 			
+			document.body.addEventListener("selectstart", function (e) {
+				e.preventDefault();
+			});
 			window.addEventListener("resize", onResize.bind(undefined, this));
+			this.svgChart.addEventListener("wheel", onWheel.bind(undefined, this));
+			new Draggable(this.svgChart);
+			
+			this.svgChart.addEventListener("dragstart", onDragStart.bind(undefined, this));
+			this.svgChart.addEventListener("dragmove", onDragMove.bind(undefined, this));
+			
+			
+			this.resize();
+		},
+		
+		invalidate: function () {
+			var data = this.data.buildData(this.start, this.end),
+				width = this.rect.width,
+				height = this.rect.height;
+			
+			this.high = data.high;
+			this.low = data.low;;
+			
+			this.drawAxis();
+			
+			this.drawGraph(data);
+		},
+		
+		resize: function () {
+			var rect = this.svgChart.getBoundingClientRect(),
+				width = rect.width - MARGIN *2,
+				height = rect.height - MARGIN *2 - DATE_AXIS_HEIGHT;
+			
+			//window resize 발생 했으나 chart 크기 변화는 없음
+			if (width === this.rect.width && height === this.rect.height) {
+				return;
+			}
+			
+			this.rect.width = width;
+			this.rect.height = height;
 			
 			this.invalidate();
 		},
 		
-		invalidate: function () {
-			var rect = this.body.getBoundingClientRect(),
-				width = rect.width,
-				height = rect.height,
-				data = {};
+		move: function (drag) {
+			//if (drag % 5 === 0) {
+				this.start = this.dragStart + drag;
+				this.end = this.dragEnd + drag;
+				
+				this.invalidate();
+			//}
+		},
+		
+		zoom: function (zoomIn) {
+			var sign = zoomIn? -1: +1;
 			
-			// high와 low가 결정되지 않았으면 다시 그리지 않음
-			if (typeof this.high !== "number" || typeof this.low !== "number") {
-				throw "";
+			for (var i=0; i<WHEEL_REPEAT; i++) {
+				this.end -= this.tpp * sign;
+				this.start += this.tpp * sign;
 			}
 			
-			//window resize 발생 했으나 chart 크기 변화는 없음
-			if (width === this.width && height === this.height) {
-				return;
+			this.invalidate();
+		},
+		
+		drawGrid: function (x1, x2, count, space) {
+			this.grid.beginPath();
+			
+			for (var i=0, y; i<=count; i++) {
+				y = i * space;
+				
+				this.grid.moveTo(x1, y).lineTo(x2, y);
 			}
 			
-			this.width = width;
-			this.height = height;
-			
-			// padding 제외
-			width -= MARGIN *2;
-			
-			//padding 과 date 축 제외
-			height -= (MARGIN *2 + DATE_AXIS_HEIGHT);
-			
-			//height 확정되면 count, space, grow 계산
-			var count = Math.min(MAX_AXIS_VAL_CNT, Math.round(height / MIN_AXIS_VSPACE)),
-				space = height / count,
+			this.grid.stroke();
+		},
+		
+		drawAxis: function () {
+			var height = this.rect.height,
+				count = Math.min(MAX_AXIS_VAL_CNT, Math.round(height / MIN_AXIS_VSPACE)),
 				grow = (this.high - this.low) / count,
-				x, xx;
+				valueArray = [],
+				x1, x2;
 			
-			this.tpp = (this.end - this.start / width); 
+			for (var i=0; i<=count; i++) {
+				valueArray[valueArray.length] = this.high - i * grow;
+			}
 			
-			this.leftAxis.draw(count, space, this.high, grow);
+			this.leftAxis.draw(valueArray, height / count, this.high);
+			x1 = this.leftAxis.getSize().width;
+			this.leftAxis.setTranslate(x1, 0);
 			
-			//x left 축 너비
-			x = this.leftAxis.getSize().width;
+			this.rightAxis.draw(valueArray, height / count, this.high);
+			x2 = this.rect.width - this.rightAxis.getSize().width;
+			this.rightAxis.setTranslate(x2, 0);
 			
-			this.leftAxis.setTranslate(x, 0);
+			this.drawGrid(x1, x2, count, height / count);
+		},
+		
+		drawGraph: function (data) {
+			var blocks = data.keys,
+				width = this.rect.width,
+				height = this.rect.height,
+				tpp = (this.end - this.start) / width,
+				dateArray, date;
 			
-			this.rightAxis.draw(count, space, this.high, grow)
+			this.tpp = tpp;
 			
-			// xx right 축 너비
-			xx = this.rightAxis.getSize().width;
+			this.graph.setSize(width, height);
+			this.graph.setTranslate(0, height);
+			this.graph.setScale(1, -1);
 			
-			this.rightAxis.setTranslate(width - xx, 0);
+			// y좌표 : value/high * height
+			// x좌표 : (date - this.start) /tpp
+			this.graph.avgPath.beginPath();
+			this.graph.avgPath.moveTo(0, 0);
+		
+			for (var i=0, numberOfBlock=blocks.length; i<numberOfBlock; i++) {
+				dateArray = blocks[i];
+				
+				for (var j=0,numberOfDate=dateArray.length; j<numberOfDate; j++) {
+					date = dateArray[j];
+					
+					this.graph.avgPath.lineTo((date - this.start) /tpp, this.data.get(date).max / this.high * height);
+				}
+			}
 			
-			width -= (x + xx);
-			
-			// width
-			this.dateAxis.setSize(width, DATE_AXIS_HEIGHT);
-			this.dateAxis.setTranslate(0, height);
-			this.dateAxis.draw(this.start, this.end, this.tpp);
-			
-			// x, width, height
-//			this.graph.resize(x +PADDING, width - PADDING *2, height);
-			
-			// x, width, height
-			this.grid.setTranslate(x, 0);
-			this.grid.setSize(width, height);
-			
-			this.grid.draw(Math.round(width) -.5, space, count);
+			this.graph.avgPath.stroke();
 		},
 		
 		add: function (svgElement) {
 			this.container.appendChild(svgElement);
+		},
+		
+		on: function (event, callback) {
+			this.container.addEventListener(event, callback);
 		}
 	};
 	
@@ -244,17 +334,16 @@ function SVGChart() {
 		};
 		
 		svgChart.setScale = function (x, y) {
-			transformList.getItem(0).setScale(x, y || x);
+			transformList.getItem(1).setScale(x, y || x);
 		};
 	}
 	
 	SVGChart.prototype = {
 		initialize: function (chart, config) {
 			this.chart = chart;
-			
 			this.container = document.createElementNS(svgNS, "g");
-			
-			this.container.setAttribute("transform", "translate(0, 0) scale(1, 1)");
+			this.container.addEventListener("click", function () {console.log("###"+ this)});
+			this.container.setAttributeNS(null, "transform", "translate(0, 0) scale(1, 1)");
 			
 			setTransform(this);
 			
@@ -286,6 +375,15 @@ function SVGChart() {
 			svgText.textContent = text;
 			
 			this.container.appendChild(svgText);
+		},
+		
+		clip: function (x, y, width, height) {
+			this.clipRect.setAttributeNS(null, "x", x);
+			this.clipRect.setAttributeNS(null, "y", y);
+			this.clipRect.setAttributeNS(null, "width", width);
+			this.clipRect.setAttributeNS(null, "height", height);
+			
+			
 		}
 	};
 
@@ -305,11 +403,13 @@ function Axis(chart, config) {
 		SVGChart.prototype.initialize.call(this, chart, config);
 	};
 	
-	Axis.prototype.draw = function (count, space, high, grow) {
+	Axis.prototype.draw = function (valueArray, space, high) {
+		var length = valueArray.length;
+		
 		this.clear();
 		
-		for (var i=0; i<=count; i++) {
-			this.addText(0, space * i, (this.valueToString || valueToString) ((high - i * grow), high));
+		for (var i=0; i<length; i++) {
+			this.addText(0, space * i, (this.valueToString || valueToString) (valueArray[i], high));
 		}
 	};
 	
@@ -371,16 +471,17 @@ function DateAxis(chart, config) {
 	
 	DateAxis.prototype.draw = function (start, end, tpp) {
 		var text,
-			mills = start.setHours(start.getHours() +1, 0, 0, 0),
+			date = new Date(start),
+			mills = date.setHours(date.getHours() +1, 0, 0, 0),
 			offset = start - mills,
 			x;
 		
 		x = offset / tpp;
-		console.log(0);
-		if (x > MIN_AXIS_HSPACE) {console.log(1);
+		
+		if (x > MIN_AXIS_HSPACE) {
 			addText(x, 0, ITAhM.util.toDateFormatString(new Date(mills)));
 		}this.addText(x, 0, ITAhM.util.toDateFormatString(new Date(mills)));
-		console.log(2);
+		
 		/*
 		
 		this.clear();
@@ -411,16 +512,20 @@ function Graph(chart, config) {
 	Graph.prototype.initialize = function (chart, config) {
 		SVGChart.prototype.initialize.call(this, chart, config);
 		
+		this.maxPath = new Path(this.container);
+		this.avgPath = new Path(this.container);
+		this.minPath = new Path(this.container);
+		
 		this.container.classList.add("graph");
 	};
-	
+	/*
 	Graph.prototype.setDate = function (start, end) {
 		this.start = start;
 		this.end = end;
 		
 		this.tpp = (end - start / this.width);
 	};
-	
+	*/
 	Graph.prototype.setSize = function (width, height) {
 		SVGChart.prototype.setSize.call(this, width, height);
 		
@@ -428,51 +533,10 @@ function Graph(chart, config) {
 		this.tpp = (this.end - this.start / width);
 	};
 	
-	Graph.prototype.draw = function () {
-		//new Path(this.container).moveTo(0, 0).lineTo(0, 500).stroke();
+	Graph.prototype.draw = function (x, y) {
+		
 	};
 			
-}) (window);
-
-function Grid(chart, config) {
-	this.initialize(chart, config || {});
-}
-
-(function (window, undefined) {
-	
-	Grid.prototype = new SVGChart();
-	
-	Grid.prototype.initialize = function (chart, config) {
-		SVGChart.prototype.initialize.call(this, chart, config);
-		
-		this.path = new Path();
-		
-		this.container.classList.add("graph");
-	};
-	
-	Grid.prototype.draw = function (x, space, count) {
-		var rect = this.container.getBBox(),
-			y;
-		
-		this.path.beginPath();
-		
-		for (var i=0; i<=count; i++) {
-			y = Math.round(i * space) -.5;
-			
-			this.path.moveTo(0, y);
-			this.path.lineTo(x, y);
-		}
-		
-		this.path.moveTo(PADDING, 0);
-		this.path.lineTo(PADDING, y);
-		
-		this.path.moveTo(x - PADDING, 0);
-		this.path.lineTo(x - PADDING, y);
-		
-		this.path.strokeStyle = "#cccccc";
-		this.path.stroke(this.container);
-	};
-	
 }) (window);
 
 function ChartData(data) {
@@ -569,7 +633,12 @@ function ChartSummaryData(data) {
 			}
 			
 			if (tmp.length > 0) {
-				data[data.length] = tmp;
+				keys[keys.length] = tmp;
+			}
+			
+			if (high === low) {
+				high++;
+				low--;
 			}
 			
 			return {
@@ -577,6 +646,10 @@ function ChartSummaryData(data) {
 				low: low,
 				keys: keys
 			}
+		},
+		
+		get: function (date) {
+			return this.data[date];
 		}
 	};
 	
@@ -586,95 +659,125 @@ new Chart(chart);
 
 function createData() {
 	return {
-	    "1446757200000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 2
+	    "1447160400000": {
+	        "avg": 2,
+	        "min": 1,
+	        "max": 4
 	    },
-	    "1446760800000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 0
-	    },
-	    "1446746400000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 0
-	    },
-	    "1446771600000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 3
-	    },
-	    "1446742800000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 1
-	    },
-	    "1446753600000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 0
-	    },
-	    "1446764400000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 0
-	    },
-	    "1446775200000": {
+	    "1447146000000": {
 	        "avg": 2,
 	        "min": 0,
-	        "max": 29
+	        "max": 4
 	    },
-	    "1446782400000": {
+	    "1447099200000": {
 	        "avg": 3,
-	        "min": 0,
-	        "max": 9
-	    },
-	    "1446739200000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 0
-	    },
-	    "1446796800000": {
-	        "avg": 1,
-	        "min": 0,
-	        "max": 17
-	    },
-	    "1446750000000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 11
-	    },
-	    "1446786000000": {
-	        "avg": 1,
-	        "min": 0,
-	        "max": 9
-	    },
-	    "1446793200000": {
-	        "avg": 1,
-	        "min": 0,
-	        "max": 7
-	    },
-	    "1446735600000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 1
-	    },
-	    "1446789600000": {
-	        "avg": 0,
-	        "min": 0,
+	        "min": 1,
 	        "max": 8
 	    },
-	    "1446768000000": {
-	        "avg": 0,
-	        "min": 0,
-	        "max": 0
+	    "1447095600000": {
+	        "avg": 3,
+	        "min": 3,
+	        "max": 14
 	    },
-	    "1446778800000": {
+	    "1447128000000": {
+	        "avg": 3,
+	        "min": 1,
+	        "max": 6
+	    },
+	    "1447088400000": {
+	        "avg": 3,
+	        "min": 2,
+	        "max": 5
+	    },
+	    "1447138800000": {
+	        "avg": 1,
+	        "min": 1,
+	        "max": 5
+	    },
+	    "1447110000000": {
+	        "avg": 2,
+	        "min": 1,
+	        "max": 5
+	    },
+	    "1447164000000": {
+	        "avg": 1,
+	        "min": 1,
+	        "max": 5
+	    },
+	    "1447120800000": {
+	        "avg": 1,
+	        "min": 1,
+	        "max": 10
+	    },
+	    "1447131600000": {
+	        "avg": 3,
+	        "min": 1,
+	        "max": 6
+	    },
+	    "1447142400000": {
+	        "avg": 1,
+	        "min": 0,
+	        "max": 4
+	    },
+	    "1447153200000": {
+	        "avg": 2,
+	        "min": 1,
+	        "max": 4
+	    },
+	    "1447113600000": {
+	        "avg": 4,
+	        "min": 0,
+	        "max": 15
+	    },
+	    "1447106400000": {
+	        "avg": 2,
+	        "min": 1,
+	        "max": 3
+	    },
+	    "1447117200000": {
 	        "avg": 2,
 	        "min": 0,
+	        "max": 12
+	    },
+	    "1447156800000": {
+	        "avg": 2,
+	        "min": 1,
+	        "max": 4
+	    },
+	    "1447084800000": {
+	        "avg": 3,
+	        "min": 2,
+	        "max": 4
+	    },
+	    "1447149600000": {
+	        "avg": 1,
+	        "min": 1,
+	        "max": 3
+	    },
+	    "1447135200000": {
+	        "avg": 1,
+	        "min": 0,
 	        "max": 13
+	    },
+	    "1447081200000": {
+	        "avg": 2,
+	        "min": 1,
+	        "max": 4
+	    },
+	    "1447092000000": {
+	        "avg": 3,
+	        "min": 3,
+	        "max": 5
+	    },
+	    "1447102800000": {
+	        "avg": 1,
+	        "min": 1,
+	        "max": 4
+	    },
+	    "1447124400000": {
+	        "avg": 3,
+	        "min": 2,
+	        "max": 10
 	    }
 	};
 }
