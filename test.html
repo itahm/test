@@ -15,10 +15,13 @@ body.loading #chart {
 	min-width: 400px;
 	min-height: 400px;
 	display: flex;
+	flex-direction: column;
 }
 
 svg {
 	flex: 1;
+	/*height: 0;
+	display: block;*/
 }
 
 .left text {
@@ -36,6 +39,13 @@ svg {
 	text-anchor: middle;
 }
 
+.graph path {
+	stroke: #0084ff;
+	stroke-width: 3;
+}
+
+
+
 path {
 	stroke-width: .5;
 	fill: none;
@@ -52,8 +62,6 @@ path {
 	<script src="js/ITAhM.js"></script>
 	<script>
 
-
-
 var svgNS = "http://www.w3.org/2000/svg",
 	MIN_CHART_WIDTH = 100,
 	MIN_CHART_HEIGHT = 100,
@@ -63,7 +71,8 @@ var svgNS = "http://www.w3.org/2000/svg",
 	DATE_AXIS_HEIGHT = 50,
 	MARGIN = 20,
 	PADDING = 5,
-	WHEEL_REPEAT = 20;
+	WHEEL_REPEAT = 50,
+	uuid = 1;
 
 function Path(container) {
 	this.initialize(container);
@@ -114,8 +123,8 @@ function Path(container) {
 	
 }) (window);
 
-function Chart(svg) {
-	this.initialize(svg);
+function Chart(id) {
+	this.initialize(id);
 }
 
 function valueToString(value) {
@@ -145,41 +154,42 @@ function valueToString(value) {
 	}
 	
 	Chart.prototype = {
-		initialize: function (root) {
+		initialize: function (id) {
+			var root = document.getElementById(id);
+			
 			this.svgChart = document.createElementNS(svgNS, "svg");
 			this.container = document.createElementNS(svgNS, "g");
 			this.rect = {};
-			/*this.graphPath = document.createElementNS(svgNS, "clipPath");
-			this.graphRect = document.createElementNS(svgNS, "rect");
-			this.datePath = document.createElementNS(svgNS, "clipPath");
-			this.dateRect = document.createElementNS(svgNS, "rect");*/
+			this.clipPath = document.createElementNS(svgNS, "clipPath");
+			this.clipRect = document.createElementNS(svgNS, "rect");
 			this.leftAxis = new LeftAxis(this);
 			this.rightAxis = new RightAxis(this);
 			this.dateAxis = new DateAxis(this);
+			
+			// graph 가 clippath의 id를 참조하므로 반드시 graph 생성 전에 생성해야함
+			this.clipPath.setAttributeNS(null, "id", id +"_clip_"+ uuid++);
+			
 			this.graph = new Graph(this);
 			this.grid = new Path(this.container);
 			this.data = new ChartSummaryData(createData());
-			this.start = new Date(2015, 10, 10, 3, 0, 0, 0).getTime();
+			this.start = new Date(2015, 10, 10, 0, 0, 0, 0).getTime();
 			this.end = new Date(2015, 10, 11, 0, 0, 0, 0).getTime();
 			
-			this.grid.strokeStyle = "#ffff00";
+			this.grid.strokeStyle = "#dddddd";
 			
 			this.container.setAttribute("transform", "translate(20, 20)");
 			
-			/*var svgDefs = document.createElementNS(svgNS, "defs");
-			
-			this.container.appendChild(svgDefs);
-			svgDefs.appendChild(this.graphPath).setAttributeNS(null, "id", "path_graph_"+ "1");
-			svgDefs.appendChild(this.datePath).setAttributeNS(null, "id", "path_date_"+ "1");
+			this.svgChart.appendChild(document.createElementNS(svgNS, "defs"))
+			.appendChild(this.clipPath);
 			
 			this.clipPath.appendChild(this.clipRect);
-			*/
+			
 			var transformList = this.container.transform.baseVal;
 			
 			this.transform = {
 				translate: transformList.getItem(0)
 			};
-			
+						
 			root.appendChild(this.svgChart).appendChild(this.container);
 			
 			document.body.addEventListener("selectstart", function (e) {
@@ -192,8 +202,11 @@ function valueToString(value) {
 			this.svgChart.addEventListener("dragstart", onDragStart.bind(undefined, this));
 			this.svgChart.addEventListener("dragmove", onDragMove.bind(undefined, this));
 			
-			
 			this.resize();
+		},
+		
+		getClipID: function () {
+			return this.clipPath.getAttributeNS(null, "id");
 		},
 		
 		invalidate: function () {
@@ -226,16 +239,17 @@ function valueToString(value) {
 		},
 		
 		move: function (drag) {
+			drag *= this.tpp;
 			//if (drag % 5 === 0) {
-				this.start = this.dragStart + drag;
-				this.end = this.dragEnd + drag;
+				this.start = this.dragStart - drag;
+				this.end = this.dragEnd - drag;
 				
 				this.invalidate();
 			//}
 		},
 		
 		zoom: function (zoomIn) {
-			var sign = zoomIn? -1: +1;
+			var sign = zoomIn? 1: -1;
 			
 			for (var i=0; i<WHEEL_REPEAT; i++) {
 				this.end -= this.tpp * sign;
@@ -277,6 +291,11 @@ function valueToString(value) {
 			this.rightAxis.setTranslate(x2, 0);
 			
 			this.drawGrid(x1, x2, count, height / count);
+			
+			this.clipRect.setAttributeNS(null, "x", x1 + PADDING);
+			this.clipRect.setAttributeNS(null, "y", 0);
+			this.clipRect.setAttributeNS(null, "width", x2 - x1 - PADDING *2);
+			this.clipRect.setAttributeNS(null, "height", height);
 		},
 		
 		drawGraph: function (data) {
@@ -295,12 +314,16 @@ function valueToString(value) {
 			// y좌표 : value/high * height
 			// x좌표 : (date - this.start) /tpp
 			this.graph.avgPath.beginPath();
-			this.graph.avgPath.moveTo(0, 0);
+			//this.graph.avgPath.moveTo(0, 0);
 		
 			for (var i=0, numberOfBlock=blocks.length; i<numberOfBlock; i++) {
 				dateArray = blocks[i];
 				
-				for (var j=0,numberOfDate=dateArray.length; j<numberOfDate; j++) {
+				date = dateArray[0];
+				
+				this.graph.avgPath.moveTo((date - this.start) /tpp, this.data.get(date).max / this.high * height);
+				
+				for (var j=1,numberOfDate=dateArray.length; j<numberOfDate; j++) {
 					date = dateArray[j];
 					
 					this.graph.avgPath.lineTo((date - this.start) /tpp, this.data.get(date).max / this.high * height);
@@ -342,7 +365,6 @@ function SVGChart() {
 		initialize: function (chart, config) {
 			this.chart = chart;
 			this.container = document.createElementNS(svgNS, "g");
-			this.container.addEventListener("click", function () {console.log("###"+ this)});
 			this.container.setAttributeNS(null, "transform", "translate(0, 0) scale(1, 1)");
 			
 			setTransform(this);
@@ -375,15 +397,6 @@ function SVGChart() {
 			svgText.textContent = text;
 			
 			this.container.appendChild(svgText);
-		},
-		
-		clip: function (x, y, width, height) {
-			this.clipRect.setAttributeNS(null, "x", x);
-			this.clipRect.setAttributeNS(null, "y", y);
-			this.clipRect.setAttributeNS(null, "width", width);
-			this.clipRect.setAttributeNS(null, "height", height);
-			
-			
 		}
 	};
 
@@ -483,7 +496,6 @@ function DateAxis(chart, config) {
 		}this.addText(x, 0, ITAhM.util.toDateFormatString(new Date(mills)));
 		
 		/*
-		
 		this.clear();
 		
 		for (var i=0; i<=count; i++) {
@@ -515,6 +527,8 @@ function Graph(chart, config) {
 		this.maxPath = new Path(this.container);
 		this.avgPath = new Path(this.container);
 		this.minPath = new Path(this.container);
+		
+		this.container.setAttributeNS(null, "clip-path", "url(#"+ chart.getClipID() +")");
 		
 		this.container.classList.add("graph");
 	};
@@ -562,7 +576,9 @@ function ChartData(data) {
 				date = new Date(start),
 				value, high, low;
 			
-			while (this.next(date) < end) {
+			date.setSeconds(0, 0);
+			
+			do {
 				value = this.data[mills];
 				
 				if (value) {
@@ -576,7 +592,7 @@ function ChartData(data) {
 					
 					tmp = [];
 				}
-			}
+			} while (this.next(date) < end);
 			
 			if (tmp.length > 0) {
 				data[data.length] = tmp;
@@ -616,7 +632,9 @@ function ChartSummaryData(data) {
 				date = new Date(start),
 				mills, value, high, low;
 			
-			while ((mills = this.next(date)) < end) {
+			mills = date.setMinutes(0, 0, 0);
+			
+			do {
 				value = this.data[mills];
 				
 				if (value) {
@@ -631,6 +649,7 @@ function ChartSummaryData(data) {
 					tmp = [];
 				}
 			}
+			while ((mills = this.next(date)) < end);
 			
 			if (tmp.length > 0) {
 				keys[keys.length] = tmp;
@@ -655,7 +674,10 @@ function ChartSummaryData(data) {
 	
 }) (window);
 
-new Chart(chart);
+new Chart("chart");
+new Chart("chart");
+
+ITAhM.util.fireEvent("resize", window);
 
 function createData() {
 	return {
