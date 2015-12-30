@@ -372,11 +372,12 @@ var ITAhM = {};
 	var MONTH_NAME = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
 		getDateFormatString = {
 			ko: function (date) {
-				var format = ["월 ", "일 ", "시"];
+				var format = [date.getMonth() +1, "월", " ", date.getDate(), "일"],
+					hour = date.getHours();
 				
-				format.splice(2, 0, date.getHours());
-				format.splice(1, 0, date.getDate());
-				format.splice(0, 0, date.getMonth());
+				if (hour > 0) {
+					format.push(" ", hour, "시");
+				}
 				
 				return format.join("");
 			},
@@ -389,6 +390,9 @@ var ITAhM = {};
 			}
 		};
 	
+	/**
+	 * @param date Date object not integer (mills) 
+	 */
 	function toDateFormatString(date) {
 		//return getDateFormatString["en"](date);
 		return (getDateFormatString[navigator.language] || getDateFormatString.en)(date);

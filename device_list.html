@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title></title>
+		
+		<style>
+body, header, li, input {
+	font-family: tahoma, arial, "맑은 고딕";
+	margin: 0;
+	padding: 0; 
+}
+
+nav {
+	position: fixed; top: 0; right: 0; left: 0;
+	padding: 5px;
+	box-sizing: border-box;
+	height: 39px;
+	border-bottom: 1px;
+}
+
+.table {
+	position: fixed; top: 40px; right: 0; left: 0; bottom: 0;
+}
+
+li,
+input {
+	font-size: 12px;
+}
+
+.table {
+	position: absolute; top: 40px; right: 0; bottom: 0; left: 0;
+}
+
+.table ul {
+	margin: 0;
+	padding: 3px 0;
+	list-style: none;
+	display: flex;
+}
+
+.table li {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.table li:first-child {
+	flex: none;
+	width: 20px;
+}
+
+.thead {
+	position: absolute; top: 0; right: 0; left: 0;
+	height: 26px;
+	box-sizing: border-box;
+	background-color: #0084ff;
+	color: #ddf;
+	padding: 2px;
+}
+
+.thead li {
+	font-weight: bold;
+	text-align: center;
+}
+
+.thead li:not(:first-child) {
+	border-left: 1px solid #0af;
+}
+
+.thead li:last-child {
+	flex: none;
+	/* browser scrollbar의 너비에 따라 달라져야함*/ 
+	width: 17px;
+}
+
+
+.tbody {
+	position: absolute; top: 26px; right: 0; bottom: 0; left: 0;
+	background-color: #fff;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.tbody ul {
+	cursor: pointer;
+	position: relative;
+}
+
+.tbody ul:hover li:nth-child(2) {
+	text-decoration: underline;
+	color: #0084ff;
+}
+
+.tbody ul:nth-child(odd) {
+	background-color: #fafafa;
+}
+
+.tbody li {
+	padding: 3px;
+}
+
+input[type=button],
+input[type=submit],
+input[type=text],
+select {
+	padding: .5em;
+}
+
+nav form {
+	white-space: nowrap;
+}
+		</style>
+		
+	</head>
+	
+	<body>
+	
+		<nav>
+			<form id="form">
+				<input type="button" value="map" name="map">
+				<input type="button" value="map" name="chart">
+				<input type="button" value="add device" name="add">
+				<input type="button" value="remove device" name="remove">
+				<select name="label"></select>
+				<input type="text" name="keyword">
+				<input type="submit" value="search">
+			</form>
+		</nav>
+		
+		<div class="table">
+			<div class="thead" id="htead">
+				<ul>
+					<li>
+					<li>name
+					<li>type
+					<li>ip address
+					<li>processor load
+					<li>memory usage
+					<li>disk usage
+					<li>interface throughput
+					<li>
+				</ul>
+			</div>
+			<div class="tbody" id="tbody"></div>
+		</div>
+		
+		<script src="js/ITAhM.js"></script>
+		
+		<script>
+		
+/**
+ * list
+ */
+(function (window, undefined) {
+	var deviceData = top.getDeviceData(),
+		hover = document.querySelector(".hover"),
+		table = document.getElementById("tbody"),
+		specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0",
+		rowMap = {};
+	
+
+	/**
+	 * private method
+	 */
+	function setDeviceList() {console.log(deviceData);
+		var fragment = document.createDocumentFragment(),
+			labels = {},
+			row, device, checkbox, label;
+		
+		for (var id in deviceData) {
+			row = document.createElement("ul");
+			device = deviceData[id];
+			
+			checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.value = id;
+			checkbox.onclick = onStopPropagation;
+			
+			row.appendChild(document.createElement("li")).appendChild(checkbox);
+			row.appendChild(document.createElement("li")).textContent = device.name;
+			row.appendChild(document.createElement("li")).textContent = device.type;
+			row.appendChild(document.createElement("li")).textContent = device.ip;
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			row.appendChild(document.createElement("li")).textContent = "";
+			
+			row.onclick = onSelectDevice.bind(undefined, id);
+			
+			rowMap[id] = row;
+			
+			if (device.label) {
+				label = device.label.split(",");
+				
+				for (var i=0, length=label.length; i<length; i++) {
+					row.classList.add(label[i]);
+					
+					labels[label[i]] = null;
+				}
+			}
+			
+			fragment.appendChild(row);
+		}
+		
+		table.appendChild(fragment);
+		
+		initLabels(Object.keys(labels));
+	}
+	
+	/**
+	 * callback method
+	 */
+	function onSelectDevice(id) {
+		//showDialog("dialog/device.html");
+		console.log("edit device");
+	}
+	
+	function onStopPropagation(e) {
+		e.stopPropagation();
+	}
+	
+	/**
+	 * public method
+	 */
+	window.initialize = function () {
+		setDeviceList();
+	};
+		
+	window.getRowsByLabel = function (labelName) {
+		var fragment = document.createDocumentFragment();
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (labelName) {
+			array = label[labelName];
+			
+			fragment = document.createDocumentFragment();
+			
+			if (array) {
+				for (var i=0, length=array.length; i<length; i++) {
+					fragment.appendChild(array[i]);
+				}
+			}
+		}
+		
+		return fragment;
+	};
+
+	window.clearDeviceList = function () {
+		var fragment = document.createDocumentFragment(),
+			row;
+		
+		while (row = table.firstChild) {
+			fragment.appendChild(row);
+		}
+		
+		return fragment;
+	};
+	
+	window.filterDeviceList = function (keyword) {
+		var row = clearDeviceList().firstChild,
+			next,
+			fragment = document.createDocumentFragment(),
+			device;
+		
+		while (row) {
+			next = row.nextSibling;
+			
+			device = deviceData[row.firstChild.value];
+			
+			if (device.name.indexOf(keyword) !== -1 || device.ip.indexOf(keyword) !== -1 /*device.type.indexOf(keyword) === -1*/) {
+				fragment.appendChild(row);
+			}
+			
+			row = next;
+		}
+		
+		table.appendChild(fragment);
+	};
+	
+	window.selectLabel = function (label) {
+		var fragment = document.createDocumentFragment(),
+			rows;
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (label) {
+			rows = [].slice.call(fragment.querySelectorAll("."+ label), 0);
+			
+			fragment = document.createDocumentFragment();
+			
+			for (var i=0, length=rows.length; i<length; i++) {
+				fragment.appendChild(rows[i]);
+			}
+		}
+		
+		table.appendChild(fragment);
+	};
+	
+	window.removeDeviceList =function () {
+		var checked = document.querySelectorAll("#tbody input:checked"),
+			length = checked.length;
+			
+		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
+			return;
+		}
+		
+		for (var i=0; i<length; i++) {
+			delete deviceData[checked[i].value];
+		}
+		
+		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
+		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
+		// 일단은 페이지 새로고침으로 해결
+		location.reload();
+	};
+	
+	window.resetDeviceList = function () {
+		var row;
+		
+		while(row = table.firstChild) {
+			table.removeChild(row);
+		}
+		
+		setDeviceList();
+		
+		if (getSelectedDevice()) {
+			showView("/view/chart.html");
+		}
+	};
+	
+	window.showChart = function (id) {
+		var device = deviceData[id];
+		
+		if (device.snmp) {
+			window.open("/view/chart.html", id, specs);
+		}
+	};
+	
+})(window);
+
+/**
+ * device 관리
+ */
+(function (window, undefined) {
+	var deviceData,
+		selectedDevice,
+		tmpID = -1,
+		applyDevice;
+	
+	// callback method
+	function onResponse(data, status) {
+		if (status === 200) {
+			initDeviceList(deviceData = data);
+		}
+		else if (status === 401) {
+			unauthorized();
+		}
+		else {
+			throw "";
+		}
+	}
+	
+	/**
+	 * public method
+	 */
+	window.getDeviceData = function () {
+		return deviceData;
+	};
+	
+	window.addDevice = function () {
+		selectedDevice = undefined;
+		
+		showDialog("dialog/device.html");
+	};
+	
+	window.createDevice = function (device) {
+		var id = tmpID--;
+		
+		device.id = id;
+		device.x = 0;
+		device.y = 0;
+		
+		deviceData[id] = device;
+	}
+	
+	window.selectDevice = function (device) {
+		selectedDevice = device;
+	}
+	
+	window.removeDevice = function (idList) {
+		for (var i=0, length=idList.length; i<length; i++) {
+			delete deviceData[idList[i]];
+		}
+	};
+	
+	window.initDevice = function () {
+		sendRequest({
+			command: "pull",
+			database: "device"
+		}, onResponse);
+	};
+	
+	window.getSelectedDevice = function () {
+		return selectedDevice;
+	};
+	
+}) (window);
+
+/**
+ * control
+ */
+(function (window, undefined) {
+	var form = document.getElementById("form");
+	
+	initEvent();
+	
+	/**
+	 * private method
+	 */
+	function initEvent() {
+		form.elements.add.addEventListener("click", addDevice, false);
+		form.elements.remove.addEventListener("click", onRemove, false);
+		form.elements.label.addEventListener("change", onChangeLabel, false);
+		form.addEventListener("submit", onSearch, false);
+		form.elements.map.addEventListener("click", onShowMap, false);
+		form.elements.chart.addEventListener("click", onShowChart, false);
+	}
+	
+	/**
+	 * callback method
+	 */
+	function onSearch(e) {
+		e.preventDefault();
+		
+		selectLabel(form.elements.label.value);
+
+		filterDeviceList(form.elements.keyword.value);
+	}
+	
+	function onChangeLabel(e) {
+		form.elements.keyword.value = "";
+		
+		selectLabel(form.elements.label.value);
+	}
+	
+	function onChangeMode(e) {
+		console.log(e.currentTarget.value);
+	}
+	
+	function onRemove() {
+		removeDeviceList();
+	}
+	
+	function onShowMap() {
+		//top.showMap();
+	}
+	
+	function onShowChart(id) {
+		//top.showChart();
+	}
+	
+	/*
+	 * public method
+	 */
+	window.initLabels = function (labels) {
+		var select = form.elements.label,
+			option = document.createElement("option");
+	
+		// label select 초기화
+		select.length = 0;
+		
+		option.value = "";
+		option.text = "all labels";
+		option.selected = true;
+		
+		select.add(option);
+		
+		for (var i=0, length=labels.length; i<length; i++) {
+			option = document.createElement("option");
+			
+			option.text = labels[i];
+			
+			select.add(option);
+		}
+	};
+	
+})(window);
+
+initialize();
+
+		</script>
+	
+	</body>
+	
+</html>

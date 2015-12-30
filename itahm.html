@@ -282,9 +282,9 @@ var elements = {
 	 * public method
 	 */
 	
-	window.unauthorized = function () {
+	window.unauthorized = function () {console.log(document.body.classList);
 		document.body.classList.remove("authorized");
-		
+		console.log(document.body.classList);
 		showView("view/setting.html");
 	};
 	
@@ -633,7 +633,7 @@ var elements = {
 		selectDevice(device);
 		
 		if (device.snmp) {
-			window.open("view/chart.html", id, "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0");
+			window.open("view/chart.html", id, specs);
 		}
 		else {
 			showDialog("dialog/device.html");
