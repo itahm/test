@@ -34,7 +34,6 @@ header {
 }
 
 iframe {
-	position: fixed; top: 40px; right: 0; bottom: 0; left: 0;
 	width: 100%; height: 100%;
 	border: 0;
 	margin: 0;
@@ -109,17 +108,42 @@ header h3 {
 	margin: 1em;
 }
 
+/*frame 배치*/
+.main {
+	position: fixed; top: 40px; right: 0; bottom: 0; left: 0;
+	display: flex;
+	background-color: #fff;
+}
+
+#frame_list {
+	width: 500px;
+}
+
+#frame_map {
+	flex: 1;
+}
+
 body:not(.connected) #signin,
 body.connected #connect,
 body.authorized .container:not(.authorized),
-body:not(.authorized) .container.authorized {
+body:not(.authorized) .container.authorized,
+body:not(.chart) .chart {
 	display: none;
 }
+
+body.maximized .container.main {
+	top: 0;
+}
+
+body.maximized #frame_list {
+	width: 0;
+}
+
 		</style>
 		
 	</head>
 	
-	<body>
+	<body class="">
 	
 		<header class="container authorized">
 			<div>
@@ -133,7 +157,10 @@ body:not(.authorized) .container.authorized {
 			</form>
 		</header>
 		
-		<iframe class="container authorized" id="device_list"></iframe>
+		<div class="main container authorized">
+			<iframe id="frame_list"></iframe>
+			<iframe id="frame_map"></iframe>
+		</div>
 		
 		<div class="container centered">
 			<div class="signin">
@@ -155,6 +182,7 @@ body:not(.authorized) .container.authorized {
 		</div>
 		
 		<script src="js/ITAhM.js"></script>
+		<script src="js/icon.js"></script>
 		<!--script src="js/Communicator.js"></script-->
 		<script src="js/Communicator_tmp.js"></script>
 		<script>
@@ -259,11 +287,11 @@ body:not(.authorized) .container.authorized {
 	
 }) (window);
 
-// main
+// list
 (function (window, undefined){
 	
 	var form = document.getElementById("signout"),
-		frame = document.getElementById("device_list");
+		frame = document.getElementById("frame_list");
 	
 	function initEvent() {
 		form.addEventListener("submit", onSignout, false);
@@ -283,6 +311,8 @@ body:not(.authorized) .container.authorized {
 		document.body.classList.add("authorized");
 		
 		frame.src = "device_list.html";
+		
+		initIcon();
 	};
 	
 	window.onAuthorized = function (agent) {
@@ -297,6 +327,21 @@ body:not(.authorized) .container.authorized {
 	};
 	
 	initEvent();
+	
+}) (window);
+
+//map
+(function (window, undefined){
+	
+	var frame = document.getElementById("frame_map");
+	
+	window.initMap = function () {
+		frame.src = "map.html";
+	};
+	
+	window.selectDevice = function (id) {
+		frame.contentWindow.selectDevice(id);
+	};
 	
 }) (window);
 
@@ -321,6 +366,52 @@ body:not(.authorized) .container.authorized {
 	};
 
 }) (window);
+
+//icon data
+(function (window, undefined) {
+	var iconData = ITAhM.iconData;
+
+	if (!iconData) {
+		throw "icon.js is required";
+	}
+	
+	function onResponse(data, status) {
+		if (status === 200) {
+			for (var type in data) {
+				iconData[type] = data[type];
+			}
+			
+			initMap();
+		}
+		else if (status === 401) {
+			unauthorized();
+		}
+		else {
+			throw "";
+		}
+	}
+	
+	window.initIcon = function () {
+		sendRequest({
+			command: "pull",
+			database: "icon"
+		}, onResponse, true);
+	};
+	
+	window.getIconData = function () {
+		return iconData;
+	};
+	
+}) (window);
+
+// public
+function showChart(id) {
+	console.log(id);
+}
+
+function maximizeMap(maximize) {
+	document.body.classList[maximize? "add": "remove"]("maximized");
+}
 
 		</script>
 	

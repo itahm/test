@@ -18,13 +18,13 @@ function Draggable(target) {
 	}
 	
 	function onMouseMove(e) {
-		if (!draggable || lastX === x && lastY === y) {
-			return;
-		}
-		
 		var x = e.clientX,
 			y = e.clientY,
 			data;
+		
+		if (!draggable || lastX === x && lastY === y) {
+			return;
+		}
 			
 		if (!isDragging) {
 			data = {

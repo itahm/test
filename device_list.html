@@ -113,6 +113,11 @@ select {
 nav form {
 	white-space: nowrap;
 }
+
+.hidden {
+	display: none;
+}
+
 		</style>
 		
 	</head>
@@ -121,10 +126,10 @@ nav form {
 	
 		<nav>
 			<form id="form">
-				<input type="button" value="map" name="map">
-				<input type="button" value="map" name="chart">
-				<input type="button" value="add device" name="add">
-				<input type="button" value="remove device" name="remove">
+				<input type="button" value="map" name="map" class="hidden">
+				<input type="button" value="chart" name="chart"  class="hidden">
+				<input type="button" value="add" name="add">
+				<input type="button" value="del" name="remove">
 				<select name="label"></select>
 				<input type="text" name="keyword">
 				<input type="submit" value="search">
@@ -138,10 +143,6 @@ nav form {
 					<li>name
 					<li>type
 					<li>ip address
-					<li>processor load
-					<li>memory usage
-					<li>disk usage
-					<li>interface throughput
 					<li>
 				</ul>
 			</div>
@@ -162,11 +163,10 @@ nav form {
 		specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0",
 		rowMap = {};
 	
-
 	/**
 	 * private method
 	 */
-	function setDeviceList() {console.log(deviceData);
+	function setDeviceList() {
 		var fragment = document.createDocumentFragment(),
 			labels = {},
 			row, device, checkbox, label;
@@ -184,10 +184,10 @@ nav form {
 			row.appendChild(document.createElement("li")).textContent = device.name;
 			row.appendChild(document.createElement("li")).textContent = device.type;
 			row.appendChild(document.createElement("li")).textContent = device.ip;
-			row.appendChild(document.createElement("li")).textContent = "";
-			row.appendChild(document.createElement("li")).textContent = "";
-			row.appendChild(document.createElement("li")).textContent = "";
-			row.appendChild(document.createElement("li")).textContent = "";
+			//row.appendChild(document.createElement("li")).textContent = "";
+			//row.appendChild(document.createElement("li")).textContent = "";
+			//row.appendChild(document.createElement("li")).textContent = "";
+			//row.appendChild(document.createElement("li")).textContent = "";
 			
 			row.onclick = onSelectDevice.bind(undefined, id);
 			
@@ -215,8 +215,7 @@ nav form {
 	 * callback method
 	 */
 	function onSelectDevice(id) {
-		//showDialog("dialog/device.html");
-		console.log("edit device");
+		top.selectDevice(id);
 	}
 	
 	function onStopPropagation(e) {
