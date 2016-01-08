@@ -57,14 +57,6 @@ li {
 	white-space: nowrap;
 }
 
-.flex {
-	display: flex;
-}
-
-.flex>input {
-	flex: 1;
-}
-
 .hide {
 	display: none;
 }
@@ -95,8 +87,13 @@ body:not(.snmp) .advanced >.snmp {
 	display: none;
 }
 
-.footer {
+footer {
 	margin-top: 5px;
+	display: flex;
+}
+
+footer input {
+	flex: 1;
 }
 
 		</style>
@@ -152,10 +149,11 @@ body:not(.snmp) .advanced >.snmp {
 				</div>
 				 <ul id="snmp_list" class="snmp"></ul>
 			</div>
-			<div class="flex footer">
+			
+			<footer>
 				<input type="reset" value="cancel">
 				<input type="submit" value="apply">
-			</div>
+			</footer>
 		</form>
 		
 		<script>
@@ -165,17 +163,9 @@ if (window === top) throw "";
 (function (window, undefined){
 	
 	var form = document.querySelector("form"),
-		iconData = top.getIconData(),
-		device = top.getSelectedDevice(),
+		device,
 		snmpList = document.getElementById("snmp_list"),
 		customList = document.getElementById("custom_list");
-	
-	setEvent();
-	if (device) {
-		initDevice();
-	}
-	initType();
-	onSnmpChanged();
 	
 	function setEvent() {
 		form.addEventListener("submit", onApply, false);
@@ -189,56 +179,6 @@ if (window === top) throw "";
 		for (var i=0, length = snmp.length; i<length; i++) {
 			snmp[i].onchange = onSnmpChanged;
 		}
-	}
-	
-	function initDevice() {
-		form.elements.name.value = device.name;
-		form.elements.ip.value = device.ip;
-		form.elements.type.value = device.type;
-		// 저장할때는 trim으로 다 붙여서 넣지만 보여줄때는 보기 좋게 한칸씩 띈다.
-		form.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
-		
-		if (device.ifEntry) {
-			initCustomInterface();
-		}
-		
-		if (device.snmp) {
-			document.getElementById("profile").title = "working profile:\n" + device.profile;
-			
-			form.elements.snmp.value = "true";
-			
-			// interface 정보 획득 목적
-			top.sendRequest({
-				command: "select",
-				ip: device.ip
-			}, onResponse, true);
-		}
-		else {
-			form.elements.snmp.value = "";
-		}
-	}
-	
-	function initType() {
-		var control = form.elements.type,
-			fragment = document.createDocumentFragment(),
-			group = {}, optgroup, groupName, option;
-		
-		for (var type in iconData) {
-			groupName = iconData[type].className;
-			optgroup = group[groupName];
-			if (!optgroup) {
-				optgroup = document.createElement("optgroup");
-				optgroup.label = groupName;
-				
-				group[groupName] = optgroup;
-				
-				fragment.appendChild(optgroup);
-			}
-			
-			optgroup.appendChild(document.createElement("option")).text = type;
-		}
-		
-		control.appendChild(fragment);
 	}
 	
 	function initCustomInterface() {
@@ -351,8 +291,6 @@ if (window === top) throw "";
 			top.createDevice(device);
 		}
 		
-		top.resetDeviceList();
-		
 		form.reset();
 	}
 	
@@ -402,19 +340,58 @@ if (window === top) throw "";
 		}
 	}
 	
-	function onResponse(data, status) {
-		if (status === 200) {
-			initSnmpInterface(data);
+	window.initialize = function (iconData) {
+		var control = form.elements.type,
+			fragment = document.createDocumentFragment(),
+			group = {}, optgroup, groupName, option;
+		
+		for (var type in iconData) {
+			groupName = iconData[type].group;
+			optgroup = group[groupName];
+			if (!optgroup) {
+				optgroup = document.createElement("optgroup");
+				optgroup.label = groupName;
+				
+				group[groupName] = optgroup;
+				
+				fragment.appendChild(optgroup);
+			}
+			
+			optgroup.appendChild(document.createElement("option")).text = type;
 		}
-		else if (status === 401) {
-			top.unauthorized();
+		
+		control.appendChild(fragment);
+		
+		setEvent();
+	};
+	
+	window.setDevice = function (d, snmp) {
+		device = d;
+		
+		form.elements.name.value = device.name;
+		form.elements.ip.value = device.ip;
+		form.elements.type.value = device.type;
+		// 저장할때는 trim으로 다 붙여서 넣지만 보여줄때는 보기 좋게 한칸씩 띈다.
+		form.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
+		
+		if (device.ifEntry) {
+			initCustomInterface();
 		}
-		else {
-			throw "";
+		
+		document.getElementById("profile").title = "working profile:\n" + device.profile;
+		
+		if (snmp) {
+			form.elements.snmp.value = "true";
+			initSnmpInterface(snmp);
 		}
-	}
+	};
 	
 }) (window);
+
+// public
+function initDevice() {
+	
+}
 
 		</script>
 	
