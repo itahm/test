@@ -111,17 +111,29 @@ body:not(.dialog) #dialog {
 	display: none;
 }
 
+/* chart */
+#chart {
+	background-color: #fff;
+}
+
+body:not(.chart) #chart {
+	display: none;
+}
+
 /* 공통 */
 .fullscreen {
 	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 }
 
+body.nolink #link_token {
+	display: none;
+}
 
 		</style>
 		
 	</head>
 	
-	<body class="loading">
+	<body class="loading nolink">
 	
 		<svg id="stage">
 			<g id="transform" transform="translate(0, 0) translate(0, 0) translate(0, 0) scale(1, 1)">
@@ -154,6 +166,8 @@ body:not(.dialog) #dialog {
 		</aside>
 		
 		<iframe id="dialog" class="fullscreen"></iframe>
+		
+		<iframe id="chart" class="fullscreen"></iframe>
 		
 		<script src="../js/Draggable.js"></script>
 		<script>
@@ -480,7 +494,7 @@ var deviceData = opener.getDeviceData(),
 		
 	window.setSelectionMark = function () {
 		var id = getSelectedDeviceID(),
-			device = getDevice(id),
+			device = deviceData[id],
 			svgDevice = getSvgDevice(id),
 			x = Number(svgDevice.getAttributeNS(null, "x")),
 			y = Number(svgDevice.getAttributeNS(null, "y"));
@@ -518,44 +532,45 @@ var deviceData = opener.getDeviceData(),
 		chartAnchor.onclick = function (e) {
 			e.stopPropagation();
 			
-			//top.showChart(getSelectedDeviceID());
+			showChart();
 		};
 		
 		editAnchor.onclick = function (e) {
 			e.stopPropagation();
 			
 			var id = getSelectedDeviceID(),
-				device = getDevice(id);
+				device = deviceData[id];
 			
-			showDeviceDialog(function (dialog) {
-				dialog.initialize(iconData);
-				
-				dialog.setDevice(device);
-			});
-			
-			/*
-			opener.sendRequest({
-				command: "select",
-				ip: device.ip
-			}, onResponse, true);
-			*/
+			if (device.snmp) {
+				sendRequest({
+					command: "select",
+					ip: device.ip
+				}, onResponse, true);
+			}
+			else {
+				onLoadDeviceDialog();
+			}
 		};
 	}
 	
-	function onResponse(data, status) {
-		if (status === 200) {
-			showDeviceDialog(function () {
-				console.log(data);
-			});
-		}
-		else if (status === 401){
-			alert("no session");
-			
-			window.close();
+	function onResponse(data) {
+		if (data) {
+			onLoadDeviceDialog(data);
 		}
 		else {
-			//
+			window.close();
 		}
+	}
+	
+	function onLoadDeviceDialog(snmp) {
+		var id = getSelectedDeviceID(),
+			device = deviceData[id];
+		
+		showDeviceDialog(function (dialog) {
+			dialog.initialize(iconData);
+			
+			dialog.setDevice(device, snmp);
+		});
 	}
 	
 	window.showNavigation = function (x, y, chart) {
@@ -636,7 +651,7 @@ var deviceData = opener.getDeviceData(),
 		lineMap[device.id] = peerMap;
 		
 		for (var name in ifEntry) {
-			peer = getDevice(ifEntry[name]);
+			peer = deviceData[ifEntry[name]];
 			
 			nameSvg = createLabel(name, device.x, device.y, peer.x, peer.y);
 			
@@ -735,10 +750,45 @@ var deviceData = opener.getDeviceData(),
 	
 }) (window);
 
-// public
-function showChart(id) {
-	console.log(id);
-}
+//chart
+(function (window, undefined) {
+	
+	var chart = document.getElementById("chart"),
+		device;
+	
+	function onResponse(data) {
+		if (data) {
+			chart.onload = function () {
+				chart.contentWindow.initialize(device, data);
+			};
+			
+			chart.src = "chart.html";
+		}
+		else {
+			window.close();
+		}
+		
+		document.body.classList.add("chart");
+	}
+	
+	window.showChart = function () {
+		device = deviceData[getSelectedDeviceID()];
+		
+		sendRequest({
+			command: "select",
+			ip: device.ip
+		}, onResponse);
+	};
+	
+	window.closeChart = function () {
+		document.body.classList.remove("chart");
+		
+		chart.onload = undefined;
+		
+		dialog.src = "about:blank";
+	};
+	
+}) (window);
 
 function selectDevice(id) {
 	var svgDevice = getSvgDevice(id);
@@ -747,6 +797,10 @@ function selectDevice(id) {
 	y = Number(svgDevice.getAttributeNS(null, "y"));
 	
 	moveStage(x, y);
+}
+
+function sendRequest(request, callback) {
+	opener.sendRequest(request, callback);
 }
 
 initialize();

@@ -162,7 +162,9 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 			command: "echo"
 		}, onEcho);
 		
-		window.sendRequest = communicator.send;
+		window.sendRequest = function (request, callback) {
+			communicator.send(request, onResponse.bind(undefined, callback));
+		}
 	}
 	
 	function onDisconnect(e) {
@@ -171,6 +173,26 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 		}
 		
 		location.reload();
+	}
+	
+	function onResponse(callback, data, status) {
+		if (status === 200) {
+			callback(data);
+		}
+		else {
+			callback();
+			
+			if (status === 401) {
+				document.body.className = "connected";
+				
+				alert("no session.");
+				
+				window.focus();
+			}
+			else {
+				
+			}
+		}
 	}
 	
 	function onEcho(data, status) {
@@ -221,8 +243,8 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 			command: "signin",
 			username: form.elements["username"].value,
 			password: form.elements["password"].value
-		}, function (data, status) {
-			if (status === 200) {
+		}, function (data) {
+			if (data) {
 				onAuthorized();
 			}
 			else {
@@ -263,22 +285,17 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 
 	var deviceData;
 	
-	function onResponse(data, status) {
-		if (status === 200) {
-			deviceData = data;
-			
-			initIcon();
-		}
-		else {
-			throw"";
-		}
-	};
-	
 	window.initDevice = function () {
 		sendRequest({
 			command: "pull",
 			database: "device"
-		}, onResponse);
+		}, function (data) {
+			if (data) {
+				deviceData = data;
+				
+				initIcon();
+			}
+		});
 	};
 	
 	window.getDeviceData = function () {
@@ -295,24 +312,19 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 		throw "icon.js is required";
 	}
 	
-	function onResponse(data, status) {
-		if (status === 200) {
-			for (var type in data) {
-				iconData[type] = data[type];
-			}
-			
-			start();
-		}
-		else {
-			throw "";
-		}
-	}
-	
 	window.initIcon = function () {
 		sendRequest({
 			command: "pull",
 			database: "icon"
-		}, onResponse);
+		}, function (data) {
+			if (data) {
+				for (var type in data) {
+					iconData[type] = data[type];
+				}
+				
+				start();
+			}
+		});
 	};
 	
 	window.getIconData = function () {

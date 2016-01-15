@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title>ITAhM::Chart</title>
+		
+		<style>
+body,
+li,
+select,
+input,
+span,
+label,
+a,
+h3,
+button,
+svg text {
+	font-family: arial, tahoma, "맑은 고딕"
+}
+
+li,
+select,
+input,
+span,
+label,
+a,
+button,
+svg text {
+	font-size: 14px;
+}
+
+body {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+header img {
+	float: right;
+	cursor: pointer;
+}
+
+section {
+	border: 1px solid #0084ff;
+	margin: 10px;
+}
+
+ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+}
+
+select {
+	padding: .5em;
+}
+
+section.information li {
+	flex: 1;
+	min-width: 120px;
+	padding: 10px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+section.information ul:first-child {
+	background-color: #0084ff;
+	color: #fff;
+}
+
+section.information ul:first-child li {
+	text-align: center;
+	font-weight: bold;
+}
+
+section.select {
+	padding: 10px;
+}
+
+section.select ul {
+	display: flex;
+}
+	
+section.select li {
+	flex: 1;
+}
+
+section.select select {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+nav {
+	margin: 10px 10px 0 10px;
+	display: flex;
+	justify-content: space-between;
+}
+
+nav img {
+	vertical-align: middle;
+}
+
+button.download span {
+	margin-left: 10px;
+}
+
+#mode:not(.response) #mode_response,
+#mode:not(.processor) #mode_processor,
+#mode:not(.storage) #mode_storage,
+#mode:not(.memory) #mode_memory,
+#mode:not(.throughput) #mode_throughput {
+	display: none;
+}
+
+/* svg */
+section.chart {
+	background: #fff url(../img/chart.png) no-repeat center;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+svg {
+	flex: 1;
+	width: 100%;
+	height: 100%;
+}
+
+path {
+	stroke: #ddd;
+	stroke-width: .5;
+}
+
+#axis_left text {
+	alignment-baseline: middle;
+	text-anchor: end;
+}
+
+#axis_right text {
+	alignment-baseline: middle;
+	text-anchor: start;
+}
+
+#axis_date text {
+	alignment-baseline: text-before-edge;
+	text-anchor: middle;
+}
+
+#graph path {
+	stroke: #0084ff;
+	stroke-width: 2;
+	fill: none;
+}
+
+		</style>
+		
+	</head>
+	
+	<body>
+		
+		<header>
+			<img src="img/close.png" id="close">
+		</header>
+		
+		<section class="information">
+			<ul>
+				<li>
+					<span id="description">nameⓘ</span>
+				</li>
+				<li>
+					<span>ip address</span>
+				</li>
+				<li>
+					<span>type</span>
+				</li>
+				<li>
+					<span>label</span>
+				</li>
+				<li>
+					<span>profile</span>
+				</li>
+				<li>
+					<span>status</span>
+				</li>
+				<li>
+					<span>uptime</span>
+				</li>
+				<li>
+					<span>enterprise</span>
+				</li>
+			</ul>
+			
+			<ul>
+				<li>
+					<span id="name">name</span>
+				</li>
+				<li>
+					<span id="ip">ip</span>
+				</li>
+				<li>
+					<span id="type">type</span>
+				<li>
+					<span id="label">label</span>
+				</li>
+				<li>
+					<span id="profile">profile</span>
+				</li>
+				<li>
+					<span id="status">status</span>
+				</li>
+				<li>
+					<span id="uptime">uptime</span>
+				</li>
+				<li>
+					<span id="enterprise">enterprise</span>
+				</li>
+			</ul>
+		</section>
+		
+		<section class="select">
+			<ul>
+				<li>
+					<label>
+						<input type="radio" value="onSelectResponse" name="resource">response time
+					</label>
+				<li>
+					<label>
+						<input type="radio" value="onSelectProcessor" name="resource">processor load
+					</label>
+				<li>
+					<label>
+						<input type="radio" value="onSelectMemory" name="resource">physical memory
+					</label>
+				<li>
+					<label>
+						<input type="radio" value="onSelectStorage" name="resource">storage usage
+					</label>
+				<li>
+					<label>
+						<input type="radio" value="onSelectThroughput" name="resource">interface throughput
+					</label>
+					<select id="interface_list" disabled></select>
+			</ul>
+		</section>
+		
+		<nav>
+			<div>
+				<button class="download">
+					<img src="img/download.png">
+					<span>csv</span>
+				</button>
+				<button class="download">
+					<img src="img/download.png">
+					<span>png</span>
+				</button>
+			</div>
+			<div id="mode" class="response">
+				<select id="mode_response" disabled>
+					<option>N/A
+				</select>
+				<select id="mode_processor">
+					<option>mix
+				</select>
+				<select id="mode_storage">
+					<option>mix
+				</select>
+				<select id="mode_memory" disabled>
+					<option>N/A
+				</select>
+				<select id="mode_throughput">
+					<option>mix
+					<option>in
+					<option>out
+				</select>
+			</div>
+		</nav>
+		
+		<section class="chart">
+			<svg id="chart">
+				<defs>
+					<clipPath id="graph_area"></clipPath>
+				</defs>
+				<g transform="translate(20, 20)">
+					<g transform="translate(0, 0)" id="axis_left"></g>
+					<g transform="translate(0, 0)" id="axis_right"></g>
+			        <g transform="translate(-100, -100)" id="axis_date">
+			        	<image xlink:href="img/arrow.png" width="16" height="16" id="start"></image>
+			        	<image xlink:href="img/arrow.png" width="16" height="16" id="end"></image>
+			        </g>
+			        <g transform="translate(0, 0) scale(1 -1)" clip-path="url(#graph_area)" id="graph"></g>
+			        <g transform="translate(0, 0)" id="grid"></g>
+			    </g>
+			</svg>
+		</section>
+		
+		<script src="js/ITAhM.js"></script>
+		<script src="js/Draggable.js"></script>
+		<script src="Chart.js"></script>
+		<script>
+
+// navigation
+(function (window, undefined) {
+	
+	var name = document.getElementById("name"),
+		ip = document.getElementById("ip"),
+		type = document.getElementById("type"),
+		label = document.getElementById("label"),
+		profile = document.getElementById("profile"),
+		status = document.getElementById("status"),
+		uptime = document.getElementById("uptime"),
+		enterprise = document.getElementById("enterprise"),
+		close = document.getElementById("close");
+	
+	function initialize() {
+		close.onclick = function () {
+			top.closeChart();
+		}
+	}
+
+	// public. 페이지의 시작, map으로부터 호출됨. 
+	window.initialize = function (device, snmp) {
+		initialize();
+		
+		name.textContent = device.name;
+		ip.textContent = device.ip;
+		type.textContent = device.type;
+		label.textContent = device.label && (device.label.split(",")).join(", ") || "";
+		profile.textContent = device.profile;
+		status.textContent = snmp.timeout < 0? "up": "down";
+		uptime.textContent = ITAhM.util.toUptimeString(snmp.hrSystemUptime);
+		enterprise.textContent = ITAhM.util.enterpriseFromOID(snmp.sysObjectID);
+		
+		initThroughput(snmp);
+		
+		initProcessor(snmp);
+		
+		initStorage(snmp);
+	};
+	
+}) (window);
+
+// select
+(function (window, undefined) {
+	
+	var resources = document.getElementsByName("resource"),
+		mode = document.getElementById("mode");
+	
+	function initialize() {
+		for (var i=0, length = resources.length; i<length; i++) {
+			resources[i].onchange = onSelectResource;
+		}
+	}
+	
+	function onSelectResource() {
+		var method = this.value;
+		
+		if (method !== "onSelectThroughput") {
+			onSelectThroughput(true);
+		}
+		
+		window[method]();
+		
+		set(new ChartSummaryData(createData()), new Date(2015, 10, 10, 0, 0, 0, 0).getTime(), new Date(2015, 10, 11, 0, 0, 0, 0).getTime());
+		
+		invalidate();
+	}
+	
+	window.setResource = function (resource) {
+		mode.className = resource;
+	};
+	
+	initialize();
+	
+}) (window);
+
+// response time
+(function (window, undefined) {
+	
+	function valueToString(value) {
+		return value.toFixed(2) + "ms";
+	}
+	
+	window.onSelectResponse = function () {
+		window.valueToString = valueToString;
+		
+		setResource("response");
+	}
+	
+}) (window);
+
+// processor
+(function (window, undefined) {
+	
+	var mode = document.getElementById("mode_processor");
+	
+	function valueToString(value) {
+		return value.toFixed(2) + "%";
+	}
+	
+	window.initProcessor = function (snmp) {
+		var processor = snmp.hrProcessorIndex,
+			option;
+		
+		for (var index in processor) {
+			option = document.createElement("option");
+			
+			option.text = "processor."+ index;
+			option.value = index;
+			
+			mode.add(option)
+		}
+	};
+	
+	window.onSelectProcessor = function () {
+		window.valueToString = valueToString;
+		
+		setResource("processor");
+	};
+	
+}) (window);
+
+// storage
+(function (window, undefined) {
+	
+	var mode = document.getElementById("mode_storage");
+	
+	function valueToString(value) {
+		return ITAhM.util.toBytesString(value).replace("ytes", "");
+	}
+	
+	window.initStorage = function (snmp) {
+		var entry = snmp.hrStorageEntry,
+			storage,
+			option;
+		
+		for (var index in snmp.hrStorageIndex) {
+			storage = entry[index];
+			// size가 0인 것 제외. type이 non-removable storage인 것만
+			if (storage.hrStorageSize > 0 && storage.hrStorageType === 4) {
+				option = document.createElement("option");
+				option.text = storage.hrStorageDescr;
+				option.value = index;
+				
+				mode.add(option);
+			}
+		}
+	};
+	
+	window.onSelectStorage = function () {
+		window.valueToString = valueToString;
+		
+		setResource("storage");
+	};
+	
+}) (window);
+
+// memory
+(function (window, undefined) {
+	
+	function valueToString(value) {
+		return ITAhM.util.toBytesString(value).replace("ytes", "");
+	}
+	
+	window.onSelectMemory = function () {
+		window.valueToString = valueToString;
+		
+		setResource("memory");
+	};
+	
+}) (window);
+
+// throughput
+(function (window, undefined) {
+	
+	var ifList = document.getElementById("interface_list");
+	
+	function valueToString(value) {
+		return ITAhM.util.toBPSString(value);
+	}
+	
+	window.initThroughput = function (snmp) {
+		var ifEntry = snmp["ifEntry"],
+			option, iFace;
+		
+		for (index in snmp["ifIndex"]) {
+			iFace = ifEntry[index];
+			
+			option = document.createElement("option");
+			option.text = iFace.ifName;
+			option.title = iFace.ifDescr;
+			
+			ifList.appendChild(option)
+		}
+	};
+	
+	window.onSelectThroughput = function (disabled) {
+		window.valueToString = valueToString;
+		
+		setResource("throughput");
+		
+		if (disabled) {
+			ifList.disabled = true;
+		}
+		else {
+			ifList.disabled = false;
+		}
+	};
+	
+}) (window);
+
+// chart
+(function (window, undefined) {
+	
+	var svgNS = "http://www.w3.org/2000/svg",
+		MIN_CHART_WIDTH = 100,
+		MIN_CHART_HEIGHT = 100,
+		MIN_AXIS_VSPACE = 50,
+		MIN_AXIS_HSPACE = 160,
+		MAX_AXIS_VAL_CNT = 10,
+		DATE_AXIS_HEIGHT = 50,
+		MARGIN = 20,
+		PADDING = 5,
+		WHEEL_REPEAT = 50,
+		HOUR24 = 24 * 60 * 60 * 1000,
+		rect = {},
+		origin, start, end, tpp, high, low;
+	
+	// 공통
+	function Path(container) {
+		this.initialize(container);
+	}
+	
+	function ChartData(data) {
+		this.initialize(data);
+	}
+	
+	function clear(svgElement) {
+		var target;
+		
+		while(target = svgElement.firstChild) {
+			svgElement.removeChild(target);
+		}
+	}
+	
+	function createText(x, y, text) {
+		var svgText = document.createElementNS(svgNS, "text");
+		
+		svgText.setAttributeNS(null, "x", x);
+		svgText.setAttributeNS(null, "y", y);
+		svgText.textContent = text;
+		
+		return svgText;
+	}
+	
+	// core
+	(function (window, undefined) {
+		
+		var chart = document.getElementById("chart"),
+			clip = document.getElementById("graph_area").appendChild(document.createElementNS(svgNS, "rect")),
+			resizeTimer;
+		
+		function initialize() {
+			window.addEventListener("resize", function () {
+				if (resizeTimer) {
+					clearTimeout(resizeTimer);
+				}
+				
+				resizeTimer = setTimeout(onResize, 300);
+			});
+			
+			resize();
+		}
+		
+		function onResize() {
+			resize();
+			
+			invalidate();
+		}
+		
+		function resize() {
+			var r = chart.getBoundingClientRect(),
+				width = r.width - MARGIN *2,
+				height = r.height - MARGIN *2 - DATE_AXIS_HEIGHT;
+		
+			//window resize 발생 했으나 chart 크기 변화는 없음
+			if (width === rect.width && height === rect.height) {
+				return;
+			}
+			
+			rect = {
+				width: width,
+				height: height
+			};
+		}
+		
+		window.setClipRect = function (x, y, width, height) {
+			clip.setAttributeNS(null, "x", x);
+			clip.setAttributeNS(null, "y", y);
+			clip.setAttributeNS(null, "width", width);
+			clip.setAttributeNS(null, "height", height);
+		};
+		
+		window.invalidate = function () {
+			var data = origin.buildData(start, end);
+			
+			// TODO invalidate라고 항상 data build 하고 tpp 다시 계산 하고 해야 하는가? invalidate는 언제 발생하는가?
+			tpp = (end - start) / rect.width;
+			
+			high = data.high;
+			low = data.low;
+			
+			drawAxis();
+			
+			drawGraph(data);
+		};
+		
+		window.set = function (o, s, e) {
+			origin = o;
+			start = s;
+			end = e;
+		};
+		
+		initialize();
+		
+	}) (window);
+	
+	// axis
+	(function (window, undefined) {
+		var leftAxis = document.getElementById("axis_left"),
+			rightAxis = document.getElementById("axis_right"),
+			//dateAxis = document.getElementById("axis_date"),
+			leftAxisOffset = leftAxis.transform.baseVal.getItem(0),
+			rightAxisOffset = rightAxis.transform.baseVal.getItem(0);
+		
+		window.drawAxis = function () {
+			var count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
+				grow = (high - low) / count,
+				space = rect.height / count,
+				valueArray = [],
+				x1, x2;
+			
+			clear(leftAxis);
+			
+			for (var i=0; i<=count; i++) {
+				leftAxis.appendChild(createText(0, space * i, valueToString(high - i * grow)));
+			}
+			
+			x1 = leftAxis.getBBox().width;
+			leftAxisOffset.setTranslate(x1, 0);
+			
+			clear(rightAxis);
+			
+			for (var i=0; i<=count; i++) {
+				rightAxis.appendChild(createText(0, space * i, ((high - i * grow) / high *100).toFixed(2) +"%"));
+			}
+			
+			x2 = rightAxis.getBBox().width;
+			rightAxisOffset.setTranslate(rect.width - x2, 0);
+			
+			drawGrid(x1, rect.width - x1 - x2, count, rect.height / count);
+			
+			setClipRect(x1 + PADDING, 0, rect.width - x2 - PADDING *2, rect.height);
+		};
+		
+	}) (window);
+	
+	//graph
+	(function (window, undefined) {
+		
+		window.drawGraph = function (data) {
+			
+		};
+	}) (window);
+	
+	//grid
+	(function (window, undefined) {
+		
+		var grid, translate;
+		
+		function initialize() {
+			grid = document.getElementById("grid");
+			translate = grid.transform.baseVal.getItem(0);
+		}
+		
+		window.drawGrid = function (offset, length, count, space) {
+			var path;
+			
+			clear(grid);
+			
+			path = new Path(grid);
+			
+			translate.setTranslate(offset, 0);
+			
+			for (var i=0, y; i<=count; i++) {
+				y = i * space -.5;
+				
+				path.moveTo(0, y).lineTo(length, y);
+			}
+			
+			path.stroke();
+			
+		};
+		
+		initialize();
+		
+	}) (window);
+	
+	// Path object
+	(function (window, undefined) {
+		
+		Path.prototype = {
+			initialize: function (container) {
+				this.container = container;
+				this.path = document.createElementNS(svgNS, "path");
+				
+				container.appendChild(this.path);
+				
+				this.beginPath();
+			},
+			
+			moveTo: function (x, y) {
+				this.distance[this.distance.length] = "M"+ x +" "+ y;
+				
+				return this;
+			},
+			
+			lineTo: function (x, y) {
+				this.distance[this.distance.length] = "L"+ x +" "+ y;
+				
+				return this;
+			},
+			
+			stroke: function () {
+				this.path.setAttributeNS(null, "d", this.distance.join(" "));
+				this.path.setAttributeNS(null, "stroke", this.strokeStyle || "#000000");
+			},
+			
+			fill: function () {
+				this.path.setAttributeNS(null, "d", this.distance.join(" "));
+				this.path.setAttributeNS(null, "fill", this.fillStyle || "#000000");
+			},
+			
+			beginPath: function () {
+				this.distance = [];
+			},
+			
+			closePath: function () {
+				this.distance[this.distance.length] = "Z"
+			}
+		};
+		
+	}) (window);
+	
+	// ChartData object
+	(function (window, undefined) {
+		
+		ChartData.prototype = {
+			initialize: function (data) {
+				this.data = data;
+			},
+			
+			next: function (date) {
+				return date.setMinutes(date.getMinutes() +1, 0, 0);
+			},
+			
+			buildData: function (start, end, unit) {
+				var keys = [],
+					tmp = [],
+					date = new Date(start),
+					value, high, low;
+				
+				date.setSeconds(0, 0);
+				
+				do {
+					value = this.data[mills];
+					
+					if (value) {
+						tmp[tmp.length] = mills;
+						
+						high = Math.max(value, high || value);
+						low = Math.min(value, low || value);
+					}
+					else if (tmp.length > 0) {
+						data[data.length] = tmp;
+						
+						tmp = [];
+					}
+				} while (this.next(date) < end);
+				
+				if (tmp.length > 0) {
+					data[data.length] = tmp;
+				}
+				
+				return {
+					high: high,
+					low: low,
+					keys: keys
+				}
+			}
+			
+		};
+		
+	}) (window);
+	
+}) (window);
+
+(function (window, undefined) {}) (window);
+
+		</script>
+	
+	</body>
+	
+</html>
