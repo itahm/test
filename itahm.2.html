@@ -86,8 +86,16 @@ input[name="password"] {
 	opacity: .8;
 }
 
+#start {
+	font-weight: bold;
+	font-size: 18px;
+	margin: 10px 0;
+	padding: 5px 10px;
+}
+
 body:not(.connected) #signin,
-body:not(.connected) .agent, 
+body:not(.connected) .agent,
+body:not(.authorized) #start, 
 body.connected #connect,
 body.authorized #signin,
 body:not(.loading) #loading {
@@ -125,6 +133,8 @@ body:not(.loading) #loading {
 				<input type="password" name="password" value="root" placeholder="password">
 				<input type="submit" value="sign in">
 			</form>
+			
+			<button id="start">go ITAhM</button>
 		</section>
 		
 		<section id="loading"></section>
@@ -136,6 +146,37 @@ body:not(.loading) #loading {
 		<script>
 
 var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
+
+// 공통 
+(function (window, undefined){
+	
+	var itahm;
+	
+	document.getElementById("start").onclick = function () {
+		if (itahm && !itahm.closed) {
+			itahm.focus();
+		}
+		else {
+			showITAhM();
+		}
+	};
+	
+	window.showITAhM = function () {
+		
+		document.body.classList.remove("loading");
+			
+		itahm = window.open("itahm.3.html", "ITAhM", specs);
+			
+		itahm.focus();
+	};
+	
+	window.closeITAhM = function () {
+		if (itahm && !itahm.closed) {
+			itahm.close();
+		}
+	};
+	
+}) (window);
 
 // connect
 (function (window, undefined){
@@ -168,9 +209,7 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	}
 	
 	function onDisconnect(e) {
-		if (itahm) {
-			itahm.close();
-		}
+		closeITAhM();
 		
 		location.reload();
 	}
@@ -186,6 +225,8 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 				document.body.className = "connected";
 				
 				alert("no session.");
+				
+				closeITAhM();
 				
 				window.focus();
 			}
@@ -322,7 +363,7 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 					iconData[type] = data[type];
 				}
 				
-				start();
+				showITAhM();
 			}
 		});
 	};
@@ -332,14 +373,17 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	};
 	
 }) (window);
+/*
+var search = location.search;
 
-function start() {
-	document.body.classList.remove("loading");
+if (search) {
+	search = search.split("?")[1].split("&");
 	
-	itahm = window.open("itahm.3.html", "ITAhM", specs);
-	
-	itahm.focus();
+	if (search.length > 1) {
+		console.log(search[0], search[1])
+	}
 }
+*/
 		</script>
 	
 	</body>

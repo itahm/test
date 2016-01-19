@@ -147,13 +147,20 @@ path {
 
 #axis_date text {
 	alignment-baseline: text-before-edge;
-	text-anchor: middle;
+}
+
+#end_label text {
+	text-anchor: end;
 }
 
 #graph path {
 	stroke: #0084ff;
 	stroke-width: 2;
 	fill: none;
+}
+
+#cursor_move {
+	cursor: e-resize;
 }
 
 		</style>
@@ -258,25 +265,25 @@ path {
 					<span>png</span>
 				</button>
 			</div>
-			<div id="mode" class="response">
+			<form id="mode" class="response">
 				<select id="mode_response" disabled>
-					<option>N/A
+					<option selected>N/A
 				</select>
 				<select id="mode_processor">
-					<option>mix
+					<option selected>mix
 				</select>
 				<select id="mode_storage">
-					<option>mix
+					<option selected>mix
 				</select>
 				<select id="mode_memory" disabled>
-					<option>N/A
+					<option selected>N/A
 				</select>
 				<select id="mode_throughput">
-					<option>mix
+					<option selected>mix
 					<option>in
 					<option>out
 				</select>
-			</div>
+			</form>
 		</nav>
 		
 		<section class="chart">
@@ -287,9 +294,15 @@ path {
 				<g transform="translate(20, 20)">
 					<g transform="translate(0, 0)" id="axis_left"></g>
 					<g transform="translate(0, 0)" id="axis_right"></g>
-			        <g transform="translate(-100, -100)" id="axis_date">
-			        	<image xlink:href="img/arrow.png" width="16" height="16" id="start"></image>
-			        	<image xlink:href="img/arrow.png" width="16" height="16" id="end"></image>
+			        <g transform="translate(0, 0) translate(0, 10)" id="axis_date">
+			        	<g>
+			        		<image xlink:href="img/draggable.png" width="16" height="16" id="start_move"></image>
+			        		<text x="20" id="start_date">start</text>
+			        	</g>
+			        	<g transform="translate(0, 0)" id="end_label">
+			        		<text x="-20" id="end_date">end</text>
+			        		<image x="-16" xlink:href="img/draggable.png" width="16" height="16" id="end_move"></image>
+			        	</g>
 			        </g>
 			        <g transform="translate(0, 0) scale(1 -1)" clip-path="url(#graph_area)" id="graph"></g>
 			        <g transform="translate(0, 0)" id="grid"></g>
@@ -299,10 +312,26 @@ path {
 		
 		<script src="js/ITAhM.js"></script>
 		<script src="js/Draggable.js"></script>
-		<script src="Chart.js"></script>
+		<!--script src="Chart.js"></script-->
 		<script>
 
-// navigation
+// 공통
+var svgNS = "http://www.w3.org/2000/svg",
+	xlinkNS = "http://www.w3.org/1999/xlink";
+
+function Path(container) {
+	this.initialize(container);
+}
+
+function ChartData(data) {
+	this.initialize(data);
+}
+
+function ChartSummaryData(data) {
+	this.initialize(data);
+}
+
+//navigation
 (function (window, undefined) {
 	
 	var name = document.getElementById("name"),
@@ -313,7 +342,8 @@ path {
 		status = document.getElementById("status"),
 		uptime = document.getElementById("uptime"),
 		enterprise = document.getElementById("enterprise"),
-		close = document.getElementById("close");
+		close = document.getElementById("close"),
+		device;
 	
 	function initialize() {
 		close.onclick = function () {
@@ -322,8 +352,10 @@ path {
 	}
 
 	// public. 페이지의 시작, map으로부터 호출됨. 
-	window.initialize = function (device, snmp) {
+	window.initialize = function (d, snmp) {
 		initialize();
+		
+		device = d;
 		
 		name.textContent = device.name;
 		ip.textContent = device.ip;
@@ -339,6 +371,38 @@ path {
 		initProcessor(snmp);
 		
 		initStorage(snmp);
+	};
+	
+	window.sendRequest = function (database, index, start, end, callback) {
+		var request = {
+				command: "query",
+				ip: device.ip,
+				summary: false,
+				database: database,
+				index: index,
+				start: start,
+				end: end
+			};
+		
+		top.sendRequest(request, callback);
+	};
+	
+	window.sendSummaryRequest = function (database, index, callback) {
+		var request = {
+				command: "query",
+				ip: device.ip,
+				summary: true,
+				database: database,
+				index: index
+			},
+			date = new Date();
+		
+		date.setHours(0, 0, 0, 0);
+		
+		request.end = date.setDate(date.getDate() +1);
+		request.start = date.setFullYear(date.getFullYear() -1);
+		
+		top.sendRequest(request, callback);
 	};
 	
 }) (window);
@@ -363,10 +427,6 @@ path {
 		}
 		
 		window[method]();
-		
-		set(new ChartSummaryData(createData()), new Date(2015, 10, 10, 0, 0, 0, 0).getTime(), new Date(2015, 10, 11, 0, 0, 0, 0).getTime());
-		
-		invalidate();
 	}
 	
 	window.setResource = function (resource) {
@@ -384,11 +444,21 @@ path {
 		return value.toFixed(2) + "ms";
 	}
 	
+	function onResponse(data) {
+		if (!data) {
+			return;
+		}
+		
+		initChart(new ChartSummaryData(data));
+	}
+	
 	window.onSelectResponse = function () {
 		window.valueToString = valueToString;
 		
 		setResource("response");
-	}
+		
+		sendSummaryRequest("responseTime", 0, onResponse);
+	};
 	
 }) (window);
 
@@ -515,8 +585,7 @@ path {
 // chart
 (function (window, undefined) {
 	
-	var svgNS = "http://www.w3.org/2000/svg",
-		MIN_CHART_WIDTH = 100,
+	var MIN_CHART_WIDTH = 100,
 		MIN_CHART_HEIGHT = 100,
 		MIN_AXIS_VSPACE = 50,
 		MIN_AXIS_HSPACE = 160,
@@ -525,18 +594,7 @@ path {
 		MARGIN = 20,
 		PADDING = 5,
 		WHEEL_REPEAT = 50,
-		HOUR24 = 24 * 60 * 60 * 1000,
-		rect = {},
-		origin, start, end, tpp, high, low;
-	
-	// 공통
-	function Path(container) {
-		this.initialize(container);
-	}
-	
-	function ChartData(data) {
-		this.initialize(data);
-	}
+		HOUR24 = 24 * 60 * 60 * 1000;
 	
 	function clear(svgElement) {
 		var target;
@@ -558,13 +616,31 @@ path {
 	
 	// core
 	(function (window, undefined) {
-		
 		var chart = document.getElementById("chart"),
 			clip = document.getElementById("graph_area").appendChild(document.createElementNS(svgNS, "rect")),
-			resizeTimer;
+			origin;
+			
+		var dateAxis = document.getElementById("axis_date"),
+			startDate = document.getElementById("start_date"),
+			startMove = document.getElementById("start_move"),
+			endDate = document.getElementById("end_date"),
+			endMove = document.getElementById("end_move"),
+			axisOffset = dateAxis.transform.baseVal.getItem(0),
+			labelOffset = document.getElementById("end_label").transform.baseVal.getItem(0),
+			// chart가 한번이라도 그려져야 resize event 처리 가능
+			rect = {},
+			initialized = false,
+			resizeTimer,
+			start, end, tpp, width,
+			startFixed = false,
+			endFixed = false;
 		
 		function initialize() {
 			window.addEventListener("resize", function () {
+				if (!initialized) {
+					return;
+				}
+				
 				if (resizeTimer) {
 					clearTimeout(resizeTimer);
 				}
@@ -572,7 +648,42 @@ path {
 				resizeTimer = setTimeout(onResize, 300);
 			});
 			
+			document.addEventListener("selectstart", function (e) {
+				e.preventDefault();
+			});
+			
+			new Draggable(chart);
+			
+			chart.addEventListener("dragstart", function (e) {
+				onDragStart(e);
+			});
+			
+			chart.addEventListener("dragmove", function (e) {
+				onDragMove(e);
+			});
+			
+			chart.addEventListener("dragend", function (e) {
+				onDragEnd(e);
+			});
+			
 			resize();
+			
+			startMove.onclick = function () {
+				startMove.setAttributeNS(xlinkNS, "xlink:href", startFixed? "img/draggable.png": "img/lock_gray.png");
+				
+				startFixed = !startFixed;
+			};
+			
+			endMove.onclick = function () {
+				endMove.setAttributeNS(xlinkNS, "xlink:href", endFixed? "img/draggable.png": "img/lock_gray.png");
+				
+				endFixed = !endFixed;
+			};
+		}
+		
+		function setDate() {
+			startDate.textContent = ITAhM.util.toDateFormatString(new Date(start));
+			endDate.textContent = ITAhM.util.toDateFormatString(new Date(end));
 		}
 		
 		function onResize() {
@@ -581,7 +692,63 @@ path {
 			invalidate();
 		}
 		
-		function resize() {
+		function invalidate () {
+			var data = origin.buildData(start, end);
+			
+			// TODO invalidate라고 항상 data build 하고 tpp 다시 계산 하고 해야 하는가? invalidate는 언제 발생하는가?
+			tpp = (end - start) / rect.width;
+			
+			drawAxis(data);
+			drawDate(start, end);
+			drawGraph(data);
+		};
+		
+		function onDragStart(e) {
+		}
+		
+		function onDragMove(e) {
+			var data = e.detail,
+				move = tpp * data.dragX;
+			
+			if (!startFixed && !endFixed) {
+				moveChart(new Date(start - move).setMinutes(0, 0, 0), new Date(end - move).setMinutes(0, 0, 0));
+			}
+			else if (!startFixed) {
+				
+			}
+			else if (!endFixed) {
+				
+			}
+		}
+		
+		function onDragEnd(e) {
+		}
+		
+		window.getCoordinates = function (date) {
+			return {
+				x: (date - start) / tpp,
+				y: origin.get(date)
+			}
+		};
+		
+		window.drawDate = function (s, e) {
+			var rect = getRect();
+			
+			width = rect.width;
+			
+			start = s;
+			end = e;
+			tpp = (e - s) / width;
+			
+			
+			axisOffset.setTranslate(0, rect.height);
+			
+			labelOffset.setTranslate(rect.width, 0);
+						
+			setDate();
+		};
+		
+		window.resize = function () {
 			var r = chart.getBoundingClientRect(),
 				width = r.width - MARGIN *2,
 				height = r.height - MARGIN *2 - DATE_AXIS_HEIGHT;
@@ -604,30 +771,36 @@ path {
 			clip.setAttributeNS(null, "height", height);
 		};
 		
-		window.invalidate = function () {
-			var data = origin.buildData(start, end);
-			
-			// TODO invalidate라고 항상 data build 하고 tpp 다시 계산 하고 해야 하는가? invalidate는 언제 발생하는가?
-			tpp = (end - start) / rect.width;
-			
-			high = data.high;
-			low = data.low;
-			
-			drawAxis();
-			
-			drawGraph(data);
+		window.getRect = function () {
+			return rect;
 		};
 		
-		window.set = function (o, s, e) {
+		// chart 초기화
+		window.initChart = function (o) {
+			var date = new Date();
+			
+			initialized = true;
+			
 			origin = o;
+			
+			start = date.setHours(0, 0, 0, 0);
+			end = date.setDate(date.getDate() +1);
+			
+			invalidate();
+		};
+		
+		function moveChart(s, e) {
+			var move = false,
+				date;
+			
 			start = s;
 			end = e;
-		};
+		}
 		
 		initialize();
 		
 	}) (window);
-	
+
 	// axis
 	(function (window, undefined) {
 		var leftAxis = document.getElementById("axis_left"),
@@ -636,44 +809,87 @@ path {
 			leftAxisOffset = leftAxis.transform.baseVal.getItem(0),
 			rightAxisOffset = rightAxis.transform.baseVal.getItem(0);
 		
-		window.drawAxis = function () {
-			var count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
-				grow = (high - low) / count,
+		window.drawAxis = function (data) {
+			var rect = getRect(),
+				count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
+				grow = (data.high - data.low) / count,
 				space = rect.height / count,
-				valueArray = [],
-				x1, x2;
+				valueArray = [];
 			
 			clear(leftAxis);
 			
 			for (var i=0; i<=count; i++) {
-				leftAxis.appendChild(createText(0, space * i, valueToString(high - i * grow)));
+				leftAxis.appendChild(createText(0, space * i, valueToString(data.high - i * grow)));
 			}
 			
-			x1 = leftAxis.getBBox().width;
-			leftAxisOffset.setTranslate(x1, 0);
+			rect.left = leftAxis.getBBox().width;
+			leftAxisOffset.setTranslate(rect.left, 0);
 			
 			clear(rightAxis);
 			
 			for (var i=0; i<=count; i++) {
-				rightAxis.appendChild(createText(0, space * i, ((high - i * grow) / high *100).toFixed(2) +"%"));
+				rightAxis.appendChild(createText(0, space * i, ((data.high - i * grow) / data.high *100).toFixed(2) +"%"));
 			}
 			
-			x2 = rightAxis.getBBox().width;
-			rightAxisOffset.setTranslate(rect.width - x2, 0);
+			rect.right = rightAxis.getBBox().width;
+			rightAxisOffset.setTranslate(rect.width - rect.right, 0);
 			
-			drawGrid(x1, rect.width - x1 - x2, count, rect.height / count);
+			drawGrid(count, space);
 			
-			setClipRect(x1 + PADDING, 0, rect.width - x2 - PADDING *2, rect.height);
+			setClipRect(rect.left + PADDING, 0, rect.width - rect.right - PADDING *2, rect.height);
 		};
 		
 	}) (window);
 	
 	//graph
 	(function (window, undefined) {
+		var graph = document.getElementById("graph"),
+			offset = graph.transform.baseVal.getItem(0),
+			scale = graph.transform.baseVal.getItem(1),
+			rect = getRect();
+		
+		window.clearGraph = function () {
+			clear(graph);
+		};
 		
 		window.drawGraph = function (data) {
+			var blocks = data.keys,
+				path,
+				dateArray, date, coords;
 			
+			graph.setAttributeNS(null, "width", rect.width);
+			graph.setAttributeNS(null, "height", rect.height);
+			
+			offset.setTranslate(0, rect.height);
+			scale.setScale(1, -1);
+			
+			// y좌표 : value/high * height
+			// x좌표 : (date - this.start) /tpp
+			path = new Path(graph);
+			
+			path.beginPath();
+			path.moveTo(0, 0);
+		
+			for (var i=0, numberOfBlock=blocks.length; i<numberOfBlock; i++) {
+				dateArray = blocks[i];
+				
+				date = dateArray[0];
+				
+				coords = getCoordinates(date);
+				path.moveTo(coords.x, coords.y.max * rect.height / data.high);
+				
+				for (var j=1,numberOfDate=dateArray.length; j<numberOfDate; j++) {
+					date = dateArray[j];
+					
+					coords = getCoordinates(date);
+					
+					path.lineTo(coords.x, coords.y.max * rect.height / data.high);
+				}
+			}
+			
+			path.stroke();
 		};
+		
 	}) (window);
 	
 	//grid
@@ -683,22 +899,24 @@ path {
 		
 		function initialize() {
 			grid = document.getElementById("grid");
-			translate = grid.transform.baseVal.getItem(0);
+			offset = grid.transform.baseVal.getItem(0);
 		}
 		
-		window.drawGrid = function (offset, length, count, space) {
-			var path;
+		window.drawGrid = function (count, space) {
+			var rect = getRect(),
+				width = rect.width - rect.left - rect.right,
+				path;
 			
 			clear(grid);
 			
 			path = new Path(grid);
 			
-			translate.setTranslate(offset, 0);
+			offset.setTranslate(rect.left, 0);
 			
 			for (var i=0, y; i<=count; i++) {
 				y = i * space -.5;
 				
-				path.moveTo(0, y).lineTo(length, y);
+				path.moveTo(0, y).lineTo(width, y);
 			}
 			
 			path.stroke();
@@ -709,102 +927,161 @@ path {
 		
 	}) (window);
 	
-	// Path object
-	(function (window, undefined) {
-		
-		Path.prototype = {
-			initialize: function (container) {
-				this.container = container;
-				this.path = document.createElementNS(svgNS, "path");
-				
-				container.appendChild(this.path);
-				
-				this.beginPath();
-			},
-			
-			moveTo: function (x, y) {
-				this.distance[this.distance.length] = "M"+ x +" "+ y;
-				
-				return this;
-			},
-			
-			lineTo: function (x, y) {
-				this.distance[this.distance.length] = "L"+ x +" "+ y;
-				
-				return this;
-			},
-			
-			stroke: function () {
-				this.path.setAttributeNS(null, "d", this.distance.join(" "));
-				this.path.setAttributeNS(null, "stroke", this.strokeStyle || "#000000");
-			},
-			
-			fill: function () {
-				this.path.setAttributeNS(null, "d", this.distance.join(" "));
-				this.path.setAttributeNS(null, "fill", this.fillStyle || "#000000");
-			},
-			
-			beginPath: function () {
-				this.distance = [];
-			},
-			
-			closePath: function () {
-				this.distance[this.distance.length] = "Z"
-			}
-		};
-		
-	}) (window);
+}) (window);
+
+//Path object
+(function (window, undefined) {
 	
-	// ChartData object
-	(function (window, undefined) {
+	Path.prototype = {
+		initialize: function (container) {
+			this.container = container;
+			this.path = document.createElementNS(svgNS, "path");
+			
+			container.appendChild(this.path);
+			
+			this.beginPath();
+		},
 		
-		ChartData.prototype = {
-			initialize: function (data) {
-				this.data = data;
-			},
+		moveTo: function (x, y) {
+			this.distance[this.distance.length] = "M"+ x +" "+ y;
 			
-			next: function (date) {
-				return date.setMinutes(date.getMinutes() +1, 0, 0);
-			},
+			return this;
+		},
+		
+		lineTo: function (x, y) {
+			this.distance[this.distance.length] = "L"+ x +" "+ y;
 			
-			buildData: function (start, end, unit) {
-				var keys = [],
-					tmp = [],
-					date = new Date(start),
-					value, high, low;
+			return this;
+		},
+		
+		stroke: function () {
+			this.path.setAttributeNS(null, "d", this.distance.join(" "));
+			this.path.setAttributeNS(null, "stroke", this.strokeStyle || "#000000");
+		},
+		
+		fill: function () {
+			this.path.setAttributeNS(null, "d", this.distance.join(" "));
+			this.path.setAttributeNS(null, "fill", this.fillStyle || "#000000");
+		},
+		
+		beginPath: function () {
+			this.distance = [];
+		},
+		
+		closePath: function () {
+			this.distance[this.distance.length] = "Z"
+		}
+	};
+	
+}) (window);
+
+//ChartData object
+(function (window, undefined) {
+	
+	ChartData.prototype = {
+		initialize: function (data) {
+			this.data = data;
+		},
+		
+		next: function (date) {
+			return date.setMinutes(date.getMinutes() +1, 0, 0);
+		},
+		
+		buildData: function (start, end, unit) {
+			var keys = [],
+				tmp = [],
+				date = new Date(start),
+				value, high, low;
+			
+			date.setSeconds(0, 0);
+			
+			do {
+				value = this.data[mills];
 				
-				date.setSeconds(0, 0);
-				
-				do {
-					value = this.data[mills];
+				if (value) {
+					tmp[tmp.length] = mills;
 					
-					if (value) {
-						tmp[tmp.length] = mills;
-						
-						high = Math.max(value, high || value);
-						low = Math.min(value, low || value);
-					}
-					else if (tmp.length > 0) {
-						data[data.length] = tmp;
-						
-						tmp = [];
-					}
-				} while (this.next(date) < end);
-				
-				if (tmp.length > 0) {
+					high = Math.max(value, high || value);
+					low = Math.min(value, low || value);
+				}
+				else if (tmp.length > 0) {
 					data[data.length] = tmp;
+					
+					tmp = [];
 				}
-				
-				return {
-					high: high,
-					low: low,
-					keys: keys
-				}
+			} while (this.next(date) < end);
+			
+			if (tmp.length > 0) {
+				data[data.length] = tmp;
 			}
 			
-		};
+			return {
+				high: high,
+				low: low,
+				keys: keys
+			}
+		}
 		
-	}) (window);
+	};
+	
+}) (window);
+
+(function (window, undefined) {
+	
+	ChartSummaryData.prototype = {
+		initialize: function (data) {
+			this.data = data;
+		},
+		
+		next: function (date) {
+			return date.setHours(date.getHours() +1, 0, 0, 0);
+		},
+		
+		buildData: function (start, end) {
+			var keys = [],
+				tmp = [],
+				date = new Date(start),
+				mills, value, high, low;
+			
+			mills = date.setMinutes(0, 0, 0);
+			
+			do {
+				value = this.data[mills];
+				
+				if (value) {
+					tmp[tmp.length] = mills;
+					
+					high = Math.max(value.max, high || value.max);
+					low = Math.min(value.min, low || value.min);
+				}
+				else if (tmp.length > 0) {
+					keys[keys.length] = tmp;
+					
+					tmp = [];
+				}
+			}
+			while ((mills = this.next(date)) < end);
+			
+			if (tmp.length > 0) {
+				keys[keys.length] = tmp;
+			}
+			
+			if (high === low) {
+				high++;
+				low--;
+			}
+			
+			return {
+				high: high,
+				low: low,
+				keys: keys
+			}
+		},
+		
+		get: function (date) {
+			return this.data[date];
+		}
+	};
 	
 }) (window);
 

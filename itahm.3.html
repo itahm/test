@@ -102,7 +102,7 @@ text {
 
 body.loading #navigation,
 body.loading #selection,
-#navigation:not(.chart) #chart_anchor {
+body:not(.snmp) #chart_anchor {
 	display: none;
 }
 
@@ -588,7 +588,7 @@ var deviceData = opener.getDeviceData(),
 		editAnchor.setAttributeNS(null, "x", x);
 		editAnchor.setAttributeNS(null, "y", y);
 		
-		canvas.classList[chart? "add": "remove"]("chart");
+		document.body.classList[chart? "add": "remove"]("snmp");
 		
 		canvas.appendChild(navigation);
 	};
