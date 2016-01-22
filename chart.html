@@ -146,7 +146,7 @@ path {
 }
 
 #axis_date text {
-	alignment-baseline: text-before-edge;
+	alignment-baseline: before-edge;
 }
 
 #end_label text {
@@ -159,15 +159,18 @@ path {
 	fill: none;
 }
 
-#cursor_move {
-	cursor: e-resize;
+body.start #start_fixed,
+body.end #end_fixed,
+body:not(.start) #start_move,
+body:not(.end) #end_move {
+	display: none;
 }
 
 		</style>
 		
 	</head>
 	
-	<body>
+	<body class="start end">
 		
 		<header>
 			<img src="img/close.png" id="close">
@@ -292,19 +295,21 @@ path {
 					<clipPath id="graph_area"></clipPath>
 				</defs>
 				<g transform="translate(20, 20)">
-					<g transform="translate(0, 0)" id="axis_left"></g>
-					<g transform="translate(0, 0)" id="axis_right"></g>
-			        <g transform="translate(0, 0) translate(0, 10)" id="axis_date">
+			        <g transform="translate(0, -100) translate(0, 10)" id="axis_date">
 			        	<g>
 			        		<image xlink:href="img/draggable.png" width="16" height="16" id="start_move"></image>
+			        		<image xlink:href="img/lock_gray.png" width="16" height="16" id="start_fixed"></image>
 			        		<text x="20" id="start_date">start</text>
 			        	</g>
 			        	<g transform="translate(0, 0)" id="end_label">
 			        		<text x="-20" id="end_date">end</text>
 			        		<image x="-16" xlink:href="img/draggable.png" width="16" height="16" id="end_move"></image>
+			        		<image x="-16" xlink:href="img/lock_gray.png" width="16" height="16" id="end_fixed"></image>
 			        	</g>
 			        </g>
-			        <g transform="translate(0, 0) scale(1 -1)" clip-path="url(#graph_area)" id="graph"></g>
+			        <g transform="translate(0, 0) scale(1 -1)" clip-path="url(#_graph_area)" id="graph"></g>
+			        <g transform="translate(0, 0)" id="axis_left"></g>
+					<g transform="translate(0, 0)" id="axis_right"></g>
 			        <g transform="translate(0, 0)" id="grid"></g>
 			    </g>
 			</svg>
@@ -620,20 +625,11 @@ function ChartSummaryData(data) {
 			clip = document.getElementById("graph_area").appendChild(document.createElementNS(svgNS, "rect")),
 			origin;
 			
-		var dateAxis = document.getElementById("axis_date"),
-			startDate = document.getElementById("start_date"),
-			startMove = document.getElementById("start_move"),
-			endDate = document.getElementById("end_date"),
-			endMove = document.getElementById("end_move"),
-			axisOffset = dateAxis.transform.baseVal.getItem(0),
-			labelOffset = document.getElementById("end_label").transform.baseVal.getItem(0),
-			// chart가 한번이라도 그려져야 resize event 처리 가능
-			rect = {},
+		var rect = {},
 			initialized = false,
 			resizeTimer,
 			start, end, tpp, width,
-			startFixed = false,
-			endFixed = false;
+			data;
 		
 		function initialize() {
 			window.addEventListener("resize", function () {
@@ -665,90 +661,13 @@ function ChartSummaryData(data) {
 			chart.addEventListener("dragend", function (e) {
 				onDragEnd(e);
 			});
-			
-			resize();
-			
-			startMove.onclick = function () {
-				startMove.setAttributeNS(xlinkNS, "xlink:href", startFixed? "img/draggable.png": "img/lock_gray.png");
-				
-				startFixed = !startFixed;
-			};
-			
-			endMove.onclick = function () {
-				endMove.setAttributeNS(xlinkNS, "xlink:href", endFixed? "img/draggable.png": "img/lock_gray.png");
-				
-				endFixed = !endFixed;
-			};
-		}
-		
-		function setDate() {
-			startDate.textContent = ITAhM.util.toDateFormatString(new Date(start));
-			endDate.textContent = ITAhM.util.toDateFormatString(new Date(end));
 		}
 		
 		function onResize() {
 			resize();
-			
-			invalidate();
 		}
 		
-		function invalidate () {
-			var data = origin.buildData(start, end);
-			
-			// TODO invalidate라고 항상 data build 하고 tpp 다시 계산 하고 해야 하는가? invalidate는 언제 발생하는가?
-			tpp = (end - start) / rect.width;
-			
-			drawAxis(data);
-			drawDate(start, end);
-			drawGraph(data);
-		};
-		
-		function onDragStart(e) {
-		}
-		
-		function onDragMove(e) {
-			var data = e.detail,
-				move = tpp * data.dragX;
-			
-			if (!startFixed && !endFixed) {
-				moveChart(new Date(start - move).setMinutes(0, 0, 0), new Date(end - move).setMinutes(0, 0, 0));
-			}
-			else if (!startFixed) {
-				
-			}
-			else if (!endFixed) {
-				
-			}
-		}
-		
-		function onDragEnd(e) {
-		}
-		
-		window.getCoordinates = function (date) {
-			return {
-				x: (date - start) / tpp,
-				y: origin.get(date)
-			}
-		};
-		
-		window.drawDate = function (s, e) {
-			var rect = getRect();
-			
-			width = rect.width;
-			
-			start = s;
-			end = e;
-			tpp = (e - s) / width;
-			
-			
-			axisOffset.setTranslate(0, rect.height);
-			
-			labelOffset.setTranslate(rect.width, 0);
-						
-			setDate();
-		};
-		
-		window.resize = function () {
+		function resize () {
 			var r = chart.getBoundingClientRect(),
 				width = r.width - MARGIN *2,
 				height = r.height - MARGIN *2 - DATE_AXIS_HEIGHT;
@@ -762,7 +681,77 @@ function ChartSummaryData(data) {
 				width: width,
 				height: height
 			};
+			
+			// resize시 start와 end는 변함 없지만 width의 변화로 인해 tpp는 다시 계산되어야 함.
+			tpp = (end - start) / width;
+			
+			drawGrid();
+			
+			drawGraph();
 		}
+		
+		function onDragStart(e) {
+		}
+		
+		function onDragMove(e) {
+			if (!initialized) {
+				return;
+			}
+			
+			var move = tpp * e.detail.moveX,
+				tmp,
+				s = new Date(start).setMinutes(0, 0, 0),
+				e = new Date(end).setMinutes(0, 0, 0),
+				invalidate = false;
+			
+			if (document.body.classList.contains("start")) {
+				start -= move;
+				
+				tmp = s;
+				
+				s = new Date(start).setMinutes(0, 0, 0);
+				
+				if (s != tmp) {
+					invalidate = true;
+				}
+			}
+			
+			if (document.body.classList.contains("end")) {
+				end -= move;
+				
+				tmp = e;
+				
+				e = new Date(end).setMinutes(0, 0, 0);
+				
+				if (e != tmp) {
+					invalidate = true;
+				}
+			}
+			
+			if (invalidate) {
+				data = origin.buildData(s, e);
+				
+				tpp = (end - start) / rect.width;
+				
+				writeDateLabel(start, end);
+				
+				drawGraph();
+			}
+		}
+		
+		function onDragEnd(e) {
+		}
+		
+		window.buildData = function () {
+			return data;
+		};
+		
+		window.getCoordinates = function (date) {
+			return {
+				x: (date - start) / tpp,
+				y: origin.get(date)
+			}
+		};
 		
 		window.setClipRect = function (x, y, width, height) {
 			clip.setAttributeNS(null, "x", x);
@@ -783,19 +772,16 @@ function ChartSummaryData(data) {
 			
 			origin = o;
 			
+			// data rebuild는 최초, 시간의 변경시 발생함
 			start = date.setHours(0, 0, 0, 0);
 			end = date.setDate(date.getDate() +1);
 			
-			invalidate();
-		};
-		
-		function moveChart(s, e) {
-			var move = false,
-				date;
+			data = origin.buildData(start, end);
 			
-			start = s;
-			end = e;
-		}
+			resize();
+			
+			writeDateLabel (start, end);
+		};
 		
 		initialize();
 		
@@ -805,18 +791,60 @@ function ChartSummaryData(data) {
 	(function (window, undefined) {
 		var leftAxis = document.getElementById("axis_left"),
 			rightAxis = document.getElementById("axis_right"),
-			//dateAxis = document.getElementById("axis_date"),
+			dateAxis = document.getElementById("axis_date"),
 			leftAxisOffset = leftAxis.transform.baseVal.getItem(0),
-			rightAxisOffset = rightAxis.transform.baseVal.getItem(0);
+			rightAxisOffset = rightAxis.transform.baseVal.getItem(0),
+			dateAxisOffset = dateAxis.transform.baseVal.getItem(0),
+			startDate = document.getElementById("start_date"),
+			endDate = document.getElementById("end_date"),
+			labelOffset = document.getElementById("end_label").transform.baseVal.getItem(0),
+			data,
+			startFixed = false,
+			endFixed = false;
 		
-		window.drawAxis = function (data) {
-			var rect = getRect(),
+		function initialize() {
+			document.getElementById("start_move").onclick = function () {
+				document.body.classList.remove("start");
+			};
+			
+			document.getElementById("end_move").onclick = function () {
+				document.body.classList.remove("end");
+			};
+			
+			document.getElementById("start_fixed").onclick = function () {
+				document.body.classList.add("start");
+			};
+			
+			document.getElementById("end_fixed").onclick = function () {
+				document.body.classList.add("end");
+			};
+		}
+		
+		window.setDateAxis = function (width, height) {
+			dateAxisOffset.setTranslate(0, height);
+			labelOffset.setTranslate(width, 0);
+		};
+		
+		window.writeDateLabel = function (start, end) {
+			startDate.textContent = ITAhM.util.toDateFormatString(new Date(start));
+			endDate.textContent = ITAhM.util.toDateFormatString(new Date(end));
+		};
+		
+		window.drawAxis = function () {
+			var data = buildData();
+			
+			clear(leftAxis);
+			clear(rightAxis);
+			
+			if (!data) {
+				return;
+			}
+			
+			var	rect = getRect(),
 				count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
 				grow = (data.high - data.low) / count,
 				space = rect.height / count,
 				valueArray = [];
-			
-			clear(leftAxis);
 			
 			for (var i=0; i<=count; i++) {
 				leftAxis.appendChild(createText(0, space * i, valueToString(data.high - i * grow)));
@@ -825,8 +853,6 @@ function ChartSummaryData(data) {
 			rect.left = leftAxis.getBBox().width;
 			leftAxisOffset.setTranslate(rect.left, 0);
 			
-			clear(rightAxis);
-			
 			for (var i=0; i<=count; i++) {
 				rightAxis.appendChild(createText(0, space * i, ((data.high - i * grow) / data.high *100).toFixed(2) +"%"));
 			}
@@ -834,10 +860,10 @@ function ChartSummaryData(data) {
 			rect.right = rightAxis.getBBox().width;
 			rightAxisOffset.setTranslate(rect.width - rect.right, 0);
 			
-			drawGrid(count, space);
-			
 			setClipRect(rect.left + PADDING, 0, rect.width - rect.right - PADDING *2, rect.height);
 		};
+		
+		initialize();
 		
 	}) (window);
 	
@@ -852,8 +878,19 @@ function ChartSummaryData(data) {
 			clear(graph);
 		};
 		
-		window.drawGraph = function (data) {
-			var blocks = data.keys,
+		window.drawGraph = function () {
+			var data = buildData();
+			
+			drawAxis();
+			
+			clear(graph);
+			
+			if (!data) {
+				return;
+			}
+			
+			var	rect = getRect(),
+				blocks = data.keys,
 				path,
 				dateArray, date, coords;
 			
@@ -904,23 +941,25 @@ function ChartSummaryData(data) {
 		
 		window.drawGrid = function (count, space) {
 			var rect = getRect(),
-				width = rect.width - rect.left - rect.right,
+				count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
+				space = rect.height / count,
 				path;
 			
 			clear(grid);
 			
 			path = new Path(grid);
 			
-			offset.setTranslate(rect.left, 0);
+			//offset.setTranslate(rect.left, 0);
 			
 			for (var i=0, y; i<=count; i++) {
 				y = i * space -.5;
 				
-				path.moveTo(0, y).lineTo(width, y);
+				path.moveTo(0, y).lineTo(rect.width, y);
 			}
 			
 			path.stroke();
 			
+			setDateAxis(rect.width, rect.height);
 		};
 		
 		initialize();
@@ -1015,11 +1054,11 @@ function ChartSummaryData(data) {
 				data[data.length] = tmp;
 			}
 			
-			return {
+			return keys.length > 0? {
 				high: high,
 				low: low,
 				keys: keys
-			}
+			}: undefined;
 		}
 		
 	};
@@ -1071,11 +1110,11 @@ function ChartSummaryData(data) {
 				low--;
 			}
 			
-			return {
+			return keys.length > 0? {
 				high: high,
 				low: low,
 				keys: keys
-			}
+			}: undefined;
 		},
 		
 		get: function (date) {

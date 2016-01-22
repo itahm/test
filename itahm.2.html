@@ -60,7 +60,7 @@ input[name="ip"] {
 	padding-left: 36px;
 }
 
-input[name="port"] {
+input[name="tcp"] {
 	background: transparent url("img/port.png") no-repeat 10px center;
 	width: 80px;
 	padding-left: 36px;
@@ -121,7 +121,7 @@ body:not(.loading) #loading {
 			<form id="connect">
 				<div>
 					<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address">
-					<input type="text" name="port" value="2014" placeholder="tcp port">
+					<input type="text" name="tcp" value="2014" placeholder="tcp port">
 					<input type="submit" value="connect">
 				</div>
 			</form>
@@ -150,15 +150,43 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 // 공통 
 (function (window, undefined){
 	
-	var itahm;
+	var itahm,
+		query = {};
 	
-	document.getElementById("start").onclick = function () {
-		if (itahm && !itahm.closed) {
-			itahm.focus();
+	function initialize () {
+		document.getElementById("start").onclick = function () {
+			if (itahm && !itahm.closed) {
+				itahm.focus();
+			}
+			else {
+				showITAhM();
+			}
+		};
+		
+		parseQuery();
+	}
+	
+	function parseQuery() {
+		var search,
+			pair;
+			
+		if (!location.search) {
+			return;
 		}
-		else {
-			showITAhM();
+		
+		search = location.search.substring(1).split("&");
+		
+		for (var i=0, length=search.length; i<length; i++) {
+			pair = search[i].split("=");
+			
+			if (pair.length === 2) {
+				query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+			}
 		}
+	}
+	
+	window.getQuery = function (keyword) {
+		return query[keyword];
 	};
 	
 	window.showITAhM = function () {
@@ -176,42 +204,40 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 		}
 	};
 	
+	initialize();
+	
 }) (window);
 
 // connect
 (function (window, undefined){
 	
 	var form = document.getElementById("connect"),
-		disconnect = document.getElementById("disconnect");
 		agent = document.getElementById("agent");
 	
 	function initEvent() {
-		form.addEventListener("submit", onConnect, false);
-		disconnect.addEventListener("click", onDisconnect, false);
-	}
-	
-	function onConnect(e) {
-		e.preventDefault();
+		form.onsubmit = function (e) {
+			e.preventDefault();
+			
+			var communicator = new Communicator(),
+				ip = form.elements["ip"].value,
+				tcp = form.elements["tcp"].value;
+			
+			communicator.connect(ip, tcp);
+			
+			communicator.send({
+				command: "echo"
+			}, onEcho);
+			
+			window.sendRequest = function (request, callback) {
+				communicator.send(request, onResponse.bind(undefined, callback));
+			}
+		};
 		
-		var communicator = new Communicator(),
-			ip = form.elements["ip"].value,
-			tcp = form.elements["port"].value;
-		
-		communicator.connect(ip, tcp);
-		
-		communicator.send({
-			command: "echo"
-		}, onEcho);
-		
-		window.sendRequest = function (request, callback) {
-			communicator.send(request, onResponse.bind(undefined, callback));
+		document.getElementById("disconnect").onclick = function () {
+			closeITAhM();
+			
+			location.reload();
 		}
-	}
-	
-	function onDisconnect(e) {
-		closeITAhM();
-		
-		location.reload();
 	}
 	
 	function onResponse(callback, data, status) {
@@ -238,7 +264,7 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	
 	function onEcho(data, status) {
 		var ip = form.elements["ip"].value,
-			tcp = form.elements["port"].value;
+			tcp = form.elements["tcp"].value;
 		
 		// agent에 연결 가능하나 session 없음
 		if (status === 401) {
@@ -373,17 +399,14 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	};
 	
 }) (window);
-/*
-var search = location.search;
 
-if (search) {
-	search = search.split("?")[1].split("&");
+var ip = getQuery("ip"),
+	tcp = getQuery("tcp");
+
+if (ip && tcp) {
 	
-	if (search.length > 1) {
-		console.log(search[0], search[1])
-	}
 }
-*/
+
 		</script>
 	
 	</body>
