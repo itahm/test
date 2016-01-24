@@ -84,7 +84,7 @@ text {
 
 #device text {
 	font-size: 12px;
-	alignment-baseline: hanging;
+	/*alignment-baseline: hanging;*/
 	fill: #000;
 }
 
@@ -144,10 +144,10 @@ body.nolink #link_token {
 				</g>
 				<g id="navigation">
 					<g id="tool">
-						<image xlink:href="../img/svg/chart.svg" id="chart_anchor"
+						<image xlink:href="img/svg/chart.svg" id="chart_anchor"
 							transform="translate(-42, -8)" width="16" height="16" cursor="pointer">
 						</image>
-						<image xlink:href="../img/svg/information.svg" id="edit_anchor"
+						<image xlink:href="img/svg/information.svg" id="edit_anchor"
 							transform="translate(26, -8)" width="16" height="16" cursor="pointer">
 						</image>
 						<line id="link_line"></line>
@@ -169,7 +169,7 @@ body.nolink #link_token {
 		
 		<iframe id="chart" class="fullscreen"></iframe>
 		
-		<script src="../js/Draggable.js"></script>
+		<script src="js/Draggable.js"></script>
 		<script>
 
 if (!opener) throw "";
@@ -438,7 +438,7 @@ var deviceData = opener.getDeviceData(),
 		svgDevice.setAttributeNS(null, "id", id);
 		svgDevice.setAttributeNS(null, "x", device.x);
 		svgDevice.setAttributeNS(null, "y", device.y);
-		svgDevice.setAttributeNS(xlinkNS, "xlink:href", "../"+ iconData[device.type].src);
+		svgDevice.setAttributeNS(xlinkNS, "xlink:href",  iconData[device.type].src);
 		svgDevice.setAttributeNS(null, "width", "40px");
 		svgDevice.setAttributeNS(null, "height", "40px");
 		svgDevice.setAttributeNS(null, "transform", "translate(-20, -20)");
@@ -450,7 +450,9 @@ var deviceData = opener.getDeviceData(),
 		svgName.textContent = device.name;
 		svgName.setAttributeNS(null, "x", device.x);
 		svgName.setAttributeNS(null, "y", device.y);
-		svgName.setAttributeNS(null, "transform", "translate(0, 25)");
+		// text baseline이 글자의 밑을 기준으로 하므로 글자 크기만큼 내려준다.
+		// 아이콘 크기 + 글자 크기 = 20 + 16 = 36
+		svgName.setAttributeNS(null, "transform", "translate(0, 36)");
 		
 		nameMap[id] = svgName;
 		
@@ -804,7 +806,7 @@ function sendRequest(request, callback) {
 }
 
 initialize();
-
+console.log(location);
 		</script>
 	
 	</body>

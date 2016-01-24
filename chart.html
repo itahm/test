@@ -118,7 +118,7 @@ button.download span {
 
 /* svg */
 section.chart {
-	background: #fff url(../img/chart.png) no-repeat center;
+	background: #fff url(img/chart.png) no-repeat center;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
@@ -128,6 +128,7 @@ svg {
 	flex: 1;
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 }
 
 path {
@@ -136,17 +137,11 @@ path {
 }
 
 #axis_left text {
-	alignment-baseline: middle;
 	text-anchor: end;
 }
 
 #axis_right text {
-	alignment-baseline: middle;
 	text-anchor: start;
-}
-
-#axis_date text {
-	alignment-baseline: before-edge;
 }
 
 #end_label text {
@@ -157,6 +152,11 @@ path {
 	stroke: #0084ff;
 	stroke-width: 2;
 	fill: none;
+}
+
+body:not(.start) #start_date,
+body:not(.end) #end_date {
+	fill: #aaa;
 }
 
 body.start #start_fixed,
@@ -297,13 +297,13 @@ body:not(.end) #end_move {
 				<g transform="translate(20, 20)">
 			        <g transform="translate(0, -100) translate(0, 10)" id="axis_date">
 			        	<g>
-			        		<image xlink:href="img/draggable.png" width="16" height="16" id="start_move"></image>
+			        		<image xlink:href="img/unlock.png" width="16" height="16" id="start_move"></image>
 			        		<image xlink:href="img/lock_gray.png" width="16" height="16" id="start_fixed"></image>
-			        		<text x="20" id="start_date">start</text>
+			        		<text x="20" y="14" id="start_date">start</text>
 			        	</g>
 			        	<g transform="translate(0, 0)" id="end_label">
-			        		<text x="-20" id="end_date">end</text>
-			        		<image x="-16" xlink:href="img/draggable.png" width="16" height="16" id="end_move"></image>
+			        		<text x="-20" y="14" id="end_date">end</text>
+			        		<image x="-16" xlink:href="img/unlock.png" width="16" height="16" id="end_move"></image>
 			        		<image x="-16" xlink:href="img/lock_gray.png" width="16" height="16" id="end_fixed"></image>
 			        	</g>
 			        </g>
@@ -628,7 +628,7 @@ function ChartSummaryData(data) {
 		var rect = {},
 			initialized = false,
 			resizeTimer,
-			start, end, tpp, width,
+			realStart, realEnd, start, end, tpp, width,
 			data;
 		
 		function initialize() {
@@ -700,36 +700,34 @@ function ChartSummaryData(data) {
 			
 			var move = tpp * e.detail.moveX,
 				tmp,
-				s = new Date(start).setMinutes(0, 0, 0),
-				e = new Date(end).setMinutes(0, 0, 0),
 				invalidate = false;
 			
 			if (document.body.classList.contains("start")) {
-				start -= move;
+				tmp = new Date(realStart).setMinutes(0, 0, 0);
 				
-				tmp = s;
+				realStart -= move;
 				
-				s = new Date(start).setMinutes(0, 0, 0);
+				start = new Date(realStart).setMinutes(0, 0, 0);
 				
-				if (s != tmp) {
+				if (start != tmp) {
 					invalidate = true;
 				}
 			}
 			
 			if (document.body.classList.contains("end")) {
-				end -= move;
+				tmp = new Date(realEnd).setMinutes(0, 0, 0);
 				
-				tmp = e;
+				realEnd -= move;
 				
-				e = new Date(end).setMinutes(0, 0, 0);
+				end = new Date(realEnd).setMinutes(0, 0, 0);
 				
-				if (e != tmp) {
+				if (end != tmp) {
 					invalidate = true;
 				}
 			}
 			
 			if (invalidate) {
-				data = origin.buildData(s, e);
+				data = origin.buildData(start, end);
 				
 				tpp = (end - start) / rect.width;
 				
@@ -773,14 +771,17 @@ function ChartSummaryData(data) {
 			origin = o;
 			
 			// data rebuild는 최초, 시간의 변경시 발생함
-			start = date.setHours(0, 0, 0, 0);
-			end = date.setDate(date.getDate() +1);
+			realStart = date.setHours(0, 0, 0, 0);
+			realEnd = date.setDate(date.getDate() +1);
 			
-			data = origin.buildData(start, end);
+			start = realStart;
+			end = realEnd;
+			
+			data = origin.buildData(realStart, realEnd);
 			
 			resize();
 			
-			writeDateLabel (start, end);
+			writeDateLabel (realStart, realEnd);
 		};
 		
 		initialize();
@@ -900,8 +901,6 @@ function ChartSummaryData(data) {
 			offset.setTranslate(0, rect.height);
 			scale.setScale(1, -1);
 			
-			// y좌표 : value/high * height
-			// x좌표 : (date - this.start) /tpp
 			path = new Path(graph);
 			
 			path.beginPath();
@@ -1048,7 +1047,7 @@ function ChartSummaryData(data) {
 					
 					tmp = [];
 				}
-			} while (this.next(date) < end);
+			} while (this.next(date) <= end);
 			
 			if (tmp.length > 0) {
 				data[data.length] = tmp;
@@ -1099,7 +1098,7 @@ function ChartSummaryData(data) {
 					tmp = [];
 				}
 			}
-			while ((mills = this.next(date)) < end);
+			while ((mills = this.next(date)) <= end);
 			
 			if (tmp.length > 0) {
 				keys[keys.length] = tmp;
