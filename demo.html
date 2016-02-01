@@ -4,10 +4,10 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Script-Type" content="text/javascript">
 		<meta http-equiv="Content-Style-Type" content="text/css">
-		<title></title>
+		<title>ITAhM(connecting...)</title>
 		
 		<style>
-body {
+body, header, li, input, button {
 	font-family: tahoma, arial, "맑은 고딕";
 	margin: 0;
 	padding: 0; 
@@ -18,330 +18,268 @@ li, input, button {
 }
 
 header {
-	position: fixed; top: 0; right: 0; left: 0; height: 40px;
-	line-height: 30px;
-	padding: 5px;
-	box-sizing: border-box;
-	font-size: 12px;
+	position: fixed; top: 0; right: 0; left: 0;
+	height: 100px;
 	background-color: #0084ff;
+	color: #fff;
 }
 
-.loading {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	background: rgba(255, 255, 255, .8) url("img/waiting.gif") no-repeat center;
+nav {
+	height: 100px;
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-end;
 }
 
-div[role="main"] {
-	position: fixed; top: 40px; right: 0; left: 0; bottom: 0;
+section {
+	position: fixed; top: 100px; right: 0; bottom: 0; left: 0;
 }
 
-div[role="main"].setting {
-	padding: 10px;
-	background-color: rgba(255, 255, 255, 1);
+.centered>div {
+	border: 3px solid rgba(0, 132, 255, .2);
+	padding: 30px;
 }
 
-div[role="main"].setting input {
+.box {
+	margin: auto;
+	width: 1000px;
 	padding: 10px;
 	box-sizing: border-box;
 }
 
-div[role="main"].setting input[name="ip"] {
+h2 {
+	color: #0084ff;
+}
+
+input, button {
+	padding: .5em;
+}
+
+input[name="ip"] {
 	background: transparent url("img/home.png") no-repeat 10px center;
-	width: 160px;
 	padding-left: 36px;
 }
 
-div[role="main"].setting input[name="port"] {
+input[name="tcp"] {
 	background: transparent url("img/port.png") no-repeat 10px center;
-	width: 100px;
+	width: 80px;
 	padding-left: 36px;
 }
 
-div[role="main"].setting input[name="username"] {
+input[name="username"] {
 	background: transparent url("img/user.png") no-repeat 10px center;
 	padding-left: 36px;
 }
 
-div[role="main"].setting input[name="password"] {
+input[name="password"] {
 	background: transparent url("img/lock.png") no-repeat 10px center;
 	padding-left: 36px;
 }
 
-iframe {
-	width: 100%; height: 100%;
-	margin: 0;
-	padding: 0;
-	border: 0;
+#agent {
+	margin: 1em;
 }
 
-.iframe {
-	position: absolute; width: 50%; height: 50%;
+#loading {
+	top: 0;
+	background: #fff url("img/waiting.gif") no-repeat center;
+	opacity: .8;
 }
 
-body.maximized .iframe {
-	width: 100%;
-	height: 100%;
+#start {
+	font-weight: bold;
+	font-size: 18px;
+	margin: 10px 0;
+	padding: 5px 10px;
 }
 
-.iframe.tl {
-	top: 0; left: 0;
-}
-
-.iframe.tr {
-	top: 0; right: 0;
-}
-
-.iframe.bl {
-	bottom: 0; left: 0;
-}
-
-.iframe.br {
-	bottom: 0; right: 0;
-}
-
-#profile li div:nth-child(1):before {
-	content: "community string";
-	width : 150px;
-	display: inline-block;
-}
-
-#profile li div:nth-child(2):before {
-	content: "snmp version";
-	width : 150px;
-	display: inline-block;
-}
-
-#profile li div:nth-child(3):before {
-	content: "udp port";
-	width : 150px;
-	display: inline-block;
-}
-
-#toolbar {
-	position: absolute; top: 0; right: 0;
-}
-
-.agent button {
-	margin-left: 20px;
-	vertical-align: middle;
-	padding: .5em;
-}
-
-header img,
-#toolbar img {
-	vertical-align: middle;
-	border: 1px solid transparent;
-}
-
-header img:hover,
-#toolbar img:hover {
-	border-color: #ddf;
-	cursor: pointer;
-}
-
-body.maximized #maximize,
-body.connected #form_agent,
-/*body.setting>:not(.setting),*/
-body:not(.maximized) #minimize,
-body:not(.setting)>.setting,
-body.authorized .setting form,
+body:not(.connected) #signin,
 body:not(.connected) .agent,
-body:not(.connected) #form_signin,
-body:not(.loading) .loading, 
-.hide {
+body:not(.authorized) #start, 
+body.connected #connect,
+body.authorized #signin,
+body:not(.loading) #loading {
 	display: none;
 }
-
 
 		</style>
 		
 	</head>
 	
-	<body class="setting">
-	
+	<body class="">
+		
 		<header>
-			<img src="img/gear_w.png" id="setting">
-			<img src="img/synchronize_w.png">
+			<nav class="box">
+				<ul>
+					<li><a></a></li>
+				</ul>
+			</nav>
 		</header>
 		
-		<div role="main">
-			<section class="iframe tl">
-				<iframe id="frame_list"></iframe>
-			</section>
-			
-			<section class="iframe tr">
-				<iframe id="frame_map"></iframe>
-			</section>
-			
-			<section class="iframe bl">
-				<iframe id="frame_device"></iframe>
-			</section>
-			
-			<section class="iframe br">
-				<iframe id="frame_event"></iframe> 
-			</section>
-		</div>
-		
-		<div role="main" class="setting">
-			<h3>agent</h3>
-			<h2 class="agent"><span id="agent"></span><button id="disconnect">disconnect</button></h2>
-			<form id="form_agent">
-				<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address">
-				<input type="text" name="port" value="2014" placeholder="tcp port">
-				<input type="submit" value="connect">
+		<section class="box">
+			<h3>Infrastructure Topology Administration Module</h3>
+			<form id="connect">
+				<div>
+					<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address" required>
+					<input type="text" name="tcp" value="2014" placeholder="tcp port"  required>
+					<input type="submit" value="connect">
+				</div>
 			</form>
-			<form id="form_signin">
+			
+			<h2 class="agent"><span id="agent"></span><button id="disconnect">disconnect</button></h2>
+			
+			<form id="signin">
 				<input type="text" name="username" value="root" placeholder="username">
 				<input type="password" name="password" value="root" placeholder="password">
 				<input type="submit" value="sign in">
 			</form>
 			
-			
-			<h3>user account</h3>
-			<ul id="account"></ul>
-			
-			<h3>snmp profile</h3>
-			<ul id="profile"></ul>
-		</div>
+			<button id="start">go ITAhM</button>
+		</section>
 		
-		<div class="loading"></div>
+		<section id="loading"></section>
 		
-		<div class="hide">
-			<div id="toolbar" class="minimized">
-				<img id="maximize" src="img/maximize.png">
-				<img id="minimize" src="img/minimize.png">
-			</div>
-		</div>
-		
+		<script src="js/ITAhM.js"></script>
 		<script src="js/icon.js"></script>
-		<script src="js/Communicator_demo.js"></script>
+		<!--script src="js/Communicator.js"></script-->
+		<script src="js/Communicator_tmp.js"></script>
+		<script src="demo/responseTime.js"></script>
+		<script src="demo/device.js"></script>
+		<script src="demo/snmp.js"></script>
 		<script>
 
+var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
+
+// 공통 
 (function (window, undefined){
 	
-	var communicator = new Communicator(),
-		deviceData, iconData, snmpData,
-		iconMap = {},
-		typeMap = {},
-		tmpID = 1,
-		agent,
-		elements = {
-			agent: document.getElementById("agent"),
-			toolbar: document.getElementById("toolbar"),
-			maximize: document.getElementById("maximize"),
-			minimize: document.getElementById("minimize"),
-			setting: document.getElementById("setting"),
-			profile: document.getElementById("profile"),
-			account: document.getElementById("account"),
-			form: {
-				agent: document.getElementById("form_agent"),
-				signin: document.getElementById("form_signin"),
-			},
-			frame: {
-				list: document.getElementById("frame_list"),
-				map : document.getElementById("frame_map"),
-				device: document.getElementById("frame_device"),
-				event: document.getElementById("frame_event")
+	var itahm,
+		query = {};
+	
+	function initialize () {
+		window.addEventListener("beforeunload", onUnload);
+		
+		document.getElementById("start").onclick = function () {
+			if (itahm && !itahm.closed) {
+				itahm.focus();
+			}
+			else {
+				showITAhM();
 			}
 		};
-	
-	// event 등록
-	elements.setting.addEventListener("click", onSetting, false);
-	elements.maximize.addEventListener("click", onMaximize, false);
-	elements.minimize.addEventListener("click", onMinimize, false);
-	elements.form.agent.addEventListener("submit", onConnect, false);
-	elements.form.signin.addEventListener("submit", onSignin, false);
-	document.getElementById("disconnect").addEventListener("click", onDisconnect, false);
-	
-	// 각 frame들에게 event 등록
-	(function (frame) {
-		for (var id in frame) {
-			frame[id].addEventListener("mouseenter", onFocus, false);
-		}
-		
-	}) (elements.frame);
-	
-	/**
-	 * load
-	 * agent가 결정되면 호출된다.
-	 * deviceData, snmpData, iconData 초기화
-	 */
-	function load() {
-		iconData = ITAhM.iconData;
-		
-		sendRequest({
-			command: "pull",
-			database: "profile"
-		}, onInitProfile);
-		
-		sendRequest({
-			command: "pull",
-			database: "account"
-		}, onInitAccount);
-		
-		sendRequest({
-			command: "pull",
-			database: "snmp"
-		}, onInitSnmp);
-		
-		sendRequest({
-			command: "pull",
-			database: "device"
-		}, onInitDevice);
-		
-		document.body.classList.add("authorized");
 	}
 	
-	/**
-	 * 페이지 시작점
-	 */
-	function init() {		
-		// frame load
-		elements.frame.list.src = "list.html";
-		elements.frame.map.src = "map.html";
-		elements.frame.device.src = "device.html";
-		elements.frame.event.src = "event.html";
-		
-		document.body.classList.add("setting");
+	function onUnload() {
+		closeITAhM();
 	}
 	
-	/**
-	 * callback method
-	 */
-	function onConnect(e) {
-		e.preventDefault();
-		
-		var ip = elements.form.agent.elements["ip"].value,
-			port = elements.form.agent.elements["port"].value;
-		
-		communicator.connect(ip, port);
-		
-		sendRequest({
-			command: "echo"
-		}, onEcho);
-	}
-	
-	function onEcho(data, status) {		
-		if (status === 401) {
-			setAgent();
+	window.showITAhM = function () {
+		document.body.classList.remove("loading");
 			
-			elements.form.signin.reset();
-			elements.form.signin.elements["username"].focus();
+		itahm = window.open("map.html", "ITAhM", specs);
+			
+		itahm.focus();
+	};
+	
+	window.closeITAhM = function () {
+		if (itahm && !itahm.closed) {
+			itahm.close();
 		}
+	};
+	
+	initialize();
+	
+}) (window);
+
+// connect
+(function (window, undefined){
+	
+	var form = document.getElementById("connect"),
+		agent = document.getElementById("agent");
+	
+	function initialize() {
+		document.getElementById("disconnect").onclick = function () {
+			closeITAhM();
+			
+			location.reload();
+		}
+	}
+	
+	function onResponse(callback, data, status) {
+		if (status === 200) {
+			callback(data);
+		}
+		else {
+			callback();
+			
+			if (status === 401) {
+				document.body.className = "connected";
+				
+				alert("no session.");
+				
+				closeITAhM();
+				
+				window.focus();
+			}
+			else {
+				
+			}
+		}
+	}
+	
+	function onEcho(data, status) {
+		var ip = form.elements["ip"].value,
+			tcp = form.elements["tcp"].value;
+		
+		// agent에 연결 가능하나 session 없음
+		if (status === 401) {
+			document.body.classList.add("connected");
+		
+			setAgent(ip +" : "+ tcp);
+			
+			onConnected();
+		}
+		// agent에 연결 가능하고 이미 session 있음
 		else if (status === 200) {
-			setAgent();
-			console.log("load");
-			load();
+			document.body.classList.add("connected");
+			
+			setAgent(ip +" : "+ tcp);
+			
+			onAuthorized();
 		}
 		else {
 			alert("can not connect to server");
 			
-			communicator.close();
+			form.elements["ip"].select();
 		}
 	}
 	
-	function onDisconnect(e) {
-		document.location.reload();
+	window.tryConnect = function (ip, tcp) {
+		var communicator = new Communicator(); 
+		
+		window.sendRequest = function (request, callback) {
+			communicator.send(request, onResponse.bind(undefined, callback));
+		}
+		
+		communicator.connect(ip, tcp);
+		
+		communicator.send({
+			command: "echo"
+		}, onEcho);
+	}
+	
+	initialize();
+	
+}) (window);
+
+// signin
+(function (window, undefined){
+	
+	var form = document.getElementById("signin"),
+		agentElement = document.getElementById("agent");
+	
+	function initEvent() {
+		form.addEventListener("submit", onSignin, false);
 	}
 	
 	function onSignin(e) {
@@ -349,249 +287,149 @@ body:not(.loading) .loading,
 		
 		sendRequest({
 			command: "signin",
-			username: elements.form.signin.elements["username"].value,
-			password: elements.form.signin.elements["password"].value
-		}, function (data, status) {
-			if (status === 200) {
-				load();
+			username: form.elements["username"].value,
+			password: form.elements["password"].value
+		}, function (data) {
+			document.body.classList.remove("loading");
+			
+			if (data) {
+				onAuthorized();
 			}
 			else {
 				alert("Incorrect username or password");
 				
-				elements.form.signin.elements["username"].select();
+				form.elements["username"].select();
 			}
 		});
+		
+		document.body.classList.add("loading");
 	}
 	
-	function onSetting(e) {
-		
-		document.body.classList.toggle("setting");
-	}
+	window.setAgent = function (agent) {
+		agentElement.textContent = agent;
+	};
 	
-	function onMaximize(e) {
-		maximize(this.parentNode.parentNode);
-	}
+	window.onAuthorized = function () {
+		document.title = "ITAhM("+ agentElement.textContent +")";
+		
+		document.body.classList.add("authorized");
+		
+		initDevice();
+	};
 	
-	function onMinimize(e) {
-		minimize();
-	}
-	
-	function onFocus() {
-		var selected = this.parentNode;
-		
-		selected.appendChild(elements.toolbar);
-	}
-	
-	function onInitProfile(data, status) {
-		if (!data) {
-			return;
-		}
-		
-		var list = elements.profile,
-			li, snmp;
-		
-		while(li = list.firstChild) {
-			list.removeChild(li);
-		}
-		
-		for (var profile in data) {
-			snmp = data[profile];
-			li = document.createElement("li");
-			
-			li.appendChild(document.createElement("h4")).textContent = profile;
-			
-			li.appendChild(document.createElement("div")).textContent = snmp.community;
-			li.appendChild(document.createElement("div")).textContent = snmp.version;
-			li.appendChild(document.createElement("div")).textContent = snmp.udp;
-			
-			list.appendChild(li);
-		}
-	}
-	
-	function onInitAccount(data, status) {
-		if (!data) {
-			return;
-		}
-		
-		var list = elements.account,
-			li;
-		
-		while(li = list.firstChild) {
-			list.removeChild(li);
-		}
-		
-		for (var username in data) {
-			li = document.createElement("li");
-			
-			li.appendChild(document.createElement("h4")).textContent = username;
-			
-			list.appendChild(li);
-		}
-	}
-	
-	function onInitSnmp(data, status) {
-		if (!data) {
-			return;
-		}
-		
-		snmpData = data;
-		
-	}
-	
-	function onInitDevice(data, status) {
-		if (!data) {
-			return;
-		}
-		
-		deviceData = data;
-		
-		/**
-		 * icon 모두 load 된 후 페이지 시작
-		 */
-		loadIcon(init);
-	}
-	
-	/**
-	 * private method
-	 */
-	function setAgent() {
-		var ip = elements.form.agent.elements["ip"].value,
-			port = elements.form.agent.elements["port"].value;
-		
-		elements.agent.textContent = ip +" : "+ port;
-		agent = ip +":"+ port;
-		
+	window.onConnected = function () {
+		document.title = "ITAhM(connected)";
 		document.body.classList.add("connected");
-	}
+		
+		form.reset();
+		
+		form.elements["username"].focus();
+	};
 	
-	function maximize(frame) {
-		for (var id in elements.frame) {
-			elements.frame[id].parentNode.classList.add("hide");
-		}
-		
-		frame.classList.remove("hide");
-		
-		document.body.classList.add("maximized");
-	}
+	initEvent();
 	
-	function minimize() {
-		var frame = elements.frame;
-		
-		for (var id in frame) {
-			frame[id].parentNode.classList.remove("hide");
-		}
-		
-		document.body.classList.remove("maximized");
-	}
+}) (window);
+
+//device data
+(function (window, undefined){
+
+	var deviceData;
 	
-	// iconList로부터 type map 생성
-	(function () {
-		var group;
+	window.initDevice = function () {
+		document.body.classList.add("loading");
 		
-		for (var type in iconData) {
-			group = iconData[type].group;
-			
-			
-		}
-	}) ();
-	
-	/**
-	 * iconData loop에서 iconMap 과 typeMap 완성
-	 * map 상태에서는 처리 했는지 안했는지 알수 없기 때문에 array 상태로 loop
-	 */
-	function loadIcon(complete) {
-		var types = Object.keys(iconData),
-			length = types.length,
-			icon = new Image(),
-			index = 0,
-			group;
-		
-		icon.onload = onLoad;
-		icon.src = iconData[types[index]].src;
-		
-		function onLoad() {
-			var type = types[index],
-				data = iconData[type],
-				group = data.group;
-			// iconMap
-			iconMap[type] = this;
-			
-			// typeMap
-			if (!(group in typeMap)) {
-				typeMap[group] = [];
+		sendRequest({
+			command: "pull",
+			database: "device"
+		}, function (data) {
+			if (data) {
+				deviceData = data;
+				
+				initIcon();
 			}
-			
-			typeMap[group].push(type);
-			
-			// next loop
-			if (++index < length) {
-				icon = new Image();
-				icon.onload = onLoad;
-				icon.src = iconData[types[index]].src;
-			}
-			else {
-				complete();
-			}
-		}
-	}
+		});
+	};
 	
-	function sendRequest(data, callback) {
-		communicator.send(data, callback);
-	}
-	
-	/**
-	 * public method
-	 */
-	window.sendRequest = sendRequest;
-	
-	window.getDeviceList = function () {
+	window.getDeviceData = function () {
 		return deviceData;
 	};
+
+}) (window);
+
+//icon data
+(function (window, undefined) {
+	var iconData = ITAhM.iconData;
+
+	if (!iconData) {
+		throw "icon.js is required";
+	}
 	
-	window.getSNMPList = function () {
-		return snmpData;
+	window.initIcon = function () {
+		sendRequest({
+			command: "pull",
+			database: "icon"
+		}, function (data) {
+			document.body.classList.remove("loading");
+			
+			if (data) {
+				for (var type in data) {
+					iconData[type] = data[type];
+				}
+				
+				showITAhM();
+			}
+		});
 	};
 	
-	window.getDevice = function (id) {
-		return deviceData[id];
-	};
-	
-	window.getIconData = function (type) {
-		return iconData[type];
-	};
-	
-	window.selectDevice = function (id) {
-		
-		if (id) {
-			elements.frame.map.contentWindow.selectDevice(id);
-		}
-		
-		elements.frame.device.contentWindow.resetDevice(id);
-	};
-	
-	window.minimize = function () {
-		if (document.body.classList.contains("maximized")) {
-			minimize();
-		}
-	};
-	
-	window.getFrame = function (frameName) {
-		return elements.frame[frameName].contentWindow;
-	};
-	
-	window.getIconMap = function () {
-		return iconMap;
-	};
-	
-	window.getTypeMap = function () {
-		return typeMap;
-	};
-	
-	window.createDeviceID = function () {
-		return "-"+ tmpID++;
+	window.getIconData = function () {
+		return iconData;
 	};
 	
 }) (window);
+
+// QueryParser object
+(function (window, undefined) {
+	
+	QueryParser.prototype = {
+		map: {},
+		
+		initialize: function (search) {
+			var queries,
+				pair;
+				
+			if (!search) {
+				return;
+			}
+			
+			queries = search.substring(1).split("&");
+			
+			for (var i=0, length=queries.length; i<length; i++) {
+				pair = queries[i].split("=");
+				
+				if (pair.length === 2) {
+					this.map[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+				}
+			}
+		},
+		
+		get: function (key) {
+			return this.map[key];
+		}		
+	};
+	
+}) (window);
+
+function QueryParser(search) {
+	this.initialize(search);
+}
+
+var query = new QueryParser(location.search),
+	ip = query.get("ip"),
+	tcp = query.get("tcp");
+
+if (ip && tcp) {
+	tryConnect(ip, tcp);
+}
 
 		</script>
 	

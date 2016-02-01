@@ -120,8 +120,8 @@ body:not(.loading) #loading {
 			<h3>Infrastructure Topology Administration Module</h3>
 			<form id="connect">
 				<div>
-					<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address">
-					<input type="text" name="tcp" value="2014" placeholder="tcp port">
+					<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address" required>
+					<input type="text" name="tcp" value="2014" placeholder="tcp port"  required>
 					<input type="submit" value="connect">
 				</div>
 			</form>
@@ -141,8 +141,7 @@ body:not(.loading) #loading {
 		
 		<script src="js/ITAhM.js"></script>
 		<script src="js/icon.js"></script>
-		<!--script src="js/Communicator.js"></script-->
-		<script src="js/Communicator_tmp.js"></script>
+		<script src="js/Communicator.js"></script>
 		<script>
 
 var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
@@ -154,6 +153,8 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 		query = {};
 	
 	function initialize () {
+		window.addEventListener("beforeunload", onUnload);
+		
 		document.getElementById("start").onclick = function () {
 			if (itahm && !itahm.closed) {
 				itahm.focus();
@@ -162,38 +163,17 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 				showITAhM();
 			}
 		};
-		
-		parseQuery();
 	}
 	
-	function parseQuery() {
-		var search,
-			pair;
-			
-		if (!location.search) {
-			return;
-		}
-		
-		search = location.search.substring(1).split("&");
-		
-		for (var i=0, length=search.length; i<length; i++) {
-			pair = search[i].split("=");
-			
-			if (pair.length === 2) {
-				query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
-			}
-		}
+	function onUnload() {
+		closeITAhM();
 	}
-	
-	window.getQuery = function (keyword) {
-		return query[keyword];
-	};
 	
 	window.showITAhM = function () {
 		
 		document.body.classList.remove("loading");
 			
-		itahm = window.open("itahm.3.html", "ITAhM", specs);
+		itahm = window.open("map.html", "ITAhM", specs);
 			
 		itahm.focus();
 	};
@@ -214,25 +194,7 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	var form = document.getElementById("connect"),
 		agent = document.getElementById("agent");
 	
-	function initEvent() {
-		form.onsubmit = function (e) {
-			e.preventDefault();
-			
-			var communicator = new Communicator(),
-				ip = form.elements["ip"].value,
-				tcp = form.elements["tcp"].value;
-			
-			communicator.connect(ip, tcp);
-			
-			communicator.send({
-				command: "echo"
-			}, onEcho);
-			
-			window.sendRequest = function (request, callback) {
-				communicator.send(request, onResponse.bind(undefined, callback));
-			}
-		};
-		
+	function initialize() {
 		document.getElementById("disconnect").onclick = function () {
 			closeITAhM();
 			
@@ -289,7 +251,21 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 		}
 	}
 	
-	initEvent();
+	window.tryConnect = function (ip, tcp) {
+		var communicator = new Communicator(); 
+		
+		window.sendRequest = function (request, callback) {
+			communicator.send(request, onResponse.bind(undefined, callback));
+		}
+		
+		communicator.connect(ip, tcp);
+		
+		communicator.send({
+			command: "echo"
+		}, onEcho);
+	}
+	
+	initialize();
 	
 }) (window);
 
@@ -311,6 +287,8 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 			username: form.elements["username"].value,
 			password: form.elements["password"].value
 		}, function (data) {
+			document.body.classList.remove("loading");
+			
 			if (data) {
 				onAuthorized();
 			}
@@ -320,6 +298,8 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 				form.elements["username"].select();
 			}
 		});
+		
+		document.body.classList.add("loading");
 	}
 	
 	window.setAgent = function (agent) {
@@ -328,8 +308,9 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	
 	window.onAuthorized = function () {
 		document.title = "ITAhM("+ agentElement.textContent +")";
-		
-		document.body.classList.add("authorized", "loading");
+		console.log("!");
+		//document.body.classList.add("authorized", "loading");
+		document.body.classList.add("authorized");
 		
 		initDevice();
 	};
@@ -353,6 +334,8 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	var deviceData;
 	
 	window.initDevice = function () {
+		document.body.classList.add("loading");
+		
 		sendRequest({
 			command: "pull",
 			database: "device"
@@ -384,6 +367,8 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 			command: "pull",
 			database: "icon"
 		}, function (data) {
+			document.body.classList.remove("loading");
+			
 			if (data) {
 				for (var type in data) {
 					iconData[type] = data[type];
@@ -400,11 +385,48 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	
 }) (window);
 
-var ip = getQuery("ip"),
-	tcp = getQuery("tcp");
+// QueryParser object
+(function (window, undefined) {
+	
+	QueryParser.prototype = {
+		map: {},
+		
+		initialize: function (search) {
+			var queries,
+				pair;
+				
+			if (!search) {
+				return;
+			}
+			
+			queries = search.substring(1).split("&");
+			
+			for (var i=0, length=queries.length; i<length; i++) {
+				pair = queries[i].split("=");
+				
+				if (pair.length === 2) {
+					this.map[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+				}
+			}
+		},
+		
+		get: function (key) {
+			return this.map[key];
+		}		
+	};
+	
+}) (window);
+
+function QueryParser(search) {
+	this.initialize(search);
+}
+
+var query = new QueryParser(location.search),
+	ip = query.get("ip"),
+	tcp = query.get("tcp");
 
 if (ip && tcp) {
-	
+	tryConnect(ip, tcp);
 }
 
 		</script>

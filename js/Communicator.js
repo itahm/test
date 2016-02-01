@@ -10,7 +10,7 @@ function Communicator() {
 		callbackQ = [];
 	}
 	
-	function send(data, background) {
+	function send(data) {
 		if (!xhr) {
 			if (url) {
 				xhr = new XMLHttpRequest();
@@ -19,12 +19,6 @@ function Communicator() {
 				throw "closed.";
 			}
 		}
-		
-		if (!background) {
-			document.body.classList.add("loading");
-		}
-		
-		response = undefined;
 		
 		xhr.open("POST", url, true);
 		xhr.onloadend = onLoad;
@@ -38,8 +32,6 @@ function Communicator() {
 			response = xhr.responseText;
 		
 		callbackQ.shift()((response && response.length > 0)? JSON.parse(response): {}, xhr.status);
-		
-		document.body.classList.remove("loading");
 		
 		if (data) {
 			send(data);
@@ -58,9 +50,9 @@ function Communicator() {
 		init();
 	},
 	
-	this.send = function (data, callback, background) {
+	this.send = function (data, callback) {
 		if (callbackQ.length == 0) {
-			send(data, background);
+			send(data);
 		}
 		else {
 			dataQ.push(data);

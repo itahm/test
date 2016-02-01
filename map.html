@@ -2,9 +2,56 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>Insert title here</title>
-
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title>ITAhM(connecting...)</title>
+		
 		<style>
+body, input, button {
+	font-family: tahoma, arial, "맑은 고딕";
+	margin: 0;
+	padding: 0; 
+}
+
+aside {
+	position: fixed; top: 0; left: 0;
+	height: 0;
+	width: 400px;
+	background-color: #fff;
+	transition: height .2s ease-in;
+}
+
+iframe {
+	width: 100%; height: 100%;
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+
+body.list aside {
+	bottom: 0;
+	height: 100%;
+}
+
+#frame_list {
+	width: 500px;
+}
+
+#show_list {
+	position: fixed; top: 10px; left: 10px;
+	cursor: pointer;
+}
+
+#hide_list {
+	position: absolute; top: 10px; right: 0;
+	cursor: pointer;
+}
+
+body:not(.list) #hide_list {
+	display: none;
+}
+
+/* svg*/
 svg {
 	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 	width: 100%; height: 100%;
@@ -37,7 +84,7 @@ text {
 
 #device text {
 	font-size: 12px;
-	alignment-baseline: hanging;
+	/*alignment-baseline: hanging;*/
 	fill: #000;
 }
 
@@ -53,82 +100,42 @@ text {
 	fill: #f00;
 }
 
-#navigation:not(.chart) #chart_anchor,
 body.loading #navigation,
 body.loading #selection,
-body.maximized #maximize,
-body:not(.maximized) #minimize,
+body:not(.snmp) #chart_anchor {
+	display: none;
+}
+
+/* dialog */
 body:not(.dialog) #dialog {
 	display: none;
 }
 
-nav {
-	position: fixed; top: 10px; right: 10px;
-}
-
-nav img {
-	cursor: pointer;
-}
-
-/* dialog */
-#dialog {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	background-color: rgba(255, 255, 255, .9);
-	padding: 0;
-	margin: 0;
-	border: none;
-	/*display: flex;
-	justify-content: center;
-	align-items: center;*/
-}
-
-/* link dialog */
-.dialog {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	background-color: rgba(255, 255, 255, .9);
-	display: flex;
-	justify-content: center;
-	align-items: center;
-}
-
-.dialog form {
-	padding: 20px;
+/* chart */
+#chart {
 	background-color: #fff;
-	box-shadow: 0px 0px 20px 10px #ddd;
 }
 
-.dialog footer input {
-	width: 100px;
-	padding: .5em;
+body:not(.chart) #chart {
+	display: none;
 }
 
-.dialog footer {
-	margin-top: 20px;
-	text-align: right;
+/* 공통 */
+.fullscreen {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 }
 
-
-#link .main {
-	width: 480px;
-	display: flex;
-	justify-content: space-around;
-}
-
-#link select {
-	padding: .5em;
-	width: 100%;
-	box-sizing: border-box;
-}
-
-.peer {
-	width: 200px;
+body.nolink #link_token,
+#edit_anchor {
+	display: none;
 }
 
 		</style>
-	</head>
-
-	<body class="loading">
 		
+	</head>
+	
+	<body class="loading nolink">
+	
 		<svg id="stage">
 			<g id="transform" transform="translate(0, 0) translate(0, 0) translate(0, 0) scale(1, 1)">
 				<g id="line"></g>
@@ -138,73 +145,109 @@ nav img {
 				</g>
 				<g id="navigation">
 					<g id="tool">
-						<image xlink:href="../img/svg/chart.svg" id="chart_anchor"
+						<image xlink:href="img/svg/chart.svg" id="chart_anchor"
 							transform="translate(-42, -8)" width="16" height="16" cursor="pointer">
 						</image>
-						<image xlink:href="../img/svg/information.svg" id="edit_anchor"
+						<image xlink:href="img/svg/information.svg" id="edit_anchor"
 							transform="translate(26, -8)" width="16" height="16" cursor="pointer">
 						</image>
 						<line id="link_line"></line>
 						<circle id="link_token" r="5" cursor="crosshair"></circle>
 					</g>
 				</g>
-				
 				<g id="device"></g>
 			</g>
 		</svg>
 		
-		<nav>
-			<img alt="restore map" src="../img/minimize.png" id="minimize">
-			<img alt="maximize map" src="../img/maximize.png" id="maximize">
-		</nav>
+		<img src="img/list.png" id="show_list" title="show device list">
 		
-		<!--section class="dialog">
-			<form id="link">
-				<div class="main">
-					<div class="peer">
-						<h2 id="name1">peer1</h2>
-						<select name="entry1" class="snmp" required></select>
-					</div>
-					<div class="peer">
-						<h2 id="name2">peer2</h2>
-						<select id="entry2" class="snmp" required></select>
-					</div>
-				</div>
-				<footer>
-					<input type="reset" value="cancel">
-					<input type="submit" value="apply">
-				</footer>
-			</form>
-		</section-->
+		<aside>
+			<img src="img/close.png" id="hide_list" title="hide device list">
+			<iframe id="device_list"></iframe>
+		</aside>
 		
-		<iframe id="dialog"></iframe>
+		<iframe id="dialog" class="fullscreen"></iframe>
 		
-	<script src="../js/Draggable.js"></script>
-	<script>
+		<iframe id="chart" class="fullscreen"></iframe>
+		
+		<script src="js/Draggable.js"></script>
+		<script>
 
-if (window === top) throw "";
+if (!opener) throw "";
 
 var svgNS = "http://www.w3.org/2000/svg",
-		xlinkNS = "http://www.w3.org/1999/xlink";
+	xlinkNS = "http://www.w3.org/1999/xlink";
 
-/**
- * stage
- */
+var deviceData = opener.getDeviceData(),
+	iconData = opener.getIconData();
+
+//device list
+(function (window, undefined){
+	
+	var frame = document.getElementById("device_list"),
+		show = document.getElementById("show_list"),
+		hide = document.getElementById("hide_list");
+	
+	function initialize() {
+		show.onclick = function () {
+			document.body.classList.add("list");
+			
+			frame.onload = onLoad;
+			
+			frame.src = "device_list.html";
+		};
+		
+		hide.onclick = function () {
+			document.body.classList.remove("list");
+			
+			frame.src = "about:blank";
+		};
+	}
+	
+	function onLoad() {
+		
+	}
+	
+	window.hideDeviceList = function () {
+		document.body.classList.remove("list");
+	};
+	
+	initialize();
+	
+}) (window);
+
+//device 관리
+(function (window, undefined) {
+	
+	var tmpID = -1;
+	
+	window.createDevice = function () {
+		var id = tmpID--;
+		
+		device.id = id;
+		device.x = 0;
+		device.y = 0;
+		
+		deviceData[id] = device;
+	};
+	
+}) (window);
+
+// stage
 (function (window, undefined) {
 	var canvas = document.getElementById("stage"),
 		base, translate, scale, ratio = 1,
 		selectedDevice,
-		deviceData = top.getDeviceData(),
 		deviceMap = {},
 		dragOrigin;
-
+	
 	function initialize() {		
 		initEvent();
 		
 		resetStage();
-
+		
 		clearSelectionMark();
-
+		
 		for (var id in deviceData) {
 			device = deviceData[id];
 			
@@ -220,14 +263,14 @@ var svgNS = "http://www.w3.org/2000/svg",
 	
 	function initEvent() {
 		var transformList = document.getElementById("transform").transform.baseVal;
-		
+	
 		new Draggable(canvas);
 			
 		base = transformList.getItem(0);
 		translate = transformList.getItem(1);
 		drag = transformList.getItem(2);
 		scale = transformList.getItem(3);
-
+		
 		window.addEventListener("resize", function (e) {
 			resetStage();
 		});
@@ -276,7 +319,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 		canvas.addEventListener("dragmove", function (e) {
 			var data = e.detail,
 				target = data.target;
-
+		
 			// selectedDevice 인 경우 moveDevice
 			if (target === selectedDevice) {
 				moveDevice(dragOrigin.x + Math.round(data.dragX / ratio), dragOrigin.y + Math.round(data.dragY / ratio));
@@ -309,7 +352,9 @@ var svgNS = "http://www.w3.org/2000/svg",
 			}
 			else if (isLinkToken(target)){
 				if (destination.tagName === "image") {
-					showDialog(deviceData[selectedDevice.getAttributeNS(null, "id")], deviceData[destination.getAttributeNS(null, "id")]);
+					showLinkDialog(function (dialog) {
+						dialog.setLink(deviceData[selectedDevice.getAttributeNS(null, "id")], deviceData[destination.getAttributeNS(null, "id")]);
+					});
 				}
 				
 				setSelectionMark();
@@ -323,7 +368,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 	
 	function onClick(e) {
 		var target = e.target;
-		
+	
 		selectedDevice = target.tagName === "image"? target: undefined;
 		
 		if (selectedDevice) {
@@ -334,7 +379,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 		else {
 			clearSelectionMark();
 		}
-		
+	
 	}
 	
 	function cancelClick(e) {
@@ -342,12 +387,13 @@ var svgNS = "http://www.w3.org/2000/svg",
 		canvas.removeEventListener("click", cancelClick);
 	}
 	
+	// public
 	window.resetStage = function () {
 		rect = canvas.getBoundingClientRect();
 		
 		base.setTranslate(rect.width /2, rect.height /2);
 	};
-
+	
 	window.moveStage = function (x, y) {
 		translate.setTranslate(- x, - y);
 	};
@@ -365,20 +411,21 @@ var svgNS = "http://www.w3.org/2000/svg",
 	};
 	
 	window.editDevice = function () {
-		
+	
+	};
+	
+	window.getDeviceData = function () {
+		return deviceData;
 	};
 	
 	window.initialize = initialize;
-	
+
 }) (window);
 
-/**
- * device
- */
+// svg device group
 (function (window, undefined) {
 	
 	var canvas = document.getElementById("device"),
-		iconData = top.getIconData(),
 		deviceMap = {},
 		nameMap = {},
 		svgDevice, svgName, device;
@@ -392,7 +439,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 		svgDevice.setAttributeNS(null, "id", id);
 		svgDevice.setAttributeNS(null, "x", device.x);
 		svgDevice.setAttributeNS(null, "y", device.y);
-		svgDevice.setAttributeNS(xlinkNS, "xlink:href", "../"+ iconData[device.type].src);
+		svgDevice.setAttributeNS(xlinkNS, "xlink:href",  iconData[device.type].src);
 		svgDevice.setAttributeNS(null, "width", "40px");
 		svgDevice.setAttributeNS(null, "height", "40px");
 		svgDevice.setAttributeNS(null, "transform", "translate(-20, -20)");
@@ -404,7 +451,9 @@ var svgNS = "http://www.w3.org/2000/svg",
 		svgName.textContent = device.name;
 		svgName.setAttributeNS(null, "x", device.x);
 		svgName.setAttributeNS(null, "y", device.y);
-		svgName.setAttributeNS(null, "transform", "translate(0, 25)");
+		// text baseline이 글자의 밑을 기준으로 하므로 글자 크기만큼 내려준다.
+		// 아이콘 크기 + 글자 크기 = 20 + 16 = 36
+		svgName.setAttributeNS(null, "transform", "translate(0, 36)");
 		
 		nameMap[id] = svgName;
 		
@@ -436,9 +485,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 	
 }) (window);
 
-/**
- * select
- */
+// svg select group
 (function (window, undefined) {
 	
 	var canvas = document.getElementById("selection"),
@@ -450,7 +497,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 		
 	window.setSelectionMark = function () {
 		var id = getSelectedDeviceID(),
-			device = getDevice(id),
+			device = deviceData[id],
 			svgDevice = getSvgDevice(id),
 			x = Number(svgDevice.getAttributeNS(null, "x")),
 			y = Number(svgDevice.getAttributeNS(null, "y"));
@@ -473,9 +520,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 	
 }) (window);
 
-/**
- * navigation
- */
+// svg navigation group
 (function (window, undefined) {
 	
 	var canvas = document.getElementById("navigation"),
@@ -490,32 +535,45 @@ var svgNS = "http://www.w3.org/2000/svg",
 		chartAnchor.onclick = function (e) {
 			e.stopPropagation();
 			
-			
-			//top.showChart(getSelectedDeviceID());
+			showChart();
 		};
 		
 		editAnchor.onclick = function (e) {
 			e.stopPropagation();
 			
-			top.sendRequest({
-				command: "select",
-				ip: device.ip
-			}, onResponse, true);
+			var id = getSelectedDeviceID(),
+				device = deviceData[id];
+			
+			if (device.snmp) {
+				sendRequest({
+					command: "select",
+					ip: device.ip
+				}, onResponse, true);
+			}
+			else {
+				onLoadDeviceDialog();
+			}
 		};
 	}
 	
 	function onResponse(data) {
-		if (status === 200) {
-			showDialog("device.html", function () {
-				
-			});
-		}
-		else if (status === 400){
-			//
+		if (data) {
+			onLoadDeviceDialog(data);
 		}
 		else {
-			//
+			window.close();
 		}
+	}
+	
+	function onLoadDeviceDialog(snmp) {
+		var id = getSelectedDeviceID(),
+			device = deviceData[id];
+		
+		showDeviceDialog(function (dialog) {
+			dialog.initialize(iconData);
+			
+			dialog.setDevice(device, snmp);
+		});
 	}
 	
 	window.showNavigation = function (x, y, chart) {
@@ -533,7 +591,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 		editAnchor.setAttributeNS(null, "x", x);
 		editAnchor.setAttributeNS(null, "y", y);
 		
-		canvas.classList[chart? "add": "remove"]("chart");
+		document.body.classList[chart? "add": "remove"]("snmp");
 		
 		canvas.appendChild(navigation);
 	};
@@ -558,9 +616,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 	
 }) (window);
 
-/**
- * interface name
- */
+// svg interface name group
 (function (window, undefined) {
 	var canvas = document.getElementById("if_name");
 	
@@ -583,9 +639,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 	
 }) (window);
 
-/**
- * line
- */
+// svg line group
 (function (window, undefined) {
 	
 	var canvas = document.getElementById("line"),
@@ -600,7 +654,7 @@ var svgNS = "http://www.w3.org/2000/svg",
 		lineMap[device.id] = peerMap;
 		
 		for (var name in ifEntry) {
-			peer = getDevice(ifEntry[name]);
+			peer = deviceData[ifEntry[name]];
 			
 			nameSvg = createLabel(name, device.x, device.y, peer.x, peer.y);
 			
@@ -666,111 +720,79 @@ var svgNS = "http://www.w3.org/2000/svg",
 	
 }) (window);
 
-// functional
+// dialog
 (function (window, undefined) {
 	
-	var maximize = document.getElementById("maximize"),
-		minimize = document.getElementById("minimize");
+	var dialog = document.getElementById("dialog");
 	
-	function initialize() {
-		maximize.addEventListener("click", window.maximize);
+	function showDialog(onload) {
+		document.body.classList.add("dialog");
 		
-		minimize.addEventListener("click", function () {
-			document.body.classList.remove("maximized");
-			
-			top.maximizeMap(false);
-		});
+		onload(dialog.contentWindow);
 	}
 	
-	window.maximize = function () {console.log(1);
-		top.maximizeMap(true);
+	window.showDeviceDialog = function (onload) {
+		dialog.onload = showDialog.bind(undefined, onload);
 		
-		document.body.classList.add("maximized");
+		dialog.src = "device.html";
 	};
 	
-	initialize();
+	window.showLinkDialog = function (onload) {
+		dialog.onload = showDialog.bind(undefined, onload);
+		
+		dialog.src = "link.html";
+	};
+	
+	window.closeDialog = function () {
+		document.body.classList.remove("dialog");
+		
+		dialog.onload = undefined;
+		
+		dialog.src = "about:blank";
+	};
 	
 }) (window);
 
-// dialog
-/*
-(function (window, undefined){
-	var device1, device2, ifEntry1, ifEntry2,
-		form = document.getElementById("link");
+//chart
+(function (window, undefined) {
 	
-	function initialize() {
-		form.addEventListener("submit", function (e) {
-			ifEntry1[form.elements["entry1"].value] = device2.id;
-			ifEntry2[form.elements["entry2"].value] = device1.id;
-			
-			form.reset();
-		});
-		
-		form.addEventListener("reset", function (e) {
-			document.body.classList.remove("dialog", "link");
-		});
-	}
+	var chart = document.getElementById("chart"),
+		device;
 	
-	function initInterface(select, entry) {
-		var option;
-		
-		for (var name in entry) {
-			if (entry[name]) {
-				continue;
-			}
+	function onResponse(data) {
+		if (data) {
+			chart.onload = function () {
+				chart.contentWindow.initialize(device, data);
+			};
 			
-			option = document.createElement("option");
-			option.text = name;
-			
-			select.add(option);
+			chart.src = "chart.html";
+		}
+		else {
+			window.close();
 		}
 		
-		select.value = "";
+		document.body.classList.add("chart");
 	}
 	
-	window.showDialog = function (peer1, peer2) {
-		device1 = peer1;
-		device2 = peer2;
-		ifEntry1 = device1.ifEntry;
-		ifEntry2 = device2.ifEntry;
+	window.showChart = function () {
+		device = deviceData[getSelectedDeviceID()];
 		
-		initInterface(form.elements["entry1"], ifEntry1);
-		initInterface(form.elements["entry2"], ifEntry2);
-		
-		document.body.classList.add("dialog", "link");
-		
-		maximize();
-	}
-	
-	initialize();
-	
-}) (window);
-*/
-
-//dialog
-(function (window, undefined){
-	var device1, device2, ifEntry1, ifEntry2,
-		form = document.getElementById("link");
-	
-	function initialize() {
-	}
-	
-	window.showDialog = function (url, callback) {
-		dialog.onload = callback;
-		dialog.src = url;
-		
-		document.body.classList.remove("add");
+		sendRequest({
+			command: "select",
+			ip: device.ip
+		}, onResponse);
 	};
 	
-	window.hideDialog = function () {
-		document.body.classList.remove("dialog");
+	window.closeChart = function () {
+		document.body.classList.remove("chart");
+		
+		chart.onload = undefined;
+		
+		dialog.src = "about:blank";
 	};
-	
-	initialize();
 	
 }) (window);
 
-// public
 function selectDevice(id) {
 	var svgDevice = getSvgDevice(id);
 	
@@ -780,9 +802,14 @@ function selectDevice(id) {
 	moveStage(x, y);
 }
 
+function sendRequest(request, callback) {
+	opener.sendRequest(request, callback);
+}
+
 initialize();
 
-	</script>
-
+		</script>
+	
 	</body>
+	
 </html>
