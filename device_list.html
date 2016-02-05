@@ -103,6 +103,15 @@ input {
 	padding: 3px;
 }
 
+#form {
+	display: flex;
+	justify-content: space-between;
+}
+
+input[name="keyword"] {
+	flex: .9;
+}
+
 input[type=button],
 input[type=submit],
 input[type=text],
@@ -128,8 +137,10 @@ nav form {
 			<form id="form">
 				<input type="button" value="map" name="map" class="hidden">
 				<input type="button" value="chart" name="chart"  class="hidden">
-				<input type="button" value="add" name="add">
-				<input type="button" value="del" name="remove">
+				<div class="hidden">
+					<input type="button" value="add" name="add">
+					<input type="button" value="del" name="remove">
+				</div>
 				<select name="label"></select>
 				<input type="text" name="keyword">
 				<input type="submit" value="search">
@@ -270,8 +281,10 @@ nav form {
 		
 		while (row) {
 			next = row.nextSibling;
-			
-			device = deviceData[row.firstChild.value];
+			// row => ul
+			// row.firstChild => li
+			// checkbox <== li.firstChild
+			device = deviceData[row.firstChild.firstChild.value];
 			
 			if (device.name.indexOf(keyword) !== -1 || device.ip.indexOf(keyword) !== -1 /*device.type.indexOf(keyword) === -1*/) {
 				fragment.appendChild(row);
@@ -440,6 +453,7 @@ nav form {
 	function onSearch(e) {
 		e.preventDefault();
 		
+		// search 결과를 초기화 하기 위해
 		selectLabel(form.elements.label.value);
 
 		filterDeviceList(form.elements.keyword.value);

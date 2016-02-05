@@ -4,7 +4,7 @@ ITAhM.iconData = {
     "server": {
         "group": "server",
         "alt": "server",
-        "src": "img/server.png"
+        "src": "img/svg/server.svg"
     },
     "mainframe": {
         "group": "server",
@@ -20,7 +20,7 @@ ITAhM.iconData = {
     "storage": {
         "group": "server",
         "alt": "storage",
-        "src": "img/storage.png"
+        "src": "img/svg/storage.svg"
     },
     "www": {
         "group": "server",

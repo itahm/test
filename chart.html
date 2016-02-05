@@ -1132,7 +1132,7 @@ function ChartSummaryData(data) {
 		function drawGraph(blocks, index, high, low, single) {
 			var path = new Path(graph),
 				unit = rect.height / (high - low),
-				x, y,
+				x, y, lastX,
 				dateArray, date, coords;
 			
 			path.beginPath();
@@ -1144,14 +1144,20 @@ function ChartSummaryData(data) {
 				
 				coords = getCoordinates(date, index);
 				
-				path.moveTo(coords.x, (coords.y.max - low) * unit);
+				if (lastX && coords.x - lastX < 1) {
+					continue;
+				}
+				
+				lastX = coords.x;
+				
+				path.moveTo(lastX, (coords.y.max - low) * unit);
 				
 				for (var j=1,numberOfDate=dateArray.length; j<numberOfDate; j++) {
 					date = dateArray[j];
 					
 					coords = getCoordinates(date, index);
 					
-					path.lineTo(coords.x, (coords.y.max -low) * unit);
+					path.lineTo(lastX, (coords.y.max -low) * unit);
 				}
 			}
 			
@@ -1185,12 +1191,14 @@ function ChartSummaryData(data) {
 			if (!data) {
 				throw "";
 			}
+			
 			var pathMax, pathAvg, pathMin,
 				blocks = data.keys,
 				high = data.high,
 				low = data.low,
 				unit = rect.height / (high - low),
 				x, y,
+				lastX,
 				dateArray, date, coords;
 			
 			pathMax = new Path(graph);
@@ -1212,32 +1220,38 @@ function ChartSummaryData(data) {
 				
 				coords = getCoordinates(date, index);
 				
-				pathMax.moveTo(coords.x, 0);
-				pathMax.lineTo(coords.x, (coords.y.max - low) * unit);
+				if (lastX && coords.x - lastX < 1) {
+					continue;
+				}
 				
-				pathAvg.moveTo(coords.x, (coords.y.avg - low) * unit);
+				lastX = coords.x;
 				
-				pathMin.moveTo(coords.x, 0);
-				pathMin.lineTo(coords.x, (coords.y.min - low) * unit);
+				pathMax.moveTo(lastX, 0);
+				pathMax.lineTo(lastX, (coords.y.max - low) * unit);
+				
+				pathAvg.moveTo(lastX, (coords.y.avg - low) * unit);
+				
+				pathMin.moveTo(lastX, 0);
+				pathMin.lineTo(lastX, (coords.y.min - low) * unit);
 				
 				for (var j=1,numberOfDate=dateArray.length; j<numberOfDate; j++) {
 					date = dateArray[j];
 					
 					coords = getCoordinates(date, index);
 					
-					pathMax.lineTo(coords.x, (coords.y.max - low) * unit);
-					pathAvg.lineTo(coords.x, (coords.y.avg -low) * unit);
-					pathMin.lineTo(coords.x, (coords.y.min - low) * unit);
+					pathMax.lineTo(lastX, (coords.y.max - low) * unit);
+					pathAvg.lineTo(lastX, (coords.y.avg -low) * unit);
+					pathMin.lineTo(lastX, (coords.y.min - low) * unit);
 					
 				}
 				
-				pathMax.lineTo(coords.x, 0);
+				pathMax.lineTo(lastX, 0);
 				pathMax.closePath();
 				pathMax.draw();
 				
 				pathAvg.draw();
 				
-				pathMin.lineTo(coords.x, 0);
+				pathMin.lineTo(lastX, 0);
 				pathMin.closePath();
 				pathMin.draw();
 			}
