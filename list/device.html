@@ -18,7 +18,7 @@ li {
 	font-size: 12px;
 }
 
-nav {
+header {
 	position: fixed; top: 0; right: 0; left: 0;
 	padding: 5px;
 	box-sizing: border-box;
@@ -26,25 +26,25 @@ nav {
 	border-bottom: 1px;
 }
 
-.table {
+section {
 	position: fixed; top: 40px; right: 0; bottom: 0; left: 0;
 }
 
-.table ul {
+ul {
 	margin: 0;
 	padding: 3px 0;
 	list-style: none;
 	display: flex;
 }
 
-.table li {
+li {
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.table li:first-child {
+li:first-child {
 	flex: none;
 	width: 20px;
 }
@@ -104,7 +104,7 @@ select {
 	padding: .5em;
 }
 
-header form {
+form {
 	white-space: nowrap;
 }
 		</style>
@@ -140,256 +140,273 @@ header form {
 		</section>
 		
 		<script>
-if (window === top) {
-	throw "";
-}
 
-/**
- * control
- */
-(function (window, undefined) {
-	var form = document.getElementById("form");
+(function (window, top) {
 	
-	initEvent();
-	
-	/**
-	 * private method
-	 */
-	function initEvent() {
-		form.elements.add.addEventListener("click", top.addDevice, false);
-		form.elements.remove.addEventListener("click", onRemove, false);
-		form.elements.label.addEventListener("change", onChangeLabel, false);
-		form.addEventListener("submit", onSearch, false);
+	if (window === top) {
+		throw "";
 	}
 	
-	/**
-	 * callback method
-	 */
-	function onSearch(e) {
-		e.preventDefault();
-		
-		selectLabel(form.elements.label.value);
-
-		filterDeviceList(form.elements.keyword.value);
-	}
+	var deviceList = top.getDeviceList(),
+		elements = {
+			form: document.getElementById("form"),
+			tbody: document.getElementById("tbody")
+		},
+		list;
 	
-	function onChangeLabel(e) {
-		form.elements.keyword.value = "";
-		
-		selectLabel(form.elements.label.value);
-	}
+	elements.form.elements.add.addEventListener("click", onAdd, false);
+	elements.form.elements.remove.addEventListener("click", onRemove, false);
+	elements.form.elements.label.addEventListener("change", onChangeLabel, false);
+	elements.form.addEventListener("submit", onSearch, false);
 	
-	function onRemove() {
-		removeDeviceList();
-	}
-	/*
-	 * public method
-	 */
-	window.initLabels = function (labels) {
-		var select = form.elements.label,
+	resetList();
+	
+	function resetList() {
+		var array,
+			select = elements.form.elements.label,
 			option = document.createElement("option");
-	
+		
+		list = new List(onSelect);
+		
 		// label select 초기화
+		array = list.getLabels();
 		select.length = 0;
 		
 		option.value = "";
 		option.text = "all labels";
-		option.selected = true;
 		
 		select.add(option);
 		
-		for (var i=0, length=labels.length; i<length; i++) {
+		for (var i=0, length=array.length; i<length; i++) {
 			option = document.createElement("option");
 			
-			option.text = labels[i];
+			option.text = array[i];
 			
 			select.add(option);
 		}
-	};
-	
-})(window, top);
-
-/**
- * list
- */
-(function (window, undefined) {
-	var deviceData = top.getDeviceData(),
-		table = document.getElementById("tbody"),
-		rowMap = {};
-	
-	initDeviceList();
-	
-	function initDeviceList() {
-		var fragment = document.createDocumentFragment(),
-			labels = {},
-			row, device, checkbox, label;
 		
-		for (var id in deviceData) {
-			row = document.createElement("ul");
-			device = deviceData[id];
-			
-			checkbox = document.createElement("input");
-			checkbox.type = "checkbox";
-			checkbox.value = id;
-			checkbox.onclick = onStopPropagation;
-			
-			row.appendChild(checkbox);
-			row.appendChild(document.createElement("li")).textContent = device.name;
-			row.appendChild(document.createElement("li")).textContent = device.type;
-			row.appendChild(document.createElement("li")).textContent = device.ip;
-			row.appendChild(document.createElement("li")).textContent = "";
-			row.appendChild(document.createElement("li")).textContent = "";
-			row.appendChild(document.createElement("li")).textContent = "";
-			row.appendChild(document.createElement("li")).textContent = "";
-			
-			row.onclick = onSelectDevice.bind(undefined, id);
-			
-			rowMap[id] = row;
-			
-			if (device.label) {
-				label = device.label.split(",");
-				
-				for (var i=0, length=label.length; i<length; i++) {
-					row.classList.add(label[i]);
-					
-					labels[label[i]] = null;
-				}
-			}
-			
-			fragment.appendChild(row);
+		changeLabel("");
+	}
+	
+	function removeDevice(id) {
+		var device = deviceList[id],
+			iFace = device.iFace,
+			deviceFrame;
+		
+		for (var name in iFace) {
+			removeIFace(deviceList[iFace[name]], id);
 		}
 		
-		table.appendChild(fragment);
+		delete deviceList[id];
 		
-		initLabels(Object.keys(labels));
-	}
-	
-	/**
-	 * callback method
-	 */
-	function onSelectDevice(id) {
-		// TODO
-		console.log("selected >> "+ id);
-	}
-	
-	function onStopPropagation(e) {
-		e.stopPropagation();
-	}
-	/**
-	 * public method
-	 */
-	this.getRowsByLabel = function (labelName) {
-		var fragment = document.createDocumentFragment();
-		
-		for (var id in rowMap) {
-			fragment.appendChild(rowMap[id]);
+		deviceFrame = top.getFrame("device");
+		// 선택된 device가 삭제되는 경우
+		if (id == deviceFrame.getDeviceID()) {
+			deviceFrame.resetDevice(0);
 		}
+	}
+	
+	function removeIFace(peer, id) {
+		var iFace = peer.iFace;
 		
-		if (labelName) {
-			array = label[labelName];
-			
-			fragment = document.createDocumentFragment();
-			
-			if (array) {
-				for (var i=0, length=array.length; i<length; i++) {
-					fragment.appendChild(array[i]);
-				}
+		for (var name in iFace) {
+			if (iFace[name] == id) {
+				delete iFace[name];
 			}
 		}
+	}
+	
+	function onAdd(e) {
+		top.getFrame("device").resetDevice();
+	}
+	
+	function onSearch(e) {
+		e.preventDefault();
 		
-		return fragment;
-	};
-
-	window.clearDeviceList = function () {
-		var fragment = document.createDocumentFragment(),
-			row;
+		var keyword = elements.form.elements.keyword.value;
 		
-		while (row = table.firstChild) {
-			fragment.appendChild(row);
+		changeLabel(elements.form.elements.label.value);
+		
+		if (!keyword) {	
+			return;
 		}
 		
-		return fragment;
-	};
-	
-	window.filterDeviceList = function (keyword) {
-		var row = clearDeviceList().firstChild,
-			next,
+		var row = elements.tbody.children,
 			fragment = document.createDocumentFragment(),
+			matched = [],
 			device;
 		
-		while (row) {
-			next = row.nextSibling;
+		for (var i=0, length=row.length; i<length; i++) {
+			device = deviceList[row[i].dataset.id];
 			
-			device = deviceData[row.firstChild.value];
-			
-			if (device.name.indexOf(keyword) !== -1 || device.ip.indexOf(keyword) !== -1 /*device.type.indexOf(keyword) === -1*/) {
-				fragment.appendChild(row);
-			}
-			
-			row = next;
-		}
-		
-		table.appendChild(fragment);
-	};
-	
-	window.selectLabel = function (label) {
-		var fragment = document.createDocumentFragment(),
-			rows;
-		
-		for (var id in rowMap) {
-			fragment.appendChild(rowMap[id]);
-		}
-		
-		if (label) {
-			rows = [].slice.call(fragment.querySelectorAll("."+ label), 0);
-			
-			fragment = document.createDocumentFragment();
-			
-			for (var i=0, length=rows.length; i<length; i++) {
-				fragment.appendChild(rows[i]);
+			if (device.name.indexOf(keyword) === -1 && device.address.indexOf(keyword) === -1 && device.type.indexOf(keyword) === -1) {
+				matched[matched.length] = row[i];
 			}
 		}
 		
-		table.appendChild(fragment);
-	};
-	
-	window._removeDeviceList =function () {
-		var clone = clearDeviceList(),
-			checked = clone.querySelectorAll("input:checked"),
-			length = checked.length;
-			
-		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
-			table.appendChild(clone);
-			
-			return;
+		for (var i=0, length=matched.length; i<length; i++) {
+			fragment.appendChild(matched[i]);
 		}
-		
-		for (var i=0; i<length; i++) {
-			delete deviceData[checked[i].value];
-		}
-		
-		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
-		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
-		// 일단은 페이지 새로고침으로 해결
-		location.reload();
-	};
+	}
 	
-	window.removeDeviceList =function () {
-		var checked = document.querySelectorAll("#tbody input:checked"),
+	function onSelect(id) {
+		top.getFrame("map").selectDevice(id);
+		top.getFrame("device").resetDevice(id);
+		
+		top.minimize();
+	}
+	
+	function onRemove() {
+		var checked = list.checked,
 			length = checked.length;
-			
+		
 		if (length == 0 || !confirm("remove "+ length +" device(s)?")) {
 			return;
 		}
 		
-		for (var i=0; i<length; i++) {
-			delete deviceData[checked[i].value];
+		for(var i=0; i<length; i++) {
+			removeDevice(checked[i].dataset.id);
 		}
 		
-		// TODO label 로 검색중이었다면 label 상태에서 테이블 새로 고쳐주는것이 좋아보임
-		// 이때 label이 삭제되는 경우가 생길 것이므로 label 정리부터 다시 해줘야 함.
-		// 일단은 페이지 새로고침으로 해결
-		location.reload();
+		top.getFrame("map").reload();
+	}
+	
+	function onChangeLabel(e) {
+		elements.form.elements.keyword.value = "";
+		
+		changeLabel(this.value);
+	}
+	
+	function changeLabel(label) {
+		elements.tbody.appendChild(list.getRowsByLabel(label));
+	}
+	
+	function List(onselect) {
+		var list = this,
+			rowMap = {},
+			label = {};
+		
+		this.checked = [];
+		
+		(function () {
+			var row, device, checkbox;
+			
+			for (var id in deviceList) {
+				row = document.createElement("ul");
+				device = deviceList[id];
+				
+				checkbox = document.createElement("input");
+				checkbox.type = "checkbox";
+				checkbox.onclick = onCheckItem;
+				
+				row.appendChild(checkbox);
+				row.appendChild(document.createElement("li")).textContent = device.name;
+				row.appendChild(document.createElement("li")).textContent = device.type;
+				row.appendChild(document.createElement("li")).textContent = device.address;
+				row.appendChild(document.createElement("li")).textContent = "";
+				row.appendChild(document.createElement("li")).textContent = "";
+				row.appendChild(document.createElement("li")).textContent = "";
+				row.appendChild(document.createElement("li")).textContent = "";
+				
+				row.dataset.id = id;
+				
+				row.onclick = onSelectRow;
+				
+				rowMap[id] = row;
+				
+				parseLabel(row, device);
+			}
+		})();
+		
+		this.reset = function (id) {
+			var row = rowMap[id],
+				col = row.children,
+				device = deviceList[id];
+			
+			col[1].textContent = device.name;
+			col[2].textContent = device.type;
+			col[3].textContent = device.address;
+			col[4].textContent = "";
+			col[5].textContent = "";
+			col[6].textContent = "";
+			col[7].textContent = "";
+		};
+		
+		this.getRowsByLabel = function (labelName) {
+			var fragment = document.createDocumentFragment();
+			
+			for (var id in rowMap) {
+				fragment.appendChild(rowMap[id]);
+			}
+			
+			if (labelName) {
+				array = label[labelName];
+				
+				fragment = document.createDocumentFragment();
+				
+				if (array) {
+					for (var i=0, length=array.length; i<length; i++) {
+						fragment.appendChild(array[i]);
+					}
+				}
+			}
+			
+			return fragment;
+		};
+		
+
+		this.getLabels = function() {
+			return Object.keys(label);
+		};
+		
+		function onCheckItem(e) {
+			e.stopPropagation();
+			
+			var checked = list.checked,
+				row = this.parentNode,
+				index = checked.indexOf(row);
+			
+			if (this.checked) {
+				if (index === -1) {
+					checked[checked.length] = row;
+				}
+			}
+			else {
+				if (index !== -1) {
+					checked.splice(index, 1);
+				}
+			}
+		}
+		
+		function onSelectRow() {
+			list.selected = this;
+			
+			onselect(this.dataset.id);
+		}
+		
+		function parseLabel(row, device) {
+			if (!device.label) {
+				return;
+			}
+			
+			var array = device.label.split(","),
+				labelName;
+			
+			for (var i=0, length=array.length; i<length; i++) {
+				labelName = array[i];
+				
+				if (!label[labelName]) {
+					label[labelName] = [];
+				}
+				
+				label[labelName].push(row);
+			}
+		}
+		
+	}
+	
+	window.reload = function () {
+		document.location.reload();
 	};
 	
 })(window, top);

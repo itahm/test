@@ -1,7 +1,7 @@
 ;"use strict";
 
 function Communicator() {
-	var xhr, url, dataQ, callbackQ;
+	var xhr, url, dataQ, callbackQ, response;
 	
 	init();
 	
@@ -12,26 +12,32 @@ function Communicator() {
 	
 	function send(data) {
 		if (!xhr) {
-			if (url) {
-				xhr = new XMLHttpRequest();
-			}
-			else {
-				throw "closed.";
-			}
+			xhr = new XMLHttpRequest();
 		}
 		
 		xhr.open("POST", url, true);
+		xhr.onload = onSuccess;
+		xhr.ontimeout = onTimeout;
 		xhr.onloadend = onLoad;
-		xhr.timeout = 3000;
+		xhr.timeout = 10000;
 		xhr.withCredentials = true;
 		xhr.send(JSON.stringify(data));
 	}
 	
-	function onLoad(e) {
-		var data = dataQ.shift(),
-			response = xhr.responseText;
+	function onSuccess(e) {
+		var text = xhr.responseText;
 		
-		callbackQ.shift()((response && response.length > 0)? JSON.parse(response): {}, xhr.status);
+		response = text.length > 0? JSON.parse(text): {};
+	};
+	
+	function onTimeout(e) {
+		alert("request timed out.");
+	};
+	
+	function onLoad(e) {
+		var data = dataQ.shift();
+		
+		callbackQ.shift()(response, xhr.status);
 		
 		if (data) {
 			send(data);
@@ -40,7 +46,9 @@ function Communicator() {
 	
 	this.connect = function (server, port) {
 		xhr = new XMLHttpRequest();
-		url = "http://"+ server + (port? (":"+ port): "")
+		url = "http://"+ server + (port? (":"+ port): "");
+		
+		return this;
 	},
 	
 	this.close = function () {
@@ -60,4 +68,22 @@ function Communicator() {
 		
 		callbackQ.push(callback);
 	};
+}
+
+Communicator.getInstance = function () {
+	return new Communicator();
+}
+
+Communicator.xhr = function (host, port, timeout) {
+	var xhr = new XMLHttpRequest();
+	
+	xhr.open("POST", "http://"+ host +":"+ port, true);
+	
+	if (timeout > 0) {
+		xhr.timeout = timeout;
+	}
+	
+	xhr.withCredentials = true;
+	
+	return new xhr;
 }

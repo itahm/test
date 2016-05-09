@@ -21,11 +21,12 @@ demoData.device = {
         "id": "4",
         "label": "",
         "community": "",
-        "type": "l4switch",
+        "type": "layer4 switch",
         "ifEntry": {
-            "eth1": "73",
-            "eth2": "5"
-        }
+        	"73": "eth1",
+        	"5": "eth2" 
+        },
+        "shutdown": true
     },
     "5": {
         "ip": "1.2.3.47",
@@ -37,7 +38,7 @@ demoData.device = {
         "community": "",
         "type": "router",
         "ifEntry": {
-            "e1/0": "4"
+        	"4": "e1/0" 
         }
     },
     "10": {
@@ -50,7 +51,7 @@ demoData.device = {
         "type": "storage",
         "community": "",
         "ifEntry": {
-            "eth2": "62"
+            "62": "eth2"
         }
     },
     "11": {
@@ -64,8 +65,9 @@ demoData.device = {
         "type": "server",
         "community": "",
         "ifEntry": {
-            "eth0": "62"
-        }
+        	"62": "eth0" 
+        },
+    	"shutdown": true
     },
     "15": {
         "ip": "192.168.100.100",
@@ -74,10 +76,10 @@ demoData.device = {
         "x": 227.24,
         "y": -164.84000000000003,
         "id": "15",
-        "type": "concentrator",
+        "type": "vpn concentrator",
         "ifEntry": {
-            "eth7": "47",
-            "eth8": "46"
+        	"47": "eth7",
+            "46": "eth8"
         }
     },
     "40": {
@@ -89,10 +91,10 @@ demoData.device = {
         "id": "40",
         "type": "firewall",
         "ifEntry": {
-            "eth1": "53",
-            "eth2": "46",
-            "eth3": "68",
-            "eth4": "69"
+        	"53": "eth1",
+        	"46": "eth2",
+        	"68": "eth3",
+        	"69": "eth4" 
         }
     },
     "41": {
@@ -104,10 +106,10 @@ demoData.device = {
         "id": "41",
         "type": "firewall",
         "ifEntry": {
-            "eth1": "52",
-            "eth2": "47",
-            "eth3": "68",
-            "eth4": "69"
+        	"52": "eth1",
+        	"47": "eth2",
+        	"68": "eth3",
+        	"69": "eth4" 
         }
     },
     "46": {
@@ -120,10 +122,10 @@ demoData.device = {
         "label": "idc,public",
         "type": "router",
         "ifEntry": {
-            "g2/21": "40",
-            "g0/8": "80",
-            "g1/1": "47",
-            "g1/11": "15"
+        	"40": "g2/21",
+        	"80": "g0/8",
+        	"47": "g1/1",
+        	"15": "g1/11"
         }
     },
     "47": {
@@ -136,139 +138,139 @@ demoData.device = {
         "label": "public,idc",
         "type": "router",
         "ifEntry": {
-            "g2/21": "41",
-            "g1/2": "46",
-            "g1/11": "15"
+        	"41": "g2/21",
+        	"46": "g1/2",
+        	"15": "g1/11" 
         }
     },
     "52": {
-        "ip": "",
+        "ip": "172.16.0.30",
         "x": 52.24000000000001,
         "name": "backbone switch",
         "snmp": true,
         "y": 20.160000000000025,
         "id": "52",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "g0/1": "41",
-            "g0/2": "58",
-            "g0/3": "73",
-            "g0/4": "74"
+        	"41": "g0/1",
+        	"58": "g0/2",
+        	"73": "g0/3",
+        	"74": "g0/4" 
         }
     },
     "53": {
-        "ip": "",
+        "ip": "10.10.99.8",
         "x": -147.76,
         "name": "backbone switch",
         "snmp": true,
         "y": 20.160000000000025,
         "id": "53",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "g0/1": "40",
-            "g0/2": "58",
-            "g0/3": "73",
-            "g0/4": "74",
-            "g0/5": "57"
+        	"40": "g0/1",
+        	"58": "g0/2",
+        	"73": "g0/3",
+        	"74": "g0/4",
+        	"57": "g0/5" 
         }
     },
     "57": {
-        "ip": "",
+        "ip": "10.20.20.254",
         "x": -260.48,
         "name": "server farm (A)",
         "snmp": true,
         "y": 181.24,
         "id": "57",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "ge3": "53"
+        	"53": "ge3" 
         }
     },
     "58": {
-        "ip": "",
+        "ip": "192.168.254.10",
         "x": -88.92000000000004,
         "name": "server farm (S)",
         "snmp": true,
         "y": 176.92,
         "id": "58",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "f0/2": "53",
-            "f0/3": "52"
+        	"53": "f0/2",
+        	"52": "f0/3" 
         }
     },
     "62": {
-        "ip": "",
+        "ip": "172.16.30.200",
         "x": -74.16000000000014,
         "name": "workgroup 1",
         "snmp": true,
         "y": 270.80000000000007,
         "id": "62",
-        "type": "workgroup",
+        "type": "workgroup switch",
         "ifEntry": {
-            "fe24": "73",
-            "fe1": "11",
-            "fe23": "10"
+        	"73": "fe24",
+        	"11": "fe1",
+        	"10": "fe23" 
         }
     },
     "68": {
-        "ip": "",
+        "ip": "10.6.188.7",
         "x": 202.24,
         "name": "dmz (A)",
         "snmp": true,
         "y": 33.160000000000025,
         "id": "68",
         "label": "idc,dmz",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "g2/47": "40",
-            "g2/48": "41"
+        	"40": "g2/47",
+        	"41": "g2/48" 
         }
     },
     "69": {
-        "ip": "",
+        "ip": "10.50.50.5",
         "x": 280.24,
         "name": "dmz (S)",
         "snmp": true,
         "y": -62.839999999999975,
         "id": "69",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "g2/47": "40",
-            "g2/48": "41"
+        	"40": "g2/47",
+        	"41": "g2/48" 
         }
     },
     "73": {
-        "ip": "",
+        "ip": "100.3.64.78",
         "x": 2.240000000000009,
         "name": "user (A)",
         "snmp": true,
         "y": 175.16,
         "id": "73",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "g3/1": "53",
-            "g3/2": "52",
-            "f1/1": "62",
-            "f1/2": "4"
+        	"53": "g3/1",
+        	"52": "g3/2",
+        	"62": "f1/1",
+        	"4": "f1/2" 
         }
     },
     "74": {
-        "ip": "",
+        "ip": "1.1.1.1",
         "x": 217.24,
         "snmp": true,
         "name": "user (S)",
         "snmp": true,
         "y": 175.16,
         "id": "74",
-        "type": "l3switch",
+        "type": "layer3 switch",
         "ifEntry": {
-            "g2/1": "53",
-            "g2/2": "52"
+        	"53": "g2/1",
+        	"52": "g2/2" 
         }
     },
     "80": {
-        "ip": "",
+        "ip": "99.99.99.99",
         "x": -147.76,
         "snmp": true,
         "name": "isp KT",
@@ -276,7 +278,7 @@ demoData.device = {
         "id": "80",
         "type": "cloud",
         "ifEntry": {
-            "kt": "46"
+        	"46": "kt" 
         }
     }
 };

@@ -4,138 +4,53 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Script-Type" content="text/javascript">
 		<meta http-equiv="Content-Style-Type" content="text/css">
-		<title>ITAhM::Chart</title>
+		<title>ITAhM</title>
 		
 		<style>
-body,
-li,
-select,
-input,
-span,
-label,
-a,
-h3,
-button,
-svg text {
-	font-family: arial, tahoma, "맑은 고딕"
-}
+@import url(css/calendar.css);
 
-li,
-select,
-input,
-span,
-label,
-a,
-button,
-svg text {
+body,
+text {
+	font-family: arial, tahoma, "맑은 고딕";
 	font-size: 14px;
 }
 
 body {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	display: flex;
-	flex-direction: column;
 }
 
-header img {
-	float: right;
-	cursor: pointer;
+#cal_box {
+	text-align: right;
+	position: absolute; bottom: 0;
 }
 
-section {
-	border: 1px solid #0084ff;
-	margin: 10px;
+#cal_box.start  {
+	left: 0;
 }
 
-ul {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-	display: flex;
+#cal_box.end  {
+	right: 0;
 }
 
-select {
-	padding: .5em;
-}
-
-section.information li {
-	flex: 1;
-	min-width: 120px;
-	padding: 10px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-section.information ul:first-child {
-	background-color: #0084ff;
-	color: #fff;
-}
-
-section.information ul:first-child li {
-	text-align: center;
-	font-weight: bold;
-}
-
-section.select {
-	padding: 10px;
-}
-
-section.select ul {
-	display: flex;
-}
-	
-section.select li {
-	flex: 1;
-}
-
-section.select select {
-	box-sizing: border-box;
-	width: 100%;
-}
-
-nav {
-	margin: 10px 10px 0 10px;
-	display: flex;
-	justify-content: space-between;
-}
-
-nav img {
-	vertical-align: middle;
-}
-
-button.download span {
-	margin-left: 10px;
-}
-
-#loading {
-	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-	background: #fff url("img/waiting.gif") no-repeat center;
-	opacity: .8;
-}
-
-#mode:not(.response) #mode_response,
-#mode:not(.processor) #mode_processor,
-#mode:not(.storage) #mode_storage,
-#mode:not(.memory) #mode_memory,
-#mode:not(.throughput) #mode_throughput,
-body:not(.loading) #loading {
+#cal_box:not(.show) {
 	display: none;
 }
 
-/* svg */
-section.chart {
-	background: #fff url(img/chart.png) no-repeat center;
-	flex: 1;
-	display: flex;
-	flex-direction: column;
+.calendar {
+	background-color: #fff;
+	border: 1px solid #0084ff;
+	padding: 3px;
 }
 
 svg {
-	flex: 1;
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
 	width: 100%;
 	height: 100%;
-	overflow: hidden;
+	min-width: 600px;
+	min-height: 400px;
+}
+
+text {
+	fill: #777;
 }
 
 #grid path {
@@ -144,1337 +59,692 @@ svg {
 	fill: none;
 }
 
+/* graph 기본 및 색상*/
 #graph path {
-	stroke: /*#e0ffff*/#fc0;
+	stroke: #fc0;
 	stroke-width: 2;
 	fill: none;
 }
 
-#graph path.max {
-	stroke: none;
-	fill: #0084ff;
+#graph path:hover {
+	cursor: pointer;
 }
 
-#graph path.min {
-	stroke: none;
-	fill: #fff;
+#graph path[class="0"] {
+	stroke: #0084ff;
 }
+
+#graph path[class="1"] {
+	stroke: #dd3232;
+}
+
+#graph path[class="2"] {
+	stroke: #969a52;
+}
+
+#graph path[class="3"] {
+	stroke: #0065a9;
+}
+
+#graph path[class="4"] {
+	stroke: #805462;
+}
+
+#graph path[class="5"] {
+	stroke: #00919c;
+}
+
+#graph path[class="6"] {
+	stroke: #ffef6c;
+}
+
+#graph path[class="7"] {
+	stroke: #572c29;
+}
+
+#graph path[class="8"] {
+	stroke: #b38e50;
+}
+
+#graph path[class="9"] {
+	stroke: #ffb6ad;
+}
+
+#graph path[class="10"] {
+	stroke: #fbaf5f;
+}
+
+#graph path.ifInOctets {
+	stroke: #7d7;
+}
+
+#graph path.ifOutOctets {
+	stroke: #ffb347;
+}
+/**/
 
 #axis_left text {
 	text-anchor: end;
 }
 
-#axis_right text {
-	text-anchor: start;
+#axis_date text {
+	writing-mode: tb;
 }
 
-#end_label text {
-	text-anchor: end;
+#date_text tspan:first-child,
+#date_text tspan:last-child {
+	font-weight: bold;
+	fill: #0084ff;
+	cursor: pointer;
 }
 
-body:not(.start) #start_date,
-body:not(.end) #end_date {
-	fill: #aaa;
+#date_text tspan:first-child:hover {
+	cursor: pointer;
 }
 
-body.start #start_fixed,
-body.end #end_fixed,
-body:not(.start) #start_move,
-body:not(.end) #end_move {
+nav {
+	position: fixed; right: 0; bottom: 0; left: 0;
+	display: flex;
+	justify-content: space-between;
+}
+
+nav img {
+	background-color: #fff;
+}
+
+nav label {
+	position:relative;
+}
+
+nav input[type="checkbox"] {
+	position:absolute;
+	visibility: hidden;
+}
+	
+nav input[type="checkbox"]:not(:checked) ~img:not(.lock),
+nav input[type="checkbox"]:checked ~img.lock {
 	display: none;
 }
 
-option[value="ifInOctets"] {
-	padding: 4px 4px 4px 20px;
-}
 		</style>
 		
 	</head>
 	
-	<body class="start end loading">
+	<body>
 		
-		<header>
-			<img src="img/close.png" id="close">
-		</header>
-		
-		<section class="information">
-			<ul>
-				<li>
-					<span id="description">nameⓘ</span>
-				</li>
-				<li>
-					<span>ip address</span>
-				</li>
-				<li>
-					<span>type</span>
-				</li>
-				<li>
-					<span>label</span>
-				</li>
-				<li>
-					<span>profile</span>
-				</li>
-				<li>
-					<span>status</span>
-				</li>
-				<li>
-					<span>uptime</span>
-				</li>
-				<li>
-					<span>enterprise</span>
-				</li>
-			</ul>
-			
-			<ul>
-				<li>
-					<span id="name">name</span>
-				</li>
-				<li>
-					<span id="ip">ip</span>
-				</li>
-				<li>
-					<span id="type">type</span>
-				<li>
-					<span id="label">label</span>
-				</li>
-				<li>
-					<span id="profile">profile</span>
-				</li>
-				<li>
-					<span id="status">status</span>
-				</li>
-				<li>
-					<span id="uptime">uptime</span>
-				</li>
-				<li>
-					<span id="enterprise">enterprise</span>
-				</li>
-			</ul>
-		</section>
-		
-		<section class="select">
-			<ul>
-				<li>
-					<label>
-						<input type="radio" value="onSelectResponse" name="resource">response time
-					</label>
-				<li>
-					<label>
-						<input type="radio" value="onSelectProcessor" name="resource">processor load
-					</label>
-				<li>
-					<label>
-						<input type="radio" value="onSelectMemory" name="resource">physical memory
-					</label>
-				<li>
-					<label>
-						<input type="radio" value="onSelectStorage" name="resource">storage usage
-					</label>
-				<li>
-					<label>
-						<input type="radio" value="onSelectThroughput" name="resource">interface throughput
-					</label>
-					<select id="interface_list" disabled></select>
-			</ul>
-		</section>
+		<svg id="chart">
+			<g transform="translate(20, 20)">
+		        <g transform="translate(0, 0)" id="axis_date">
+		        	<text id="date_text"></text>
+		        </g>
+		        <g transform="translate(0, 0) scale(1 -1)" id="graph"></g>
+		        <g transform="translate(0, 0)" id="axis_left"></g>
+				<g transform="translate(0, 0)" id="axis_right"></g>
+		        <g transform="translate(0, 0)" id="grid"></g>
+		    </g>
+		</svg>
 		
 		<nav>
-			<!-- div>
-				<button class="download">
-					<img src="img/download.png">
-					<span>csv</span>
-				</button>
-				<button class="download" id="download">
-					<img src="img/download.png">
-					<span>png</span>
-				</button>
-			</div-->
-			<form id="mode" class="response">
-				<select id="mode_response" disabled>
-					<option selected>N/A
-				</select>
-				<select id="mode_processor">
-					<option value="-1" selected>mix
-				</select>
-				<select id="mode_storage">
-					<option value="-1" selected>mix
-				</select>
-				<select id="mode_memory" disabled>
-					<option selected>N/A
-				</select>
-				<select id="mode_throughput" disabled>
-					<option value="-1" selected>mix
-					<option value="ifInOctets">in
-					<option value="ifOutOctets">out
-				</select>
-			</form>
+			<div>
+				<div id="cal_box">
+					<img id="cal_close" src="img/close.png">
+					<div id="calendar" class="calendar"></div>
+				</div>
+				<label style="">
+					<input type="checkbox" id="fix_start" checked>
+					<img src="img/unlock.png">
+					<img src="img/lock_gray.png" class="lock">
+				</label>
+				<img id="cal_start" src="img/calendar.png" title="show date picker">
+			</div>
+			<div>
+				<img id="cal_end" src="img/calendar.png" title="show date picker">
+				<label>
+					<input type="checkbox" id="fix_end" checked>
+					<img src="img/unlock.png">
+					<img src="img/lock_gray.png" class="lock">
+				</label>
+			</div>
 		</nav>
-		
-		<section class="chart">
-			<svg id="chart">
-				<defs>
-					<clipPath id="graph_area"></clipPath>
-				</defs>
-				<g transform="translate(20, 20)">
-			        <g transform="translate(0, -100) translate(0, 10)" id="axis_date">
-			        	<g>
-			        		<image xlink:href="img/unlock.png" width="16" height="16" id="start_move"></image>
-			        		<image xlink:href="img/lock_gray.png" width="16" height="16" id="start_fixed"></image>
-			        		<text x="20" y="14" id="start_date">start</text>
-			        	</g>
-			        	<g transform="translate(0, 0)" id="end_label">
-			        		<text x="-20" y="14" id="end_date">end</text>
-			        		<image x="-16" xlink:href="img/unlock.png" width="16" height="16" id="end_move"></image>
-			        		<image x="-16" xlink:href="img/lock_gray.png" width="16" height="16" id="end_fixed"></image>
-			        	</g>
-			        </g>
-			        <g transform="translate(0, 0) scale(1 -1)" clip-path="url(#_graph_area)" id="graph" comp-op="dst-out"></g>
-			        <g transform="translate(0, 0)" id="axis_left"></g>
-					<g transform="translate(0, 0)" id="axis_right"></g>
-			        <g transform="translate(0, 0)" id="grid"></g>
-			    </g>
-			</svg>
-		</section>
-		
-		<section id="loading"></section>
-		
 		<script src="js/ITAhM.js"></script>
+		<script src="js/object.js"></script>
 		<script src="js/Draggable.js"></script>
-		<!--script src="Chart.js"></script-->
 		<script>
+
+if (parent === window) throw "";		
 
 // 공통
 var svgNS = "http://www.w3.org/2000/svg",
 	xlinkNS = "http://www.w3.org/1999/xlink",
-	RESPONSE_TIMEOUT = 3000;
+	MIN_AXIS_VSPACE = 50,
+	MIN_AXIS_HSPACE = 160,
+	MAX_AXIS_VAL_CNT = 10,
+	DATE_AXIS_HEIGHT = 80,
+	MARGIN = 20,
+	PADDING = 5,
+	WHEEL_REPEAT = 50,
+	HOUR24 = 24 * 60 * 60 * 1000;
 
-function Path(container) {
-	this.initialize(container);
+function clear(svgElement) {
+	var element;
+	
+	while(element = svgElement.firstChild) {
+		svgElement.removeChild(element);
+	}
 }
 
-function ChartData(data) {
-	this.initialize(data);
+function createSvgText(x, y, text) {
+	var svgText = document.createElementNS(svgNS, "text");
+	
+	svgText.setAttributeNS(null, "x", x);
+	svgText.setAttributeNS(null, "y", y);
+	svgText.textContent = text;
+	
+	return svgText;
 }
 
-function ChartSummaryData(data) {
-	this.initialize(data);
+function createSvgTextSpan(x, y, text) {
+	var svgText = document.createElementNS(svgNS, "tspan");
+	
+	svgText.setAttributeNS(null, "x", x);
+	svgText.setAttributeNS(null, "y", y);
+	svgText.textContent = text;
+	
+	return svgText;
 }
 
-//navigation
+// core
 (function (window, undefined) {
-	
-	var name = document.getElementById("name"),
-		ip = document.getElementById("ip"),
-		type = document.getElementById("type"),
-		label = document.getElementById("label"),
-		profile = document.getElementById("profile"),
-		status = document.getElementById("status"),
-		uptime = document.getElementById("uptime"),
-		enterprise = document.getElementById("enterprise"),
-		close = document.getElementById("close"),
-		device;
+	var chart = document.getElementById("chart"),
+		fixStart = document.getElementById("fix_start"),
+		fixEnd = document.getElementById("fix_end"),
+		calendar = document.getElementById("cal_box"),
+		initialized = false,
+		origin, mode, capacity;
+		
+	var rect = {},
+		resizeTimer,
+		start, end, moved, tpp,
+		data;
 	
 	function initialize() {
-		close.onclick = function () {
-			top.closeChart();
-		}
-	}
-
-	// public. 페이지의 시작, map으로부터 호출됨. 
-	window.initialize = function (d, snmp) {
-		initialize();
+		initialized = true;
 		
-		device = d;
+		var r = chart.getBoundingClientRect();
 		
-		name.textContent = device.name;
-		ip.textContent = device.ip;
-		type.textContent = device.type;
-		label.textContent = device.label && (device.label.split(",")).join(", ") || "";
-		profile.textContent = device.profile;
-		status.textContent = snmp.timeout < 0? "up": "down";
-		uptime.textContent = ITAhM.util.toUptimeString(snmp.hrSystemUptime);
-		enterprise.textContent = ITAhM.util.enterpriseFromOID(snmp.sysObjectID);
-		
-		initThroughput(snmp);
-		
-		initProcessor(snmp);
-		
-		initStorage(snmp);
-		
-		initChartRect();
-		
-		document.body.classList.remove("loading");
-	};
-	
-	window.sendRequest = function (database, index, start, end, callback) {
-		var request = {
-				command: "query",
-				ip: device.ip,
-				summary: false,
-				database: database,
-				index: index,
-				start: start,
-				end: end
-			};
-		
-		top.sendRequest(request, callback);
-	};
-	
-	window.sendSummaryRequest = function (database, index, callback) {
-		var request = {
-				command: "query",
-				ip: device.ip,
-				summary: true,
-				database: database,
-				index: index
-			},
-			date = new Date();
-		
-		date.setHours(0, 0, 0, 0);
-		
-		request.end = date.setDate(date.getDate() +1);
-		request.start = date.setFullYear(date.getFullYear() -1);
-		
-		top.sendRequest(request, callback);
-	};
-	
-}) (window);
-
-// select
-(function (window, undefined) {
-	
-	var resources = document.getElementsByName("resource"),
-		mode = document.getElementById("mode");
-	
-	function initialize() {
-		for (var i=0, length = resources.length; i<length; i++) {
-			resources[i].onchange = onSelectResource;
-		}
-	}
-	
-	function onSelectResource() {
-		var method = this.value;
-		
-		if (method !== "onSelectThroughput") {
-			onSelectThroughput(true);
-		}
-		
-		window[method]();
-	}
-	
-	window.setResource = function (resource) {
-		mode.className = resource;
-	};
-	
-	initialize();
-	
-}) (window);
-
-// response time
-(function (window, undefined) {
-	
-	function valueToString(value) {
-		return value.toFixed(2) + "ms";
-	}
-	
-	function onResponse(data) {
-		if (!data) {
-			return;
-		}
-		
-		initChart({
-			0: new ChartSummaryData(data)
-		}, 0, RESPONSE_TIMEOUT);
-		
-		document.body.classList.remove("loading");
-	}
-	
-	window.onSelectResponse = function () {
-		window.valueToString = valueToString;
-		
-		document.body.classList.add("loading");
-		
-		setResource("response");
-		
-		sendSummaryRequest("responseTime", 0, onResponse);
-	};
-	
-}) (window);
-
-// processor
-(function (window, undefined) {
-	
-	var mode = document.getElementById("mode_processor"),
-		processor,
-		count = 0,
-		summaryData = {};
-	
-	function initialize() {
-		mode.onchange = function () {
-			initChart(summaryData, mode.value, 100);
+		rect = {
+			width: r.width - MARGIN *2,
+			height: r.height - MARGIN *2 - DATE_AXIS_HEIGHT
 		};
-	}
-	
-	function valueToString(value) {
-		return value.toFixed(2) + "%";
-	}
-	
-	function onResponse(index, data) {
-		if (!data) {
-			return;
-		}
 		
-		summaryData[index] = new ChartSummaryData(data);
-		
-		if (Object.keys(summaryData).length === count) {
-			initChart(summaryData, -1, 100);
-			
-			document.body.classList.remove("loading");
-		}
-	}
-	
-	window.initProcessor = function (snmp) {
-		var option;
-		
-		processor = snmp.hrProcessorIndex;
-		
-		for (var index in processor) {
-			option = document.createElement("option");
-			
-			option.text = "processor."+ index;
-			option.value = index;
-			
-			mode.add(option);
-			
-			count++;
-		}
-	};
-	
-	window.onSelectProcessor = function () {
-		window.valueToString = valueToString;
-		
-		document.body.classList.add("loading");
-		
-		setResource("processor");
-		
-		for (var index in processor) {
-			sendSummaryRequest("hrProcessorLoad", index, onResponse.bind(undefined, index));
-		}
-	};
-	
-	initialize();
-	
-}) (window);
-
-// storage
-(function (window, undefined) {
-	
-	var mode = document.getElementById("mode_storage"),
-		storage = {},
-		count = 0,
-		summaryData = {};
-	
-	function initialize() {
-		mode.onchange = function () {
-			var index = mode.value;
-			
-			if (index < 0) {
-				initChart(summaryData, -1);
+		window.addEventListener("resize", function () {
+			if (resizeTimer) {
+				clearTimeout(resizeTimer);
 			}
-			else {
-				initChart(summaryData, index, storage[index].hrStorageSize * storage[index].hrStorageAllocationUnits);
-			}
-		};
-	}
-	
-	function valueToString(value) {
-		return ITAhM.util.toBytesString(value).replace("ytes", "");
-	}
-	
-	function onResponse(index, data) {
-		if (!data) {
-			return;
-		}
-		
-		summaryData[index] = new ChartSummaryData(data);
-		
-		if (Object.keys(summaryData).length === count) {
-			initChart(summaryData, -1);
 			
-			document.body.classList.remove("loading");
-		}
-	}
-	
-	window.initStorage = function (snmp) {
-		var entry = snmp.hrStorageEntry,
-			resource,
-			option;
+			resizeTimer = setTimeout(onResize, 300);
+		});
 		
-		for (var index in snmp.hrStorageIndex) {
-			resource = entry[index];
-			
-			// size가 0인 것 제외.
-			if (resource.hrStorageSize > 0) {
-				// hrStorageFixedDisk 
-				if (resource.hrStorageType === 4) {
-					storage[index] = resource;
-					
-					option = document.createElement("option");
-					option.text = resource.hrStorageDescr;
-					option.value = index;
-					
-					mode.add(option);
-					
-					count++;
-				}
-				// hrStorageRam
-				else if (resource.hrStorageType === 2) {
-					initMemory(index, resource);
-				}
-			}
-		}
-	};
-	
-	window.onSelectStorage = function () {
-		window.valueToString = valueToString;
+		document.addEventListener("selectstart", function (e) {
+			e.preventDefault();
+		});
 		
-		document.body.classList.add("loading");
+		new Draggable(chart);
 		
-		setResource("storage");
+		chart.addEventListener("dragstart", function (e) {
+			onDragStart(e);
+		});
 		
-		for (var index in storage) {
-			sendSummaryRequest("hrStorageUsed", index, onResponse.bind(undefined, index));
-		}
-	};
-	
-	initialize();
-	
-}) (window);
-
-// memory
-(function (window, undefined) {
-	
-	var index, memory;
-	
-	function valueToString(value) {
-		return ITAhM.util.toBytesString(value).replace("ytes", "");
-	}
-	
-	function onResponse(data) {
-		if (!data) {
-			return;
-		}
+		chart.addEventListener("dragmove", function (e) {
+			onDragMove(e);
+		});
 		
-		var summaryData = {};
+		chart.addEventListener("dragend", function (e) {
+			drawDetailGraph();
+		});
 		
-		summaryData[index] = new ChartSummaryData(data);
-		
-		initChart(summaryData, index, memory.hrStorageSize * memory.hrStorageAllocationUnits);
-		
-		document.body.classList.remove("loading");
-	}
-	
-	window.initMemory = function (i, m) {
-		index = i;
-		memory = m;
-	};
-	
-	window.onSelectMemory = function () {
-		window.valueToString = valueToString;
-		
-		document.body.classList.add("loading");
-		
-		setResource("memory");
-		
-		sendSummaryRequest("hrStorageUsed", index, onResponse);
-	};
-	
-}) (window);
-
-// throughput
-(function (window, undefined) {
-	
-	var ifList = document.getElementById("interface_list"),
-		mode = document.getElementById("mode_throughput"),
-		iFace = {},
-		selectedIndex,
-		summaryData = {};
-	
-	function initialize() {
-		ifList.onchange = function () {
-			selectedIndex = ifList.value;
-			
-			document.body.classList.add("loading");
-			
-			sendSummaryRequest("ifInOctets", selectedIndex, onResponse.bind(undefined, "ifInOctets"));
-			sendSummaryRequest("ifOutOctets", selectedIndex, onResponse.bind(undefined, "ifOutOctets"));
-			
-			mode.value = -1;
-			mode.disabled = false;
+		document.getElementById("cal_start").onclick = function () {
+			calendar.className = "show start";
 		};
 		
-		mode.onchange = function () {console.log(summaryData, mode.value);
-			initChart(summaryData, mode.value, iFace[selectedIndex].ifSpeed);
+		document.getElementById("cal_end").onclick = function () {
+			calendar.className = "show end";
 		};
-	}
-	
-	function valueToString(value) {
-		return ITAhM.util.toBPSString(value);
-	}
-	
-	function onResponse(index, data) {
-		if (!data) {
-			return;
-		}
 		
-		summaryData[index] = new ChartSummaryData(data);
+		document.getElementById("cal_close").onclick = function () {
+			calendar.className = "";
+		};
 		
-		if (Object.keys(summaryData).length === 2) {
-			initChart(summaryData, -1, iFace[selectedIndex].ifSpeed);
+		new ITAhM.Calendar("calendar", function (date) {
+			var mills = date.getTime();
 			
-			document.body.classList.remove("loading");
-		}
-	}
-	
-	window.initThroughput = function (snmp) {
-		var ifEntry = snmp["ifEntry"],
-			resource,
-			option;
-		
-		for (index in snmp["ifIndex"]) {
-			resource = ifEntry[index];
-			
-			iFace[index] = resource;
-			
-			option = document.createElement("option");
-			option.value = index;
-			option.text = resource.ifName;
-			option.title = resource.ifDescr;
-			
-			ifList.appendChild(option)
-		}
-		
-		ifList.selectedIndex = -1;
-	};
-	
-	window.onSelectThroughput = function (disabled) {
-		window.valueToString = valueToString;
-		
-		setResource("throughput");
-		
-		if (disabled) {
-			// throughput 아닌 다른 resource가 선택되면
-			ifList.disabled = true;
-			
-			ifList.selectedIndex = -1;
-			
-			mode.disabled = true;
-		}
-		else {
-			ifList
-			
-			ifList.disabled = false;
-		}
-	};
-	
-	initialize();
-	
-}) (window);
-
-// chart
-(function (window, undefined) {
-	
-	var MIN_CHART_WIDTH = 100,
-		MIN_CHART_HEIGHT = 100,
-		MIN_AXIS_VSPACE = 50,
-		MIN_AXIS_HSPACE = 160,
-		MAX_AXIS_VAL_CNT = 10,
-		DATE_AXIS_HEIGHT = 30,
-		MARGIN = 20,
-		PADDING = 5,
-		WHEEL_REPEAT = 50,
-		HOUR24 = 24 * 60 * 60 * 1000;
-	
-	function clear(svgElement) {
-		var target;
-		
-		while(target = svgElement.firstChild) {
-			svgElement.removeChild(target);
-		}
-	}
-	
-	function createText(x, y, text) {
-		var svgText = document.createElementNS(svgNS, "text");
-		
-		svgText.setAttributeNS(null, "x", x);
-		svgText.setAttributeNS(null, "y", y);
-		svgText.textContent = text;
-		
-		return svgText;
-	}
-	
-	// core
-	(function (window, undefined) {
-		var chart = document.getElementById("chart"),
-			clip = document.getElementById("graph_area").appendChild(document.createElementNS(svgNS, "rect")),
-			origin, capacity, selected;
-			
-		var rect = {},
-			resizeTimer,
-			realStart, realEnd, start, end, tpp, width,
-			data;
-		
-		function initialize() {
-			window.addEventListener("resize", function () {
-				if (!origin) {
+			if (calendar.classList.contains("start")) {
+				if (mills >= end) {
+					alert("invalid date range.");
+					
 					return;
 				}
 				
-				if (resizeTimer) {
-					clearTimeout(resizeTimer);
+				start = mills;
+			}
+			else if (calendar.classList.contains("end")) {
+				if (mills <= start) {
+					alert("retry!");
+					
+					return;
 				}
 				
-				resizeTimer = setTimeout(onResize, 300);
-			});
-			
-			document.addEventListener("selectstart", function (e) {
-				e.preventDefault();
-			});
-			
-			new Draggable(chart);
-			
-			chart.addEventListener("dragstart", function (e) {
-				onDragStart(e);
-			});
-			
-			chart.addEventListener("dragmove", function (e) {
-				onDragMove(e);
-			});
-			
-			chart.addEventListener("dragend", function (e) {
-				onDragEnd(e);
-			});
-			/*
-			document.getElementById("download").addEventListener("click", function () {
-				download(chart);
-			});*/
-		}
-		
-		function onResize() {
-			var r = chart.getBoundingClientRect(),
-				width = r.width - MARGIN *2,
-				height = r.height - MARGIN *2 - DATE_AXIS_HEIGHT;
-		
-			//window resize 발생 했으나 chart 크기 변화는 없음
-			if (width === rect.width && height === rect.height) {
+				end = mills;
+			}
+			else {
 				return;
 			}
-			
-			rect = {
-				width: width,
-				height: height
-			};
-			
-			// resize시 start와 end는 변함 없지만 width의 변화로 인해 tpp는 다시 계산되어야 함.
-			tpp = (end - start) / width;
-			
-			drawGraph(selected, capacity);
-			
-			drawGrid();
-		}
-		
-		function invalidate() {
-			
-		}
-		
-		function onDragStart(e) {
-		}
-		
-		function onDragMove(e) {
-			if (!origin) {
-				return;
-			}
-			
-			var move = tpp * e.detail.moveX,
-				tmp,
-				redraw = false;
-			
-			if (document.body.classList.contains("start")) {
-				tmp = new Date(realStart).setMinutes(0, 0, 0);
-				
-				realStart -= move;
-				
-				start = new Date(realStart).setMinutes(0, 0, 0);
-				
-				if (start != tmp) {
-					redraw = true;
-				}
-			}
-			
-			if (document.body.classList.contains("end")) {
-				tmp = new Date(realEnd).setMinutes(0, 0, 0);
-				
-				realEnd -= move;
-				
-				end = new Date(realEnd).setMinutes(0, 0, 0);
-				
-				if (end != tmp) {
-					redraw = true;
-				}
-			}
-			
-			if (redraw) {
-				for (var index in data) {
-					data[index] = origin[index].buildData(start, end);
-				}
-				
-				tpp = (end - start) / rect.width;
-				
-				writeDateLabel(start, end);
-				
-				drawGraph(selected, capacity);
-			}
-		}
-		
-		function onDragEnd(e) {
-		}
-		
-		function download(svg){
-			var image = document.createElement("img"),
-				canvas = document.createElement("canvas"),
-				context = canvas.getContext("2d"),
-				fileName = "chart.png";
-			
-			canvas.width = rect.width;
-			canvas.height = rect.height;
-			console.log(rect);
-			image.onload = function () {
-				context.drawImage(image, 0, 0, rect.width,rect.height);
-				
-				if (canvas.msToBlob) {
-					var blob = canvas.msToBlob();
-					
-					navigator.msSaveBlob(blob, fileName);
-				}
-				else {
-					var a = document.createElement("a"),
-						event = document.createEvent("MouseEvent");
-					
-					a.setAttribute("download", fileName);
-					a.setAttribute("href", canvas.toDataURL("image/png;base64"));
-					
-					event.initEvent("click", true, true);
-					
-					a.dispatchEvent(event);
-				}
-			}
-			
-			image.src = "data:image/svg+xml," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
-		}
-		
-		window.initChartRect = function () {
-			var r = chart.getBoundingClientRect();
-			
-			rect = {
-				width: r.width - MARGIN *2,
-				height: r.height - MARGIN *2 - DATE_AXIS_HEIGHT
-			};
-			
-			drawGrid();
-		};
-		
-		window.buildData = function () {
-			return data;
-		};
-		
-		window.getCoordinates = function (date, index) {
-			return {
-				x: (date - start) / tpp,
-				y: origin[index].get(date)
-			}
-		};
-		
-		window.setClipRect = function (x, y, width, height) {
-/*			clip.setAttributeNS(null, "x", x);
-			clip.setAttributeNS(null, "y", y);
-			clip.setAttributeNS(null, "width", width);
-			clip.setAttributeNS(null, "height", height);*/
-		};
-		
-		window.getRect = function () {
-			return rect;
-		};
-		
-		// chart 초기화
-		window.initChart = function (o, s, c) {
-			var date = new Date();
-			
-			origin = o;
-			selected = s;
-			capacity = c;
-			
-			// data rebuild는 최초, 시간의 변경시 발생함
-			realStart = date.setHours(0, 0, 0, 0);
-			realEnd = date.setDate(date.getDate() +1);
-			
-			start = realStart;
-			end = realEnd;
 			
 			tpp = (end - start) / rect.width;
 			
-			data = {};
+			writeDateLabel(start, end);
 			
-			if (selected < 0) {
-				for (var index in origin) {
-					data[index] = origin[index].buildData(realStart, realEnd);
-				}
-			}
-			else {
-				data[selected] = origin[selected].buildData(realStart, realEnd);
-			}
+			drawSummaryGraph(origin, capacity);
 			
-			drawGraph(selected, capacity);
-			
-			writeDateLabel (realStart, realEnd);
-		};
-		
-		initialize();
-		
-	}) (window);
-
-	// axis
-	(function (window, undefined) {
-		var leftAxis = document.getElementById("axis_left"),
-			rightAxis = document.getElementById("axis_right"),
-			dateAxis = document.getElementById("axis_date"),
-			leftAxisOffset = leftAxis.transform.baseVal.getItem(0),
-			rightAxisOffset = rightAxis.transform.baseVal.getItem(0),
-			dateAxisOffset = dateAxis.transform.baseVal.getItem(0),
-			startDate = document.getElementById("start_date"),
-			endDate = document.getElementById("end_date"),
-			labelOffset = document.getElementById("end_label").transform.baseVal.getItem(0),
-			data,
-			startFixed = false,
-			endFixed = false;
-		
-		function initialize() {
-			document.getElementById("start_move").onclick = function () {
-				document.body.classList.remove("start");
-			};
-			
-			document.getElementById("end_move").onclick = function () {
-				document.body.classList.remove("end");
-			};
-			
-			document.getElementById("start_fixed").onclick = function () {
-				document.body.classList.add("start");
-			};
-			
-			document.getElementById("end_fixed").onclick = function () {
-				document.body.classList.add("end");
-			};
+			calendar.className = "";
+		});
+	}
+	
+	function onResize() {
+		var r = chart.getBoundingClientRect(),
+			width = r.width - MARGIN *2,
+			height = r.height - MARGIN *2 - DATE_AXIS_HEIGHT;
+	
+		//window resize 발생 했으나 chart 크기 변화는 없음
+		if (width === rect.width && height === rect.height) {
+			return;
 		}
 		
-		window.setDateAxis = function (width, height) {
-			dateAxisOffset.setTranslate(0, height);
-			labelOffset.setTranslate(width, 0);
+		rect = {
+			width: width,
+			height: height
 		};
 		
-		window.writeDateLabel = function (start, end) {
-			startDate.textContent = ITAhM.util.toDateFormatString(new Date(start));
-			endDate.textContent = ITAhM.util.toDateFormatString(new Date(end));
-		};
+		// resize시 start와 end는 변함 없지만 width의 변화로 인해 tpp는 다시 계산되어야 함.
+		tpp = (end - start) / width;
 		
-		window.drawAxis = function (high, low, capacity) {
-			clear(leftAxis);
-			clear(rightAxis);
+		writeDateLabel(start, end);
+		
+		drawGrid();
+		
+		drawSummaryGraph(origin, capacity);
+	}
+	
+	function invalidate() {
+		
+	}
+	
+	function onDragStart(e) {
+		moved = 0;
+	}
+	
+	function onDragMove(e) {
+		var drag = tpp * e.detail.dragX,
+			move = Math.abs(moved - drag),
+			direction = moved > drag? -1: 1,
+			restoreStart = start, restoreEnd = end;
+		
+		if (move < 3600000) {
+			return;
+		}
+		
+		move = new Date(move).setMinutes(0, 0, 0) * direction;
+		
+		if (fixStart.checked) {
+			start -= move;
+		}
+		
+		if (fixEnd.checked) {
+			end -= move;
+		}
+		
+		if (end - start === 3600000) {
+			start = restoreStart;
+			end = restoreEnd;
 			
-			var	rect = getRect(),
-				count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
-				grow = (high - low) / count,
-				space = rect.height / count,
-				valueArray = [];
+			return;
+		}
+		
+		moved += move;
+		
+		tpp = (end - start) / rect.width;
+		
+		writeDateLabel(start, end);
+		
+		drawSummaryGraph(origin, capacity, true);
+	}
+	
+	window.buildData = function (source) {
+		var data = {},
+			tmp;
+	
+		for (var index in source) {
+			tmp = source[index].buildData(start, end);
+			
+			if (!tmp) {
+				return;
+			}
+			
+			data[index] = tmp;
+		}
+		
+		return data;
+	};
+	
+	window.drawDetailGraph = function () {
+		if (tpp < 60000) {
+			parent.drawDetailGraph(start, end);
+		}
+	};
+	
+	window.getCoordinates = function (source, date, index) {
+		var y = source[index].get(date);
+		
+		return {
+			x: (date - start) / tpp,
+			// summary data 이면 mode 값(max, avg, min) detail data 이면 값 자신
+			y: isNaN(y)? y[mode]: y
+		}
+	};
+	
+	window.getRect = function () {
+		return rect;
+	};
+	
+	// chart 초기화
+	window.initChart = function (o, m, c, f) {
+		var date = new Date(),
+			tmp;
+		
+		if (!initialized) {
+			initialize();
+		}
+		
+		origin = o;
+		mode = m;
+		capacity = c;
+		window.valueToString = f;
+		
+		// data rebuild는 최초, 시간의 변경시 발생함
+		start = date.setHours(0, 0, 0, 0);
+		end = date.setDate(date.getDate() +1);
+		
+		tpp = (end - start) / rect.width;
+		
+		drawGrid();
+		
+		writeDateLabel(start, end);
+		
+		drawSummaryGraph(origin, capacity);
+	};
+	
+	window.mode = function (m) {
+		mode = m;
+		
+		drawSummaryGraph(origin, capacity);
+	};
+	/*
+	window.initialize = function () {
+		var r = chart.getBoundingClientRect();
+		
+		rect = {
+			width: r.width - MARGIN *2,
+			height: r.height - MARGIN *2 - DATE_AXIS_HEIGHT
+		};
+		
+		drawGrid();
+		
+		initialize();
+	};
+	*/
+}) (window);
+
+// axis
+(function (window, undefined) {
+	var leftAxis = document.getElementById("axis_left"),
+		rightAxis = document.getElementById("axis_right"),
+		dateAxis = document.getElementById("axis_date"),
+		leftAxisOffset = leftAxis.transform.baseVal.getItem(0),
+		rightAxisOffset = rightAxis.transform.baseVal.getItem(0),
+		dateAxisOffset = dateAxis.transform.baseVal.getItem(0),
+		dateText = document.getElementById("date_text"),
+		data;
+	
+	function initialize() {
+	}
+	
+	window.setDateAxis = function (width, height) {
+		dateAxisOffset.setTranslate(0, height);
+	};
+	
+	window.writeDateLabel = function (start, end) {
+		var width = getRect().width,
+			space = width,
+			tpp = (end - start) / width,
+			text;
+		
+		clear(dateText);
+		
+		while (space > MIN_AXIS_HSPACE) {
+			space /= 2;
+		}
+		
+		for (var x=0, x; x<=width; x += space ) {
+			text = createSvgTextSpan(x, 0, "▲"+ ITAhM.util.toDateFormatString(new Date(start + x * tpp)));
+			
+			dateText.appendChild(text);
+		}
+	};
+	
+	window.clearAxis = function (high, low, capacity) {
+		clear(leftAxis);
+		clear(rightAxis);
+	};
+	
+	window.drawAxis = function (high, low, capacity) {
+		var	rect = getRect(),
+			count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
+			grow = (high - low) / count,
+			space = rect.height / count,
+			valueArray = [];
+		
+		for (var i=0; i<=count; i++) {
+			leftAxis.appendChild(createSvgText(0, space * i, valueToString(high - i * grow)));
+		}
+		
+		rect.left = leftAxis.getBBox().width;
+		leftAxisOffset.setTranslate(rect.left, 0);
+		
+		if (capacity) {
+			high = high / capacity *100;
+			low = low / capacity *100;
+			grow = (high - low) / count;
 			
 			for (var i=0; i<=count; i++) {
-				leftAxis.appendChild(createText(0, space * i, valueToString(high - i * grow)));
+				rightAxis.appendChild(createSvgText(0, space * i, (high - i * grow).toFixed(2) +"%"));
 			}
 			
-			rect.left = leftAxis.getBBox().width;
-			leftAxisOffset.setTranslate(rect.left, 0);
-			
-			if (capacity) {
-				high = high / capacity *100;
-				low = low / capacity *100;
-				grow = (high - low) / count;
-				
-				for (var i=0; i<=count; i++) {
-					rightAxis.appendChild(createText(0, space * i, (high - i * grow).toFixed(2) +"%"));
-				}
-				
-				rect.right = rightAxis.getBBox().width;
-				rightAxisOffset.setTranslate(rect.width - rect.right, 0);
-			}
-			
-			setClipRect(rect.left + PADDING, 0, rect.width - rect.right - PADDING *2, rect.height);
-		};
-		
-		initialize();
-		
-	}) (window);
+			rect.right = rightAxis.getBBox().width;
+			rightAxisOffset.setTranslate(rect.width - rect.right, 0);
+		}
+	};
 	
-	//graph
-	(function (window, undefined) {
-		var graph = document.getElementById("graph"),
-			offset = graph.transform.baseVal.getItem(0),
-			scale = graph.transform.baseVal.getItem(1),
-			rect;
+	initialize();
+	
+}) (window);
+	
+//graph
+(function (window, undefined) {
+	var graph = document.getElementById("graph"),
+		offset = graph.transform.baseVal.getItem(0),
+		scale = graph.transform.baseVal.getItem(1),
+		high, low,
+		rect;
+	
+	function draw(origin, capacity) {
+		var data = buildData(origin),
+			max = [], min = [];
+
+		clearAxis();
 		
-		function drawGraph(blocks, index, high, low, single) {
-			var path = new Path(graph),
-				unit = rect.height / (high - low),
-				x, y, lastX,
-				dateArray, date, coords;
+		if (!data) {
+			return;
+		}
+		
+		for (var index in data) {
+			max[max.length] = data[index].high;
+			min[min.length] = data[index].low;
+		}
+		
+		high = Math.max.apply(undefined, max);
+		low = Math.min.apply(undefined, min);
+		
+		for (var index in data) {
+			drawEachGraph(origin, data[index].keys, index);
+		}
+		
+		drawAxis(high, low, capacity);
+		
+		return true;
+	}
+	
+	function drawEachGraph(source, blocks, index) {
+		var path,
+			unit = rect.height / (high - low),
+			x, lastX, value,
+			dateArray, date, coords,
+			result = {};
+		
+		path = new ITAhM.Path(graph);
+		
+		path.beginPath();
+		path.set("class", isNaN(index)? index: index % 10);
+		var tmp;
+		for (var i=0, _i=blocks.length; i<_i; i++) {
+			dateArray = blocks[i];
 			
-			path.beginPath();
+			date = dateArray[0];
 			
-			for (var i=0, numberOfBlock=blocks.length; i<numberOfBlock; i++) {
-				dateArray = blocks[i];
-				
-				date = dateArray[0];
-				
-				coords = getCoordinates(date, index);
-				
-				if (lastX && coords.x - lastX < 1) {
-					continue;
-				}
-				
-				lastX = coords.x;
-				
-				path.moveTo(lastX, (coords.y.max - low) * unit);
-				
-				for (var j=1,numberOfDate=dateArray.length; j<numberOfDate; j++) {
-					date = dateArray[j];
-					
-					coords = getCoordinates(date, index);
-					
-					path.lineTo(lastX, (coords.y.max -low) * unit);
-				}
+			coords = getCoordinates(source, date, index);
+			
+			value = coords.y;
+			
+			result[date] = value;
+			
+			tmp = (value - low) * unit;
+			if (isNaN(tmp)) {
+				throw "!"
 			}
 			
+			path.moveTo(lastX = coords.x, (value - low) * unit);
+			
+			for (var j=1,_j=dateArray.length; j<_j; j++) {
+				date = dateArray[j];
+				
+				coords = getCoordinates(source, date, index);
+				
+				x = coords.x;
+				value = coords.y;
+				
+				result[date] = value;
+				
+				if (x - lastX < 1) {
+					//continue;
+				}
+				
+				tmp = (value - low) * unit;
+				if (isNaN(tmp)) {
+					throw "!"
+				}
+				
+				path.lineTo(lastX = x, (value - low) * unit);					
+			}
+
 			path.draw();
 		}
 		
-		function drawMultiGraph(data, capacity) {
-			var high = [],
-				low = [];
-			
-			for (var index in data) {
-				high[high.length] = data[index].high;
-				low[low.length] = data[index].low;
-			}
-			
-			high = Math.max.apply(undefined, high);
-			low = Math.min.apply(undefined, low);
-			
-			for (var index in data) {
-				if (!data[index]) {
-					throw "";
-				}
-				
-				drawGraph(data[index].keys, index, high, low);
-			}
-			
-			drawAxis(high, low, capacity);
-		}
-		
-		function drawSingleGraph(data, index, capacity) {
-			if (!data) {
-				throw "";
-			}
-			
-			var pathMax, pathAvg, pathMin,
-				blocks = data.keys,
-				high = data.high,
-				low = data.low,
-				unit = rect.height / (high - low),
-				x, y,
-				lastX,
-				dateArray, date, coords;
-			
-			pathMax = new Path(graph);
-			pathMax.set("class", "max");
-			pathMax.beginPath();
-			
-			pathAvg = new Path(graph);
-			//pathAvg.set("class", "avg");
-			pathAvg.beginPath();
-			
-			pathMin = new Path(graph);
-			pathMin.set("class", "min");
-			pathMin.beginPath();
-			
-			for (var i=0, numberOfBlock=blocks.length; i<numberOfBlock; i++) {
-				dateArray = blocks[i];
-				
-				date = dateArray[0];
-				
-				coords = getCoordinates(date, index);
-				
-				if (lastX && coords.x - lastX < 1) {
-					continue;
-				}
-				
-				lastX = coords.x;
-				
-				pathMax.moveTo(lastX, 0);
-				pathMax.lineTo(lastX, (coords.y.max - low) * unit);
-				
-				pathAvg.moveTo(lastX, (coords.y.avg - low) * unit);
-				
-				pathMin.moveTo(lastX, 0);
-				pathMin.lineTo(lastX, (coords.y.min - low) * unit);
-				
-				for (var j=1,numberOfDate=dateArray.length; j<numberOfDate; j++) {
-					date = dateArray[j];
-					
-					coords = getCoordinates(date, index);
-					
-					pathMax.lineTo(lastX, (coords.y.max - low) * unit);
-					pathAvg.lineTo(lastX, (coords.y.avg -low) * unit);
-					pathMin.lineTo(lastX, (coords.y.min - low) * unit);
-					
-				}
-				
-				pathMax.lineTo(lastX, 0);
-				pathMax.closePath();
-				pathMax.draw();
-				
-				pathAvg.draw();
-				
-				pathMin.lineTo(lastX, 0);
-				pathMin.closePath();
-				pathMin.draw();
-			}
-			
-			drawAxis(data.high, data.low, capacity);
-		}
-		
-		window.drawGraph = function (selected, capacity) {
-			var data = buildData();
-			
-			clear(graph);
-			
-			rect = getRect();
-			
-			graph.setAttributeNS(null, "width", rect.width);
-			graph.setAttributeNS(null, "height", rect.height);
-			
-			offset.setTranslate(0, rect.height);
-			scale.setScale(1, -1);
-			
-			if (selected < 0) {
-				drawMultiGraph(data, capacity);
-			}
-			else {
-				drawSingleGraph(data[selected], selected, capacity);
-			}
-		};
-		
-	}) (window);
-	
-	//grid
-	(function (window, undefined) {
-		
-		var grid, translate;
-		
-		function initialize() {
-			grid = document.getElementById("grid");
-			offset = grid.transform.baseVal.getItem(0);
-		}
-		
-		window.drawGrid = function (count, space) {
-			var rect = getRect(),
-				count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
-				space = rect.height / count,
-				path;
-			
-			clear(grid);
-			
-			path = new Path(grid);
-			//offset.setTranslate(rect.left, 0);
-			
-			for (var i=0, y; i<=count; i++) {
-				y = i * space -.5;
-				
-				path.moveTo(0, y).lineTo(rect.width, y);
-			}
-			
-			path.draw();
-			
-			setDateAxis(rect.width, rect.height);
-		};
-		
-		initialize();
-		
-	}) (window);
-	
-}) (window);
+		return result;
+	}
 
-//Path object
-(function (window, undefined) {
+	window.updateChart = function (detail) {
+		var data = buildData(detail),
+			result = {};
+		
+		if (!data) {
+			return;
+		}
+		
+		clear(graph);
+		
+		for (var index in data) {
+			result[index] = drawEachGraph(detail, data[index].keys, index);
+		}
+		
+		return result;
+	}
 	
-	Path.prototype = {
-		initialize: function (container) {
-			this.container = container;
-			this.path = document.createElementNS(svgNS, "path");
-			
-			container.appendChild(this.path);
-			
-			this.beginPath();
-		},
+	window.isEmptyGraph = function () {
+		return !graph.firstChild;
+	};
+	
+	window.drawSummaryGraph = function (origin, capacity, summaryOnly) {
+		clear(graph);
 		
-		moveTo: function (x, y) {
-			this.distance[this.distance.length] = "M"+ x +" "+ y;
-			
-			return this;
-		},
+		rect = getRect();
 		
-		lineTo: function (x, y) {
-			this.distance[this.distance.length] = "L"+ x +" "+ y;
-			
-			return this;
-		},
+		offset.setTranslate(0, rect.height);
 		
-		draw: function () {
-			this.path.setAttributeNS(null, "d", this.distance.join(" "));
-		},
+		scale.setScale(1, -1);
 		
-		set: function (key, value) {
-			this.path.setAttributeNS(null, key, value);
-		},
+		draw(origin, capacity);
 		
-		beginPath: function () {
-			this.distance = [];
-		},
-		
-		closePath: function () {
-			this.distance[this.distance.length] = "Z"
+		if (!summaryOnly) {
+			drawDetailGraph();
 		}
 	};
 	
 }) (window);
-
-//ChartData object
+	
+//grid
 (function (window, undefined) {
 	
-	ChartData.prototype = {
-		initialize: function (data) {
-			this.data = data;
-		},
+	var grid, translate;
+	
+	function initialize() {
+		grid = document.getElementById("grid");
+		offset = grid.transform.baseVal.getItem(0);
+	}
+	
+	window.drawGrid = function (count, space) {
+		var rect = getRect(),
+			count = Math.min(MAX_AXIS_VAL_CNT, Math.round(rect.height / MIN_AXIS_VSPACE)),
+			space = rect.height / count,
+			path;
 		
-		next: function (date) {
-			return date.setMinutes(date.getMinutes() +1, 0, 0);
-		},
+		clear(grid);
 		
-		buildData: function (start, end, unit) {
-			var keys = [],
-				tmp = [],
-				date = new Date(start),
-				value, high, low;
+		path = new ITAhM.Path(grid);
+		//offset.setTranslate(rect.left, 0);
+		
+		for (var i=0, y; i<=count; i++) {
+			y = i * space -.5;
 			
-			date.setSeconds(0, 0);
-			
-			do {
-				value = this.data[mills];
-				
-				if (value) {
-					tmp[tmp.length] = mills;
-					
-					high = Math.max(value, high || value);
-					low = Math.min(value, low || value);
-				}
-				else if (tmp.length > 0) {
-					data[data.length] = tmp;
-					
-					tmp = [];
-				}
-			} while (this.next(date) <= end);
-			
-			if (tmp.length > 0) {
-				data[data.length] = tmp;
-			}
-			
-			return keys.length > 0? {
-				high: high,
-				low: low,
-				keys: keys
-			}: undefined;
+			path.moveTo(0, y).lineTo(rect.width, y);
 		}
 		
+		path.draw();
+		
+		setDateAxis(rect.width, rect.height);
 	};
 	
-}) (window);
-
-(function (window, undefined) {
-	
-	ChartSummaryData.prototype = {
-		initialize: function (data) {
-			this.data = data;
-		},
-		
-		next: function (date) {
-			return date.setHours(date.getHours() +1, 0, 0, 0);
-		},
-		
-		buildData: function (start, end) {
-			var keys = [],
-				tmp = [],
-				date = new Date(start),
-				mills, value, high, low;
-			
-			mills = date.setMinutes(0, 0, 0);
-			
-			do {
-				value = this.data[mills];
-				
-				if (value) {
-					tmp[tmp.length] = mills;
-					
-					high = Math.max(value.max, high || value.max);
-					low = Math.min(value.min, low || value.min);
-				}
-				else if (tmp.length > 0) {
-					keys[keys.length] = tmp;
-					
-					tmp = [];
-				}
-			}
-			while ((mills = this.next(date)) <= end);
-			
-			if (tmp.length > 0) {
-				keys[keys.length] = tmp;
-			}
-			
-			if (high === low) {
-				high++;
-				low--;
-			}
-			
-			return keys.length > 0? {
-				high: high,
-				low: low,
-				keys: keys
-			}: undefined;
-		},
-		
-		get: function (date) {
-			return this.data[date];
-		}
-	};
+	initialize();
 	
 }) (window);
-
-(function (window, undefined) {}) (window);
 
 		</script>
 	

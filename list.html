@@ -4,118 +4,391 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Script-Type" content="text/javascript">
 		<meta http-equiv="Content-Style-Type" content="text/css">
-		<title>ITAhM::list</title>
+		<title></title>
 		
 		<style>
-body {
+body, header, li, input {
 	font-family: tahoma, arial, "맑은 고딕";
-}
-
-header {
-	position: fixed; top: 0; right: 0; left: 0;
-	height: 35px;
-}
-
-section {
-	position: fixed; top: 35px; right: 0; bottom: 0; left: 0;
-}
-
-iframe {
-	border: 0;
-	width: 100%;
-	height: 100%;
-}
-
-a {
-	font-size: 15px;
-}
-
-a:link,
-a:visited,
-a:active {
-	text-decoration: none;
-	color: #555;
+	margin: 0;
+	padding: 0; 
 }
 
 nav {
-	height: 35px;
-	background-color: #ddd;
-}
-
-ul {
-	margin: 0;
-	padding: 5px 0 0 10px;
-	height: 35px;
+	position: fixed; top: 0; right: 0; left: 0;
+	padding: 5px;
 	box-sizing: border-box;
+	height: 39px;
+	border-bottom: 1px;
+}
+
+.table {
+	position: fixed; top: 40px; right: 0; left: 0; bottom: 0;
+}
+
+li,
+input {
+	font-size: 12px;
+}
+
+.table {
+	position: absolute; top: 40px; right: 0; bottom: 0; left: 0;
+}
+
+.table ul {
+	margin: 0;
+	padding: 3px 0;
 	list-style: none;
-	vertical-align: bottom;
+	display: flex;
 }
 
-li {
-	display: inline-block;
-	width: 80px;
-	height: 30px;
-	line-height: 30px;
+.table li {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.table li:first-child {
+	flex: none;
+	width: 20px;
+}
+
+.thead {
+	position: absolute; top: 0; right: 0; left: 0;
+	height: 26px;
+	box-sizing: border-box;
+	background-color: #0084ff;
+	color: #ddf;
+	padding: 2px;
+}
+
+.thead li {
+	font-weight: bold;
 	text-align: center;
-	background-color: #ddd;
-	border-radius: 5px 5px 0 0;
 }
 
-ul.device .device,
-ul.line .line {
-	background-color: #fff;
+.thead li:not(:first-child) {
+	border-left: 1px solid #0af;
 }
+
+.thead li:last-child {
+	flex: none;
+	/* browser scrollbar의 너비에 따라 달라져야함*/ 
+	width: 17px;
+}
+
+
+.tbody {
+	position: absolute; top: 26px; right: 0; bottom: 0; left: 0;
+	background-color: #fff;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.tbody ul {
+	cursor: pointer;
+	position: relative;
+}
+
+.tbody ul:hover li:nth-child(2) {
+	text-decoration: underline;
+	color: #0084ff;
+}
+
+.tbody ul:nth-child(odd) {
+	background-color: #fafafa;
+}
+
+.tbody li {
+	padding: 3px;
+}
+
+#form {
+	display: flex;
+	justify-content: space-between;
+}
+
+input[name="keyword"] {
+	flex: .9;
+}
+
+input[type=button],
+input[type=submit],
+input[type=text],
+select {
+	padding: .5em;
+}
+
+nav form {
+	white-space: nowrap;
+}
+
+.hidden {
+	display: none;
+}
+
 		</style>
 		
 	</head>
 	
 	<body>
-		<header>
+	
+		<nav>
+			<form id="form">
+				<select name="label"></select>
+				<input type="text" name="keyword">
+				<input type="submit" value="search">
+			</form>
+		</nav>
 		
-			<nav>
-				<ul id="tab" class="device">
-					<li class="device"><a href="list/device.html" id="device" target="list">device</a>
-					<li class="line"><a href="list/line.html" id="line" target="list">line</a>
-					<!--li><a href="list/address.html" target="list">address</a-->
+		<div class="table">
+			<div class="thead" id="htead">
+				<ul>
+					<li>
+					<li>name
+					<li>type
+					<li>ip address
+					<li>
 				</ul>
-			</nav>
+			</div>
+			<div class="tbody" id="tbody"></div>
+		</div>
 		
-		</header>
-		
-		<section>
-		
-			<iframe name="list" id="frame" src="list/device.html"></iframe>
-		
-		</section>
+		<script src="js/ITAhM.js"></script>
 		
 		<script>
-
-var elements = {
-		frame: document.getElementById("frame"),
-		tab: document.getElementById("tab")
-	};
-	
-(function (window, top) {
-
-	elements.tab.addEventListener("click", onTab, false);
-	
-	function onTab(e) {
-		var a = e.target;
 		
-		if (a.href) {
-			this.className = a.id;
-		}
+/**
+ * list
+ */
+(function (window, undefined) {
+	var hover = document.querySelector(".hover"),
+		table = document.getElementById("tbody"),
+		specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0",
+		rowMap = {};
+	
+	/**
+	 * private method
+	 */
+	function setDeviceList() {
+		var fragment = document.createDocumentFragment(),
+			labels = {},
+			row, device, checkbox, label;
+		
+		top.forEachDevice(function (device) {
+			row = document.createElement("ul");
+			
+			checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.onclick = onStopPropagation;
+			
+			row.appendChild(document.createElement("li")).appendChild(checkbox);
+			row.appendChild(document.createElement("li")).textContent = device.name;
+			row.appendChild(document.createElement("li")).textContent = device.type;
+			row.appendChild(document.createElement("li")).textContent = device.ip;
+			
+			row.onclick = onSelectDevice.bind(undefined, device.id);
+			
+			rowMap[device.id] = row;
+			
+			if (device.label) {
+				label = device.label.split(",");
+				
+				for (var i=0, length=label.length; i<length; i++) {
+					row.classList.add(label[i]);
+					
+					labels[label[i]] = null;
+				}
+			}
+			else {
+				row.classList.add("unlabeled");
+				
+				labels["unlabeled"] = null;
+			}
+			
+			fragment.appendChild(row);
+		});
+		
+		table.appendChild(fragment);
+		
+		initLabels(Object.keys(labels));
+	}
+	
+	/**
+	 * callback method
+	 */
+	function onSelectDevice(id) {
+		top.centerDevice(id);
+	}
+	
+	function onStopPropagation(e) {
+		e.stopPropagation();
 	}
 	
 	/**
 	 * public method
 	 */
-	window.reload = function (src) {
-		elements.frame.src = src;
+	window.initialize = function () {
+		setDeviceList();
+	};
+		
+	window.getRowsByLabel = function (labelName) {
+		var fragment = document.createDocumentFragment();
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (labelName) {
+			array = label[labelName];
+			
+			fragment = document.createDocumentFragment();
+			
+			if (array) {
+				for (var i=0, length=array.length; i<length; i++) {
+					fragment.appendChild(array[i]);
+				}
+			}
+		}
+		
+		return fragment;
+	};
+
+	window.clearDeviceList = function () {
+		var fragment = document.createDocumentFragment(),
+			row;
+		
+		while (row = table.firstChild) {
+			fragment.appendChild(row);
+		}
+		
+		return fragment;
 	};
 	
-})(window, top);
+	window.filterDeviceList = function (keyword) {
+		var row = clearDeviceList().firstChild,
+			next, cols,
+			fragment = document.createDocumentFragment(),
+			device;
+		
+		while (row) {
+			next = row.nextSibling;
+			
+			cols = row.children;
+			
+			for (var i=1, length=cols.length; i<length; i++) {
+				if (cols[i].textContent.indexOf(keyword) !== -1) {
+					fragment.appendChild(row);
+					
+					break;
+				}
+			}
+			
+			row = next;
+		}
+		
+		table.appendChild(fragment);
+	};
 	
+	window.selectLabel = function (label) {
+		var fragment = document.createDocumentFragment(),
+			rows;
+		
+		for (var id in rowMap) {
+			fragment.appendChild(rowMap[id]);
+		}
+		
+		if (label) {
+			rows = [].slice.call(fragment.querySelectorAll("."+ label), 0);
+			
+			fragment = document.createDocumentFragment();
+			
+			for (var i=0, length=rows.length; i<length; i++) {
+				fragment.appendChild(rows[i]);
+			}
+		}
+		
+		table.appendChild(fragment);
+	};
+	
+	window.resetDeviceList = function () {
+		var row;
+		
+		while(row = table.firstChild) {
+			table.removeChild(row);
+		}
+		
+		setDeviceList();
+		
+		if (getSelectedDevice()) {
+			showView("/view/chart.html");
+		}
+	};
+	
+})(window);
+
+/**
+ * control
+ */
+(function (window, undefined) {
+	var form = document.getElementById("form");
+	
+	/**
+	 * private method
+	 */
+	function initialize() {
+		form.elements.label.addEventListener("change", onChangeLabel, false);
+		form.addEventListener("submit", onSearch, false);
+	}
+	
+	/**
+	 * callback method
+	 */
+	function onSearch(e) {
+		e.preventDefault();
+		
+		// search 결과를 초기화 하기 위해
+		selectLabel(form.elements.label.value);
+
+		filterDeviceList(form.elements.keyword.value);
+	}
+	
+	function onChangeLabel(e) {
+		form.elements.keyword.value = "";
+		
+		selectLabel(form.elements.label.value);
+	}
+	
+	/*
+	 * public method
+	 */
+	window.initLabels = function (labels) {
+		var select = form.elements.label,
+			option = document.createElement("option");
+	
+		// label select 초기화
+		select.length = 0;
+		
+		option.value = "";
+		option.text = "all labels";
+		option.selected = true;
+		
+		select.add(option);
+		
+		for (var i=0, length=labels.length; i<length; i++) {
+			option = document.createElement("option");
+			
+			option.text = labels[i];
+			
+			select.add(option);
+		}
+	};
+	
+	initialize();
+})(window);
+
+initialize();
+
 		</script>
 	
 	</body>

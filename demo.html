@@ -4,16 +4,14 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Script-Type" content="text/javascript">
 		<meta http-equiv="Content-Style-Type" content="text/css">
-		<title>ITAhM(connecting...)</title>
+		<title>ITAhM</title>
 		
 		<style>
-body, header, li, input, button {
+body, header, li, input, button, legend {
 	font-family: tahoma, arial, "맑은 고딕";
-	margin: 0;
-	padding: 0; 
 }
 
-li, input, button {
+li, input, button, legend {
 	font-size: 14px;
 }
 
@@ -24,6 +22,29 @@ header {
 	color: #fff;
 }
 
+header ul {
+	list-style: none;
+	display: flex;
+}
+
+header li {
+	margin: 0 16px;
+}
+
+header a,
+header a:visited,
+header a:link,
+header a:active,
+header a:hover {
+	color: #fff;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+header a:hover {
+	text-decoration: underline;
+}
+
 nav {
 	height: 100px;
 	display: flex;
@@ -31,18 +52,20 @@ nav {
 	align-items: flex-end;
 }
 
-section {
+div.body {
 	position: fixed; top: 100px; right: 0; bottom: 0; left: 0;
+	overflow: auto;
 }
 
-.centered>div {
-	border: 3px solid rgba(0, 132, 255, .2);
-	padding: 30px;
+#dialog {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	width: 100%;
+	height: 100%;
 }
 
-.box {
+.fixed_width {
 	margin: auto;
-	width: 1000px;
+	width: 800px;
 	padding: 10px;
 	box-sizing: border-box;
 }
@@ -76,29 +99,111 @@ input[name="password"] {
 	padding-left: 36px;
 }
 
+ul.inline {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+}
+
 #agent {
 	margin: 1em;
 }
 
 #loading {
-	top: 0;
-	background: #fff url("img/waiting.gif") no-repeat center;
-	opacity: .8;
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	background: rgba(255, 255, 255, .8) url("img/waiting.gif") no-repeat center;
 }
 
-#start {
+#popup {
+	position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+	background-color: rgba(255, 255, 255, .8);
+}
+
+#popup div {
+	background-color: #ccc;
+	margin: 0 auto;
+	width: 800px;
+	height: 100%;
+	position: relative;
+}
+
+#document {
+	position: absolute; top: 20px; right: 0; bottom: 0; left: 0;
+	width: 100%; height: 100%;
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+#popup img {
+	position: absolute; top: 2px; right: 2px;
+	cursor: pointer;
+}
+
+fieldset {
+	border: none;
+	padding: 20px;
+	border-top: 2px solid #0084ff;
+	position: relative;
+}
+
+legend {
+	padding: .5em;
+	background-color: #0084ff;
+	color: #fff;
 	font-weight: bold;
-	font-size: 18px;
-	margin: 10px 0;
-	padding: 5px 10px;
+	border-radius: 5px;
+	width: 100px;
+}
+
+fieldset img {
+	position: absolute; top: 0; right: 0;
+	cursor: pointer;
+}
+/*
+iframe[src="about:blank"] {
+	display: none;
+}
+*/
+.list,
+.list2 {
+	margin: 0;
+}
+
+.list2 {
+	list-style: none;
+	padding: 0;
+}
+
+.list li,
+.list2 li {
+	padding: 3px;
+}
+
+.list li:hover,
+.list2 ul>li:hover {
+	color: #0084ff;
+	cursor: pointer;
+}
+
+#type_list {
+	max-height: 200px;
+	overflow: auto;
+}
+
+.center {
+	text-align: center;
 }
 
 body:not(.connected) #signin,
 body:not(.connected) .agent,
-body:not(.authorized) #start, 
+body:not(.authorized) .authorized, 
 body.connected #connect,
 body.authorized #signin,
-body:not(.loading) #loading {
+body:not(.loading) #loading,
+body:not(.popup) #popup,
+body:not(.dialog) #dialog {
 	display: none;
 }
 
@@ -106,42 +211,82 @@ body:not(.loading) #loading {
 		
 	</head>
 	
-	<body class="">
+	<body>
 		
 		<header>
-			<nav class="box">
+			<nav class="fixed_width">
 				<ul>
-					<li><a></a></li>
+					<li class="authorized"><a id="start">ITAhM</a>
+					<li><a id="help">help</a>
+					<li><a href="https://dl.dropbox.com/s/jkeew8p10xocjq0/ITAhM.1.0.2.2.jar" download="ITAhM.1.0.2.2.jar">download</a>
+					<li class="authorized"><a id="shutdown" title="shutdown agent service">shutdown</a>
 				</ul>
 			</nav>
 		</header>
 		
-		<section class="box">
-			<h3>Infrastructure Topology Administration Module</h3>
-			<form id="connect">
-				<div>
-					<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address" required>
-					<input type="text" name="tcp" value="2014" placeholder="tcp port"  required>
-					<input type="submit" value="connect">
-				</div>
-			</form>
-			
-			<h2 class="agent"><span id="agent"></span><button id="disconnect">disconnect</button></h2>
-			
-			<form id="signin">
-				<input type="text" name="username" value="root" placeholder="username">
-				<input type="password" name="password" value="root" placeholder="password">
-				<input type="submit" value="sign in">
-			</form>
-			
-			<button id="start">go ITAhM</button>
-		</section>
+		<div class="body">
+			<section class="fixed_width">
+				<h2>Infrastructure Topology Administration Module</h2>
+				<form id="connect">
+					<div>
+						<input type="text" name="ip" value="127.0.0.1" placeholder="agent ip address" required>
+						<input type="text" name="tcp" value="2014" placeholder="tcp port"  required>
+						<input type="submit" value="connect">
+					</div>
+				</form>
+				
+				<h3 class="agent"><span id="agent"></span><button id="disconnect">disconnect</button></h3>
+				
+				<form id="signin">
+					<input type="text" name="username" value="root" placeholder="username">
+					<input type="password" name="password" value="root" placeholder="password">
+					<input type="submit" value="sign in">
+				</form>
+				
+				<fieldset class="authorized">
+					<legend>device</legend>
+					<img src="img/synchronize.png" width="16px" height="16px" title="synchronize device data" id="device_sync">
+					<ul class="inline">
+						<li>number of devices : </li>
+						<li id="num_device"></li>
+					</ul>
+				</fieldset>
+				
+				<fieldset class="authorized">
+					<legend>user account</legend>
+					<img src="img/synchronize.png" title="synchronize user account data" id="account_sync">
+					<ul id="account_list" class="list"></ul>
+				</fieldset>
+				
+				<fieldset class="authorized">
+					<legend>snmp profile</legend>
+					<img src="img/synchronize.png" title="synchronize snmp profile data" id="profile_sync">
+					<ul id="profile_list" class="list"></ul>
+				</fieldset>
+				
+				<fieldset class="authorized">
+					<legend>icon</legend>
+					<img src="img/synchronize.png" title="synchronize custom icon data" id="icon_sync">
+					<ul id="type_list" class="list2"></ul>
+				</fieldset>
+				
+			</section>
+		</div>
+		
+		<iframe id="dialog"></iframe>
 		
 		<section id="loading"></section>
 		
+		<section id="popup">
+			<div>
+				<img id="close_popup" src="img/close.png" title="close">
+				<iframe id="document" src="about:blank"></iframe>
+			</div>
+		</section>
+		
 		<script src="js/ITAhM.js"></script>
+		<script src="js/object.js"></script>
 		<script src="js/icon.js"></script>
-		<!--script src="js/Communicator.js"></script-->
 		<script src="js/Communicator_demo.js"></script>
 		<script src="demo/responseTime.js"></script>
 		<script src="demo/device.js"></script>
@@ -150,13 +295,57 @@ body:not(.loading) #loading {
 
 var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 
-// 공통 
+// common
+(function (window, undefined){
+
+	var doc = document.getElementById("document"),
+		mapData = {
+			ratio: 1
+		};
+	
+	function initialize() {
+		document.getElementById("shutdown").onclick = shutDown;
+		
+		document.getElementById("help").onclick = function () {
+			document.body.classList.add("popup");
+			
+			doc.src="help.html";
+		};
+		
+		document.getElementById("close_popup").onclick = function () {
+			document.body.classList.remove("popup");
+			
+			doc.src="about:black";
+		};
+	}
+	
+	function shutDown() {
+		if (confirm("are you sure you want shutdown agent?")) {
+			sendRequest({
+				command: "shutdown"
+			}, function (data, status) {
+				location.href = location.href.replace(location.search, "");
+			});
+		}
+	}
+	
+	window.getMapData = function () {
+		return mapData;
+	};
+	
+	initialize();
+	
+
+}) (window);
+
+// connect
 (function (window, undefined){
 	
 	var itahm,
-		query = {};
+		form = document.getElementById("connect"),
+		agent = document.getElementById("agent");
 	
-	function initialize () {
+	function initialize() {
 		window.addEventListener("beforeunload", onUnload);
 		
 		document.getElementById("start").onclick = function () {
@@ -164,72 +353,53 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 				itahm.focus();
 			}
 			else {
-				showITAhM();
+				startITAhM();
 			}
 		};
+		
+		document.getElementById("disconnect").onclick = function () {
+			closeITAhM();
+			
+			location.href = location.origin + location.pathname;
+		}
 	}
 	
 	function onUnload() {
 		closeITAhM();
 	}
 	
-	window.showITAhM = function () {
-		document.body.classList.remove("loading");
-			
-		itahm = window.open("map.html", "ITAhM", specs);
-			
-		itahm.focus();
-	};
 	
-	window.closeITAhM = function () {
-		if (itahm && !itahm.closed) {
-			itahm.close();
-		}
-	};
-	
-	initialize();
-	
-}) (window);
-
-// connect
-(function (window, undefined){
-	
-	var form = document.getElementById("connect"),
-		agent = document.getElementById("agent");
-	
-	function initialize() {
-		document.getElementById("disconnect").onclick = function () {
-			closeITAhM();
-			
-			location.reload();
-		}
-	}
-	
+	// main response
 	function onResponse(callback, data, status) {
 		if (status === 200) {
-			callback(data);
 		}
 		else {
-			callback();
-			
-			if (status === 401) {
-				document.body.className = "connected";
-				
+			if (status === 0) {
+				alert("request timed out.");
+			}
+			else if (status === 401) {
 				alert("no session.");
 				
 				closeITAhM();
 				
-				window.focus();
+				location.reload();
 			}
-			else {
-				
+			else if (status === 400) {
+				console.log(data.error);
 			}
+			
+			data = undefined;
+			
 		}
+		
+		callback(data, status);
 	}
 	
 	function onEcho(data, status) {
 		var ip = form.elements["ip"].value,
 			tcp = form.elements["tcp"].value;
+		
+		document.body.classList.remove("loading");
 		
 		// agent에 연결 가능하나 session 없음
 		if (status === 401) {
@@ -254,8 +424,19 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 		}
 	}
 	
+	function closeITAhM() {
+		if (itahm && !itahm.closed) {
+			itahm.close();
+		}
+	}
+	
 	window.tryConnect = function (ip, tcp) {
 		var communicator = new Communicator(); 
+		
+		document.body.classList.add("loading");
+		
+		form.elements["ip"].value = ip;
+		form.elements["tcp"].value = tcp;
 		
 		window.sendRequest = function (request, callback) {
 			communicator.send(request, onResponse.bind(undefined, callback));
@@ -267,6 +448,16 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 			command: "echo"
 		}, onEcho);
 	}
+	
+	window.startITAhM = function () {
+		document.body.classList.remove("loading");
+		
+		itahm = window.open("map.html", "ITAhM", specs);
+	};
+	
+	window.getAddress = function () {
+		return form.elements["ip"].value +":"+ form.elements["tcp"].value;
+	};
 	
 	initialize();
 	
@@ -330,10 +521,40 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 	
 }) (window);
 
-//device data
-(function (window, undefined){
+// device
+(function (window, undefined) {
+	
+	var deviceData,
+		tmpID = -1,
+		sequence,
+		numOfDevice = document.getElementById("num_device");
+	
+	function initialize() {
+		document.getElementById("device_sync").onclick = onSync;
+	}
 
-	var deviceData;
+	function onSync() {
+		if (confirmSync()) {
+			sendRequest({
+				command: "push",
+				database: "device",
+				sequence: sequence,
+				data: deviceData
+			}, function (response) {
+				if (response) {
+				}
+				else {
+					alert("synchronization failed.");
+				}
+				
+				location.reload();
+			});
+		}
+	}
+	
+	function setDevice() {
+		numOfDevice.textContent = Object.keys(deviceData).length;
+	}
 	
 	window.initDevice = function () {
 		document.body.classList.add("loading");
@@ -341,91 +562,406 @@ var specs = "toolbar=0, location=0, resizable=1, menubar=0, titlebar=0";
 		sendRequest({
 			command: "pull",
 			database: "device"
-		}, function (data) {
-			if (data) {
-				deviceData = data;
+		}, function (response) {
+			if (response) {
+				deviceData = response.data;
+				sequence = response.sequence;
+				
+				setDevice();
 				
 				initIcon();
 			}
 		});
 	};
 	
-	window.getDeviceData = function () {
+	window.createDevice = function (data) {
+		var id = tmpID--;
+		
+		deviceData[id] = data;
+		
+		data.id = id;
+		data.x = 0;
+		data.y = 0;
+		data.ifEntry = {};
+		
+		setDevice();
+	};
+	
+	window.getDeviceData = function  () {
 		return deviceData;
 	};
-
+	
+	initialize();
+	
 }) (window);
 
-//icon data
+//icon
 (function (window, undefined) {
-	var iconData = ITAhM.iconData;
-
+	
+	var originData = ITAhM.iconData,
+		iconData = {},
+		customData,
+		sequence,
+		list = document.getElementById("type_list");
+	
 	if (!iconData) {
 		throw "icon.js is required";
+	}
+	
+	function initialize() {
+		document.getElementById("icon_sync").onclick = onSync;
+		
+		for (var type in originData) {
+			iconData[type] = originData[type];
+		}
+	}
+	
+	function onResponse(response) {
+		if (response) {
+			customData = response.data;
+			sequence = response.sequence;
+		
+			for (var type in customData) {
+				iconData[type] = customData[type];
+			}
+			
+			resetIconList();
+			
+			initAccount();
+		}
+		else {
+			// 오류
+		}
+		
+		document.body.classList.remove("loading");
+	}
+	
+	function onSync() {
+		if (confirmSync()) {
+			sendRequest({
+				command: "push",
+				database: "icon",
+				sequence: sequence,
+				data: iconData
+			}, function (response) {
+				if (response) {
+					location.reload();
+				}
+				else {
+					alert("synchronization failed.");
+				}
+			});
+		}
+	}
+	
+	function onSelectIcon(type) {
+		showDialog("icon.html", function (dialog) {
+			dialog.initialize(type, iconData[type]);
+		});
+	}
+	
+	function resetIconList() {
+		var df = document.createDocumentFragment(),
+			icon, groupName, groupElement, labelElement,
+			map = {},
+			li;
+		
+		while (li = list.firstChild) {
+			list.removeChild(li);
+		}
+		
+		for (var type in iconData) {
+			icon = iconData[type];
+			
+			groupName = icon.group;
+			
+			groupElement = map[groupName];
+			
+			if (!groupElement) {
+				groupElement = document.createElement("ul");
+				
+				labelElement = document.createElement("li");
+				labelElement.textContent = groupName;
+				
+				df.appendChild(labelElement)
+				labelElement.appendChild(groupElement);
+				
+				map[groupName] = groupElement;
+			}
+			
+			li = document.createElement("li");
+			
+			li.textContent = type;
+			li.onclick = onSelectIcon.bind(undefined, type);
+			
+			groupElement.appendChild(li);
+		}
+		
+		list.appendChild(df);
 	}
 	
 	window.initIcon = function () {
 		sendRequest({
 			command: "pull",
 			database: "icon"
-		}, function (data) {
-			document.body.classList.remove("loading");
-			
-			if (data) {
-				for (var type in data) {
-					iconData[type] = data[type];
+		}, onResponse);
+	};
+	
+	window.setIcon = function (type, data) {
+		iconData[type] = customData[type] = data;
+		
+		resetIconList();
+	};
+	
+	window.resetIcon = function (type) {
+		var icon = originData[type];
+		
+		delete customData[type];
+		
+		if (icon) {
+			iconData[type] = icon;
+		}
+		else {
+			delete iconData[type];
+		}
+		
+		resetIconList();
+	};
+	
+	window.getIcon = function  (type) {
+		return iconData[type];
+	};
+	
+	window.getIconData = function  () {
+		return iconData;
+	};
+	
+	initialize();
+	
+}) (window);
+
+// account
+(function (window, undefined) {
+	
+	var accountData,
+		sequence,
+		list = document.getElementById("account_list");
+	
+	function initialize() {
+		document.getElementById("account_sync").onclick = onSync;
+	}
+
+	function onSync() {
+		if (confirmSync()) {
+			sendRequest({
+				command: "push",
+				database: "account",
+				sequence: sequence,
+				data: accountData
+			}, function (response) {
+				if (response) {
+					location.reload();
 				}
+				else {
+					alert("synchronization failed.");
+				}
+			});
+		}
+	}
+	
+	function onSelectAccount(name) {
+		showDialog("account.html", function (dialog) {
+			dialog.initialize(name, accountData[name]);
+		});
+	}
+	
+	window.initAccount = function () {
+		sendRequest({
+			command: "pull",
+			database: "account"
+		}, function (response) {
+			if (response) {
+				accountData = response.data;
+				sequence = response.sequence;
 				
-				showITAhM();
+				resetAccountList();
+				
+				initProfile();
+			}
+			else {
+				throw "";
 			}
 		});
 	};
 	
-	window.getIconData = function () {
-		return iconData;
+	window.resetAccountList = function () {
+		var df = document.createDocumentFragment(),
+			li;
+		
+		while (li = list.firstChild) {
+			list.removeChild(li);
+		}
+		
+		for (var name in accountData) {
+			li = document.createElement("li");
+			
+			li.textContent = name;
+			li.onclick = onSelectAccount.bind(undefined, name);
+			
+			df.appendChild(li);
+		}
+		
+		list.appendChild(df);
 	};
+	
+	window.setAccount = function (name, account) {
+		accountData[name] = account;
+		
+		resetAccountList();
+	};
+	
+	window.removeAccount = function (name) {
+		delete accountData[name];
+		
+		resetAccountList();
+	};
+	
+	initialize();
+	
+}) (window);
+
+// profile
+(function (window, undefined) {
+	
+	var profileData,
+		sequence,
+		list = document.getElementById("profile_list");
+	
+	function initialize() {
+		document.getElementById("profile_sync").onclick = onSync;
+	}
+	
+	function onResponse(response) {
+		if (response) {
+			profileData = response.data;
+			sequence = response.sequence;
+			
+			resetProfileList();
+			
+			startITAhM();
+		}
+		else {
+			// 오류
+		}
+		
+		document.body.classList.remove("loading");
+	}
+	
+	function onSync() {
+		if (confirmSync()) {
+			sendRequest({
+				command: "push",
+				database: "profile",
+				sequence: sequence,
+				data: profileData
+			}, function (response) {
+				if (response) {
+					location.reload();
+				}
+				else {
+					alert("synchronization failed.");
+				}
+			});
+		}
+	}
+	
+	function onSelectProfile(name) {
+		showDialog("profile.html", function (dialog) {
+			dialog.initialize(name, profileData[name]);
+		})
+		
+	}
+	
+	window.initProfile = function () {
+		sendRequest({
+			command: "pull",
+			database: "profile"
+		}, onResponse);
+	};
+	
+	window.resetProfileList = function () {
+		var df = document.createDocumentFragment(),
+			li;
+		
+		while (li = list.firstChild) {
+			list.removeChild(li);
+		}
+		
+		for (var name in profileData) {
+			li = document.createElement("li");
+			
+			li.textContent = name;
+			li.onclick = onSelectProfile.bind(undefined, name);
+			
+			df.appendChild(li);
+		}
+		
+		list.appendChild(df);
+	};
+	
+	window.setProfile = function (name, profile) {
+		profileData[name] = profile;
+		
+		resetProfileList();
+	};
+	
+	window.removeProfile = function (name) {
+		delete profileData[name];
+		
+		resetProfileList();
+	};
+	
+	initialize();
+	
+}) (window);
+
+// dialog
+(function (window, undefined) {
+	
+	var dialog = document.getElementById("dialog");
+	
+	function initialize() {
+		dialog.onload = onLoad;
+	}
+	
+	function onLoad(callback) {
+		callback(dialog.contentWindow);
+		
+		document.body.classList.add("dialog");
+	}
+	
+	window.showDialog = function (url, callback) {
+		dialog.onload = onLoad.bind(undefined, callback);
+		
+		dialog.src = url; 
+	};
+	
+	window.closeDialog = function () {
+		document.body.classList.remove("dialog");
+	};
+	
+	initialize();
 	
 }) (window);
 
 // QueryParser object
-(function (window, undefined) {
-	
-	QueryParser.prototype = {
-		map: {},
-		
-		initialize: function (search) {
-			var queries,
-				pair;
-				
-			if (!search) {
-				return;
-			}
-			
-			queries = search.substring(1).split("&");
-			
-			for (var i=0, length=queries.length; i<length; i++) {
-				pair = queries[i].split("=");
-				
-				if (pair.length === 2) {
-					this.map[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
-				}
-			}
-		},
-		
-		get: function (key) {
-			return this.map[key];
-		}		
-	};
-	
-}) (window);
-
-function QueryParser(search) {
-	this.initialize(search);
-}
-
-var query = new QueryParser(location.search),
+var query = new ITAhM.QueryParser(),
 	ip = query.get("ip"),
 	tcp = query.get("tcp");
+
+function confirmSync() {
+	return confirm("reload ITAhM after synchronization.\n\ncontinue?");
+}
 
 if (ip && tcp) {
 	tryConnect(ip, tcp);

@@ -3,106 +3,72 @@ var ITAhM = ITAhM || {};
 ITAhM.iconData = {
     "server": {
         "group": "server",
-        "alt": "server",
         "src": "img/svg/server.svg"
     },
     "mainframe": {
         "group": "server",
         "alt": "mainframe",
-        "src": "img/mainframe.png"
+        "src": "img/svg/mainframe.svg"
     },
     "database": {
         "group": "server",
         "alt": "database",
-        //"src": "img/database.png"
         "src": "img/svg/database.svg"
     },
     "storage": {
         "group": "server",
-        "alt": "storage",
         "src": "img/svg/storage.svg"
-    },
-    "www": {
-        "group": "server",
-        "alt": "web server",
-        "src": "img/www.png"
     },
     "network": {
         "group": "network",
-        "alt": "network",
-        "src": "img/network.png"
+        "src": "img/svg/network.svg"
     },
-    "workgroup": {
+    "workgroup switch": {
         "group": "network",
-        "alt": "workgroup switch",
-        //"src": "img/workgroup.png"
         "src": "img/svg/workgroup.svg"
     },
-    "dummy": {
+    "layer4 switch": {
         "group": "network",
-        "alt": "dummy hub",
-        "src": "img/hub.png"
-    },
-    "l4switch": {
-        "group": "network",
-        "alt": "layer4 switch",
-        //"src": "img/l4switch.png"
         "src": "img/svg/l4switch.svg"
     },
-    "l3switch": {
+    "layer3 switch": {
         "group": "network",
-        "alt": "layer3 switch",
-       // "src": "img/l3switch.png"
         "src": "img/svg/l3switch.svg"
     },
     "router": {
         "group": "network",
-        "alt": "router",
-        //"src": "img/router.png"
         "src": "img/svg/router.svg"
     },
     "firewall": {
         "group": "network",
-        "alt": "firewall",
-        //"src": "img/firewall.png"
         "src": "img/svg/firewall.svg"
     },
-    "vpn": {
+    "vpn gateway": {
         "group": "network",
-        "alt": "vpn gateway",
-        "src": "img/gateway.png"
+        "src": "img/svg/vpn.svg"
     },
-    "concentrator": {
+    "vpn concentrator": {
         "group": "network",
-        "alt": "vpn concentrator",
-        //"src": "img/concentrator.png"
         "src": "img/svg/concentrator.svg"
     },
     "wireless": {
         "group": "network",
-        "alt": "wireless device",
-        "src": "img/wireless.png"
+        "src": "img/svg/wireless.svg"
     },
     "accesspoint": {
         "group": "network",
-        "alt": "accesspoint",
-        //"src": "img/accesspoint.png"
         "src": "img/accesspoint.svg"
     },
     "office": {
         "group": "etc",
-        "alt": "office",
-        "src": "img/office.png"
+        "src": "img/svg/office.svg"
     },
     "cloud": {
         "group": "etc",
-        "alt": "cloud",
-        //"src": "img/cloud.png"
         "src": "img/svg/cloud.svg"
     },
     "unknown": {
         "group": "etc",
-        "alt": "unknown",
-        "src": "img/unknown.png"
+        "src": "img/svg/unknown.svg"
     }
 };

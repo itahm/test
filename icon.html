@@ -2,54 +2,166 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-	</head>
+		<meta http-equiv="Content-Script-Type" content="text/javascript">
+		<meta http-equiv="Content-Style-Type" content="text/css">
+		<title>ITAhM</title>
+		
+		<style>
+@import "css/itahm.css";
 
-	<body>
-		<img id="server" class="server" alt="server" src="img/server.png">
-		<img id="mainframe" class="server" alt="mainframe" src="img/mainframe.png">
-		<img id="database" class="server" alt="database" src="img/database.png">
-		<img id="storage" class="server" alt="storage" src="img/storage.png">
-		<img id="www" class="server" alt="web server" src="img/www.png">
-		<img id="network" class="network" alt="network" src="img/network.png">
-		<img id="workgroup" class="network" alt="workgroup switch" src="img/workgroup.png">
-		<img id="dummy" class="network" alt="dummy hub" src="img/hub.png">
-		<img id="l3switch" class="network" alt="layer4 switch" src="img/l3switch.png">
-		<img id="l4switch" class="network" alt="layer4 switch" src="img/l4switch.png">
-		<img id="router" class="network" alt="router" src="img/router.png">
-		<img id="firewall" class="network" alt="firewall" src="img/firewall.png">
-		<img id="vpn" class="network" alt="vpn gateway" src="img/gateway.png">
-		<img id="concentrator" class="network" alt="vpn concentrator" src="img/concentrator.png">
-		<img id="wireless" class="network" alt="wireless device" src="img/wireless.png">
-		<img id="accesspoint" class="network" alt="accesspoint" src="img/accesspoint.png">
-		<img id="office" class="etc" alt="office" src="img/office.png">
-		<img id="cloud" class="etc" alt="cloud" src="img/cloud.png">
-		<img id="unknown" class="etc" alt="unknown" src="img/unknown.png">
-		<script>
-if (top === window) {
-	throw "";
+#li {
+	list-style: none;
+	padding: 3px;
+	margin: 0;
 }
-			
-(function (window, undefined) {
-	var customData = top.getCustomIconData(),
-		icon, data;
+
+#li:hover {
+	color: #0084ff;
+	cursor: pointer;
+}
+
+		</style>
+		
+	</head>
 	
-	for (var type in customData) {
-		data = customData[type];
+	<body class="loading content_width">
+		<button id="sync">Sync</button>
+		<ul id="list"></ul>
 		
-		icon = document.getElementById(type);
+		<div class="bg_loading"></div>
 		
-		if (!icon) {
-			icon = document.body.appendChild(document.createElement("img"));
-			icon.id = data.id;
+		<script src="js/ITAhM.js"></script>
+		<script src="js/object.js"></script>
+		<script src="js/icon.js"></script>
+		<script>
+
+if (top === window) {
+	location.href = "http://itahm.com";
+}
+
+(function (window, undefined) {
+	
+	var originData = ITAhM.iconData,
+		iconData = {},
+		customData,
+		sequence,
+		list = document.getElementById("list");
+	
+	document.getElementById("sync").onclick = onSync;
+	
+	for (var type in originData) {
+		iconData[type] = originData[type];
+	}
+	
+	initIcon();
+	
+	if (!originData) {
+		throw "icon.js is required";
+	}
+	
+	function onSync() {
+		top.sendRequest({
+			command: "push",
+			database: "icon",
+			sequence: sequence,
+			data: iconData
+		}, function (response) {
+			if (response) {
+				location.reload();
+			}
+			else {
+				alert("synchronization failed.");
+			}
+		});
+	}
+	
+	function onSelectIcon(type) {
+		top.showDialog("icon.html", function (dialog) {
+			dialog.initialize(type, iconData[type]);
+		});
+	}
+	
+	function resetIconList() {
+		var df = document.createDocumentFragment(),
+			icon, groupName, groupElement, labelElement,
+			map = {},
+			li;
+		
+		while (li = list.firstChild) {
+			list.removeChild(li);
 		}
 		
-		icon.src = data.src;
-		icon.alt = data.alt;
-		icon.className = data.group;
-	}
-	 
-}) (window);
+		for (var type in iconData) {
+			icon = iconData[type];
 			
+			groupName = icon.group;
+			
+			groupElement = map[groupName];
+			
+			if (!groupElement) {
+				groupElement = document.createElement("ul");
+				
+				labelElement = document.createElement("li");
+				labelElement.textContent = groupName;
+				
+				df.appendChild(labelElement)
+				labelElement.appendChild(groupElement);
+				
+				map[groupName] = groupElement;
+			}
+			
+			li = document.createElement("li");
+			
+			li.textContent = type;
+			li.onclick = onSelectIcon.bind(undefined, type);
+			
+			groupElement.appendChild(li);
+		}
+		
+		list.appendChild(df);
+	}
+	
+	function initIcon() {
+		top.sendRequest({
+			command: "pull",
+			database: "icon"
+		}, function (response) {
+			customData = response.data;
+			sequence = response.sequence;
+		
+			for (var type in customData) {
+				iconData[type] = customData[type];
+			}
+			
+			resetIconList();
+		});
+	};
+	
+	window.setIcon = function (type, data) {
+		iconData[type] = customData[type] = data;
+		
+		resetIconList();
+	};
+	
+	window.resetIcon = function (type) {
+		var icon = originData[type];
+		
+		delete customData[type];
+		
+		if (icon) {
+			iconData[type] = icon;
+		}
+		else {
+			delete iconData[type];
+		}
+		
+		resetIconList();
+	};
+	
+}) (window);
+
 		</script>
+	
 	</body>
+	
 </html>

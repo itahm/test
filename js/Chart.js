@@ -1,531 +1,422 @@
 ;"use strict";
 
 var
-	HOUR1 = 60 *60 *1000,
-	MINUTES1 = 60 *1000,
-	WHEEL_REPEAT = 20;
+	MINUTES1 = 60000,
+	HOURS1 = 3600000,
+	HOURS24 = 86400000,
+	GRID_MIN_WIDTH = 200,
+	GRID_MIN_HEIGHT = 50,
+	SUMMARY_MIN_PX = 1,
+	PADDING = 30,
+	MARGIN = 10,
+	FONT_SIZE = 14,
+	MODE_FIX = 0,
+	MODE_START = 1,
+	MODE_END = 2,
+	MODE_MOVE = MODE_START | MODE_END,
+	BG_COLOR = "#ffffff";
 
-function Chart(container) {
-	this.init(container);
+function Chart(container, config) {
+	this.init(container, config);
 }
 
-function format(milliseconds) {
-	var date = new Date(milliseconds),
-		day = date.getDate(),
-		hour = date.getHours();
+function fireEvent(eventType, element) {
+	var event = document.createEvent("Event");
 	
-	if (day === 1) {
-		return MONTH_NAME[date.getMonth()];
-	}
-	else {
-		return MONTH_NAME[date.getMonth()] +" "+ (day > 9? "": "0")+ day +", "+ (hour > 9? "": "0") + hour;
-	}
+	event.initEvent(eventType, true, true);
+	
+	element.dispatchEvent(event);
 }
 
 (function (window, undefined) {
 	
-	function onSort(a, b) {
-		return Number(a) - Number(b);
-	}
-	
-	function onWheel(manager, e) {
-		if (manager.mode === "realtime") {
-			return;
-		}
+	function getMaxWidth(chart, valueGap, low, capacity, count, textArray) {
+		var value, max, text;
 		
-		var zoom = e.deltaY > 0? true: false;
-		
-		for (var i=0; i<WHEEL_REPEAT; i++) {
-			manager.zoom(zoom);
-		}
-
-		manager.onchange();
-		
-		manager.invalidate();
-		
-		clearTimeout(manager.timer);
-		
-		manager.timer = setTimeout(onDetail.bind(undefined, manager), 100);
-	}
-	
-	function onDrag(manager, e) {
-		if (manager.mode === "realtime") {
-			return;
-		}
-		
-		manager.move(e.moveX);
-		
-		manager.onchange();
-		
-		manager.invalidate();
-	}
-	
-	function onDetail(manager) {
-		if (manager.mode === "realtime" || manager.tpp > MINUTES1) {
-			this.detail = undefined;
+		for (var i=0; i<=count; i++) {
+			value = low + valueGap * i;
+			text = chart.onyvalue(value);
+			textArray[i] = [text, (value / capacity *100).toFixed(2) +"%"];
 			
-			return;
-		}
-		
-		manager.ondetail();
-	}
-	
-	function invalidateRT(manager) {
-		var tpp = 100,
-			date = new Date(),
-			end = date.setMilliseconds(0),
-			// graph area width가 아니고 여유있게canvas width 이다. 이후 다시 정확히 계산한다.
-			start = end - tpp * manager.chart.canvas.width,
-			high, low, value, scale;
-		
-		manager.chart.clear();
-		
-		// data 가공
-		// realtimeData가 무한히 커지는것을 막기 위해 start 보다 오래된 data는 삭제한다.
-		// 삭제된 data로 인해 high와 low가 변경될수 있기 때문에 다시 계산한다.
-		for (var dateMills in manager.realtimeData) {
-			high = low = manager.realtimeData[dateMills];
-			break;
-		}
-		
-		for (var dateMills in manager.realtimeData) {
-			if (dateMills < start) {
-				delete manager.realtimeData[dateMills];
+			if (max === undefined) {
+				max = chart.context.measureText(text).width;
 			}
 			else {
-				value = manager.realtimeData[dateMills];
-				
-				high = Math.max(high, value);
-				low = Math.min(low, value);
+				max = Math.max(max, chart.context.measureText(text).width);
 			}
 		}
 		
-		scale = manager.chart.graphArea.height / (high - low);
-		
-		manager.chart.setYAxis(high, low);
-
-		// start 다시 계산
-		start = end - tpp * manager.chart.graphArea.width,
-		
-		manager.chart.setXAxis(getAxisValues(start, end, tpp));
-		
-		manager.resetScale(high, low);
-		
-		manager.chart.draw({
-			stroke: "#fdd400",
-			width: 2,
-			keys: [Object.keys(manager.realtimeData)],
-			get: function (key) {
-				return {
-					x: (key - start) / tpp,
-					y: (manager.realtimeData[key] - low) * scale
-				};
-				
-			}//.bind(manager)
-		});
+		return max;
 	}
 	
+	function setYAxis(chart, high, low, capacity) {
+		var count = Math.floor(chart.graphArea.height /GRID_MIN_HEIGHT),
+			axisGap = chart.graphArea.height / count,
+			valueGap = (high - low) / count,
+			context = chart.context,
+			grid = chart.grid.getContext("2d"),
+			textArray = [],
+			width = chart.graphArea.width,
+			y = PADDING + chart.axisTopHeight + MARGIN,
+			y2,
+			x1 = PADDING,
+			x2 = chart.canvas.width - PADDING;
+		
+		if (count === 0) {
+			return;
+		}
+		
+		x1 += (chart.axisLeftWidth = getMaxWidth(chart, valueGap, low, capacity, count, textArray));
+		x2 -= (chart.axisRightWidth = context.measureText("100.00%").width);
+		
+		context.save();
+		context.textBaseline = "middle";
+		context.textAlign = "right";
+		
+		count++;
+		for(; count-- > 0; y += axisGap) {
+			y2 = Math.round(y);
+			
+			context.save();
+			context.textAlign = "left";
+			context.fillText(textArray[count][1], x2, y2);
+			context.restore();
+			
+			grid.moveTo(x1, y2 -.5);
+			grid.lineTo(x2, y2 -.5);	
+			
+			context.fillText(textArray[count][0], x1, y2);
+		}
+		
+		context.restore();
+		
+		
+		grid.save();
+		grid.strokeStyle = "#ddd";
+		grid.lineWidth = 1;
+		grid.globalAlpha = .2;
+		grid.stroke();
+		grid.restore();
+		
+		drawAxis(chart, x1, x2);
+		
+		setGraphWidth(chart);
+	}
+
 	/**
-	 * chart method 호출순서
-	 * clear
-	 * setYAxis
-	 * setXAxis
-	 * draw
+	 * @param x1 graph area 시작 x 좌표
+	 * @param x2 graph area 끝 x좌표
 	 */
-	function invalidateOL(manager) {		
-		var date = new Date(manager.start),
-			dateMills = date.setMinutes(0, 0, 0),
-			endMills = (function (date) {
-				var mills = date.getTime();
-				
-				if (mills == date.setMinutes(0, 0, 0)) {
-					return mills;
-				}
-				
-				return date.setHours(date.getHours() +1);
-			})(new Date(manager.end)),
-			block = [],
-			high, max, min, low;
+	function drawAxis(chart, x1, x2) {
+		var context = chart.grid.getContext("2d"),
+			y1 = PADDING + chart.axisTopHeight + MARGIN,
+			y2 = y1 + chart.graphArea.height;
+			
+		x1 += (MARGIN -1);
+		x2 += (-MARGIN -1);
 		
-		manager.blocks = [block];
+		context.beginPath();
+		context.moveTo(x1, y1);
+		context.lineTo(x1, y2);
+		context.moveTo(x2, y1);
+		context.lineTo(x2, y2);
+		context.stroke();
 		
-		// block array 만드는 과정
-		while (dateMills <= endMills) {
-			if (dateMills in manager.data) {
-				block[block.length] = dateMills;
+		context.save();
+		context.textBaseline = "bottom";
+		context.textAlign = "center";		
+		
+		//context.fillText(chart.title, Math.round((x2 + x1) /2), y1 - MARGIN);
+		context.restore();
+	}
+
+	function init(chart) {
+		var context;
+		
+		context = chart.context;
+		context.font = "normal "+ FONT_SIZE +"px tahoma, arial, '맑은 고딕'";
+		
+		context = chart.grid.getContext("2d");
+		context.font = "normal "+ FONT_SIZE +"px tahoma, arial, '맑은 고딕'";
+		context.lineWidth = 2;
+		context.strokeStyle = "#73a4e6";
+	}
+	
+	function getFile(data, startMills, endMills) {
+		var file = [],
+			date = new Date(startMills),
+			dateMills = date.setSeconds(0, 0),
+			index=0, value;
+	
+		file[0] = "index,date,value";
+		
+		while (dateMills < endMills) {
+			value = data[dateMills];
+			
+			if (value) {
+				file[file.length] = index++ +","+ date.toISOString().slice(0, 10) + " "+ date.toTimeString().slice(0, 8) +","+ value;
 			}
-			else if (block.length > 0) {
-				block = [];
-				manager.blocks[manager.blocks.length] = block;
+			
+			dateMills = date.setMinutes(date.getMinutes() +1);
+		}
+		
+		return "data:text/csv;charset=utf-8,"+ encodeURI(file.join("\n"));
+	}
+	
+	function getSummaryFile(data, startMills, endMills) {
+		var file = [],
+			date = new Date(startMills),
+			dateMills = date.setMinutes(0, 0, 0),
+			index=0, value;
+		
+		file[0] = "index,date,max,avg,min";
+		
+		while (dateMills < endMills) {
+			value = data[dateMills];
+			
+			if (value) {
+				file[file.length] = index++ +","+ date.toISOString().slice(0, 10) + " "+ date.toTimeString().slice(0, 8) +","+ value.max +","+ value.avg +","+ value.min;
 			}
 			
 			dateMills = date.setHours(date.getHours() +1);
 		}
-		
-		if (block.length === 0) {
-			manager.blocks.splice(manager.blocks.length -1, 1);
-		}
-		
-		// 축 그리기
-		manager.chart.clear();
-		
-		if (manager.blocks.length === 0) {
-			// data가 없음.
-			manager.chart.setYAxis();
-		}
-		else {
-			// high, low 구하는 과정
-			for (var i=0, _i=manager.blocks.length; i<_i; i++) {
-				block = manager.blocks[i];
-				
-				max = Math.max.apply(undefined, block.map(function (key) {return manager.data[key].max;}.bind(manager)));
-				min = Math.min.apply(undefined, block.map(function (key) {return manager.data[key].min;}.bind(manager)));
-				
-				high = i == 0? max: Math.max(high, max);
-				low = i == 0? min: Math.min(low, min);
-			}
-			
-			manager.chart.setYAxis(high, low);
-		}
-		
-		// y축 width 변화로 tpp 변화 적용해 줘야함
-		manager.resetTPP();
-		
-		manager.chart.setXAxis(manager.getAxisValues());
-		
-		manager.resetScale(high, low);
-		
-		manager.low = low;
-		
-		
-		
-		// 다시 그려지면 detail 삭제
-		manager.detail = undefined;
-		
-		manager.chart.draw({
-			fill: "#0084ff",
-			keys: manager.blocks,
-			get: function (key) {
-				return {
-					x: (key - manager.start + HOUR1) / manager.tpp,
-					y: (manager.data[key].max - low) * manager.scale
-				}
-			}.bind(manager)
-		});
-		
-		manager.chart.draw({
-			fill: "#fff",
-			option: "cut",
-			keys: manager.blocks,
-			get: function (key) {
-				return {
-					x: (key - manager.start + HOUR1) / manager.tpp,
-					y: (manager.data[key].min - low) * manager.scale
-				}
-			}.bind(manager)
-		});
-		
-		manager.chart.draw({
-			stroke: "#e0ffff",
-			width: 2,
-			keys: manager.blocks,
-			get: function (key) {
-				return {
-					x: (key - manager.start + HOUR1) /manager.tpp,
-					y: (manager.data[key].avg - low) * manager.scale
-				}
-			}.bind(manager)
-		});
+	
+		return "data:text/csv;charset=utf-8,"+ encodeURI(file.join("\n"));
 	}
 	
-	function getAxisValues(start, end, tpp) {
-		var	date = new Date(start),
-			dateMills,
-			pow = (function () {
-				var date = new Date(0),
-					gap = GRID_MIN_WIDTH * tpp + date.getTime(),
-					pow = 0;
-			
-				for (; gap > date.setHours(date.getHours() +1); pow++);
-			
-				return Math.max(pow, 1);
-			})(),
-			axisValueArray = [];
-		
-		date.setMinutes(0, 0, 0);
-		
-		while ((dateMills = date.setHours(date.getHours() + pow)) < end) {
-			axisValueArray[axisValueArray.length] = [(dateMills - start) / tpp, ITAhM.util.toDateFormatString(date)];
-		}
-		
-		return axisValueArray;
+	function setGraphWidth(chart) {
+		return chart.graphArea.width
+			= Math.max(0, chart.canvas.width - (chart.axisRightWidth + chart.axisLeftWidth + PADDING *2 + MARGIN *2));
 	}
 	
+	function setGraphHeight(chart) {
+		return chart.graphArea.height
+			= Math.max(0, chart.canvas.height - (chart.axisTopHeight + chart.axisBottomHeight + PADDING *2 + MARGIN *2));
+	}
+	
+	/**
+	 * @param {Chart} chart
+	 * @param {Canvas} canvas
+	 */
+	function drawGraph(chart, canvas) {
+		chart.context.drawImage(canvas, PADDING + chart.axisLeftWidth + MARGIN, PADDING + chart.axisTopHeight + MARGIN);
+	}
+	
+	function cutGraph(chart, canvas) {
+		chart.context.save();
+		chart.context.globalCompositeOperation = "destination-out";
+		chart.context.drawImage(canvas, PADDING + chart.axisLeftWidth + MARGIN, PADDING + chart.axisTopHeight + MARGIN);
+		chart.context.restore();
+	}
+	
+	function saveChart(chart) {
+		chart.lastImage = chart.context.getImageData(0, 0, chart.canvas.width, chart.canvas.height);
+		chart.context.drawImage(chart.grid, 0, 0);
+	}
+
 	Chart.prototype = {
-		init: function (container) {
-			var date = new Date();
+		init: function (container, config) {
+			config = config || {};
 			
-			this.data = {};
-			this.chart = new ChartObject(container);
-			this.blocks = [];
-			this.start = date.setHours(0, 0, 0, 0);
-			this.end = date.setDate(date.getDate() +1);
-			this.setMode("offline");
-			this.ondetail = function () {};
-			
-			this.chart.element.addEventListener("wheel", onWheel.bind(undefined, this));
-			window.addEventListener("resize", this.listener = this.resize.bind(this));
-			
-			new Draggable(this.chart.element)
-				.on("dragmove", onDrag.bind(undefined, this))
-				.on("dragend", onDetail.bind(undefined, this));
-		},
-		
-		setData: function (option) {
-			if (typeof option.onyvalue === "function") {
-				this.chart.onyvalue = option.onyvalue;
+			this.element = document.createElement("div");
+			this.canvas = document.createElement("canvas");
+			this.grid = document.createElement("canvas");
+			this.context = this.canvas.getContext("2d");
+			this.graphArea = {};
+			this.title = config.title || "";
+			this.axisLeftWidth = 0;
+			this.axisRightWidth = 0;
+			this.axisTopHeight = FONT_SIZE;
+			this.axisBottomHeight = FONT_SIZE;
+			this.ondrag = config.ondrag || function () {};
+			this.manager = config.manager || {
+				resize: function () {
+					
+				}
 			}
 			
-			this.chart.title = option.title || "";
-			this.chart.capacity = option.capacity || 100;
-			
-			this.option = option;
-		},
-		
-		getData: function () {
-			return this.option;
-		},
-		
-		resetTPP: function () {
-			if (this.chart.graphArea.width === 0) {
-				throw "";
+			this.onxvalue = config.onxvalue || function (value) {
+				return value;
 			}
 			
-			this.tpp = ((this.end - this.start) / this.chart.graphArea.width);
-			
-			return this.tpp;
-		},
-		
-		isEmpty: function () {
-			for (var key in this.data) {
-				return false;
+			this.onyvalue = config.onyvalue || function (value) {
+				return value;
 			}
 			
-			return true;
+			this.element.appendChild(this.canvas);
+			this.element.className = "chart";
+			
+			container.appendChild(this.element);
+			
+			this.resize();
+			
+			fireEvent("resize", window);
+			
+			window.addEventListener("resize", function () {
+				this.resize();
+				
+				this.manager.resize();
+			}.bind(this), false);
 		},
 		
-		/**
-		 * @param {Number} high
-		 * @param {Number} low 
-		 */
-		resetScale: function (high, low) {
-			return this.scale = this.chart.graphArea.height / (high - low);
-		},
-		
-		/**
-		 * start 또는 end가 변경되면 발생되는 callback
-		 * @param {Number} start
-		 * @param {Number} end
-		 */
-		onchange: function (start, end) {
+		onresize: function () {
 			
 		},
 		
-		/**
-		 * 전으로 이동시 양수, 후로 이동시 음수
-		 * @param {Number} move
-		 */
-		move: function (move) {
-			move *= this.tpp;
+		resize: function () {
+			var rect = this.element.getBoundingClientRect(),
+				width = Math.max(rect.width, PADDING *2),
+				height = Math.max(rect.height, PADDING *2);
 			
-			this.start -= move;
-			this.end -= move;
+			this.canvas.width = width;
+			this.canvas.height = height;
+			this.grid.width = width;
+			this.grid.height = height;
+			
+			setGraphWidth(this);
+			setGraphHeight(this);
+			
+			init(this);
 		},
 		
 		/**
 		 * 
-		 * @param {Boolean} zoom 확대시 true, 축소시 false
+		 * @param {Object} chartData
+		 * @param {Array} [chartData.keys] Array[Array[]] 이어야 함
+		 * 
 		 */
-		zoom: function (zoom) {
-			var sign = zoom? -1: 1;
+		draw: function (chartData) {
+			var canvas = document.createElement("canvas"),
+				context = canvas.getContext("2d"),
+				low = this.low,
+				blockArray = chartData.keys,
+				getValue = chartData.get,
+				fill = chartData.fill,
+				stroke = chartData.stroke,
+				block, length;
 			
-			this.end -= this.tpp * sign;
-			this.start += this.tpp * sign;
+			canvas.width = this.graphArea.width;
+			canvas.height = this.graphArea.height;
+			
+			context.setTransform(1, 0, 0, -1, 0, this.graphArea.height);
+			
+			for (var i=0, _i=blockArray.length; i<_i; i++) {
+				block = blockArray[i];
 				
-			this.resetTPP();
+				context.beginPath();
+				
+				coords = getValue(block[0]);
+				
+				if (fill) {
+					context.moveTo(coords.x, 0);
+				}
+				
+				context.lineTo(coords.x, coords.y);
+				
+				for (var index=1, length = block.length; index<length; index++) {
+					coords = getValue(block[index]);
+					
+					context.lineTo(coords.x, coords.y);
+				}
+				
+				if (fill) {
+					context.lineTo(coords.x, 0);
+					context.closePath();
+					
+					context.fillStyle = fill;
+					context.fill();
+				}
+				
+				if (stroke) {
+					context.strokeStyle = stroke;
+					context.lineWidth = chartData.width;
+					context.stroke();
+				}
+			}
+			
+			if (fill && chartData.option === "cut") {
+				cutGraph(this, canvas);
+			}
+			else {
+				drawGraph(this, canvas);
+			}
+			
+			saveChart(this);
 		},
 		
 		/**
-		 * offline lony
-		 * @param {Number} start 시작 날짜 (milliseconds)
-		 * @param {Number} end 끝 날짜 (milliseconds)
+		 *@param {Number} high
+		 * @param {Number} low
+		 * @param {Number} capacity
 		 */
-		setDate: function (start, end) {
-			this.start = start;
-			this.end = end;
-			
-			this.resetTPP();
-			
-			this.invalidate();
-			
-			onDetail(this);
-		},
-		
-		setMode: function (mode) {
-			this.mode = mode;
-			
-			if (mode === "realtime") {
-				this.realtimeData = {};
+		setYAxis: function(high, low, capacity) {
+			if (high == low) {
+				++high;
+				Math.max(0, --low);
 			}
-			else if (mode === "offline") {
-				this.resetTPP();
-				
-				this.invalidate();
-			}
+			
+			this.high = high;
+			this.low = low;
+			
+			setYAxis(this, high, low, capacity);
 		},
 		
 		/**
-		 * realtime mode only
-		 * @param {Number} dateMills
-		 * @param {Number} value
-		 * @returns {undefined}
+		 * @param {Array} valueArray
 		 */
-		update: function (dateMills, value) {
+		setXAxis: function(valueArray) {
+			var data;
 			
-			this.realtimeData[dateMills] = value;
+			this.context.save();
+			this.context.textBaseline = "bottom";
+			this.context.textAlign = "center";
+			this.context.setTransform(1, 0, 0, 1, PADDING + this.axisLeftWidth + MARGIN, this.canvas.height - PADDING);
 			
-			this.invalidate();
-		},
-		
-		/**
-		 * @returns {Array} 
-		 */
-		getAxisValues: function () {
-			var	date = new Date(this.start),
-				dateMills,
-				pow = (function (tpp) {
-					var date = new Date(0),
-						gap = GRID_MIN_WIDTH * tpp + date.getTime(),
-						pow = 0;
+			for (var i=0, _i=valueArray.length; i<_i; i++) {
+				data = valueArray[i];
 				
-					for (; gap > date.setHours(date.getHours() +1); pow++);
-				
-					return Math.max(pow, 1);
-				})(this.tpp),
-				axisValueArray = [];
-			
-			date.setMinutes(0, 0, 0);
-			
-			while ((dateMills = date.setHours(date.getHours() + pow)) < this.end) {
-				axisValueArray[axisValueArray.length] = [(dateMills - this.start) / this.tpp, ITAhM.util.toDateFormatString(date)];
+				this.context.fillText(data[1], data[0], 0);
 			}
 			
-			return axisValueArray;
+			this.context.restore();
 		},
 		
-		capture: function () {
-			this.chart.download();
+		clear: function () {
+			var width = this.canvas.width,
+				height = this.canvas.height;
+			
+			//this.context.save();
+			//this.context.setTransform(1, 0, 0, 1, 0, 0);
+			this.context.clearRect(0, 0, width, height);
+			//this.context.restore();
+			
+			this.grid.getContext("2d").clearRect(0, 0, width, height);
 		},
 		
 		download: function () {
-			var row, block, date, dateMills, value;
-			
-			if (this.detail) {
-				row = ["index,date,value"];
-				
-				block = Object.keys(this.detail).sort(function (a, b) {
-					return Number(a) - Number(b);
-				});
-				
-				for (var i=0, _i=block.length; i<_i;i++) {
-					dateMills = block[i];
-					
-					date = new Date(Number(dateMills));
-					
-					row[row.length] = [i,
-					                   date.toISOString().slice(0, 10) + " "+ date.toTimeString().slice(0, 8),
-					                   this.detail[dateMills]].join(","); 
-				}
+			if (this.canvas.msToBlob) {
+				window.navigator.msSaveBlob(this.canvas.msToBlob(), "chart.png");
 			}
 			else {
-				row = ["index,date,max,avg,min"];
+				var a = document.createElement("a"),
+					event = document.createEvent("Event");
 				
-				for (var i=0, _i=this.blocks.length; i<_i; i++) {
-					block = this.blocks[i];
-					
-					for (var j=0, _j=block.length; j<_j; j++) {
-						dateMills = block[j];
-						date = new Date(dateMills);
-						value = this.data[dateMills];
-						
-						row[row.length] = [j,
-						                   date.toISOString().slice(0, 10) + " "+ date.toTimeString().slice(0, 8),
-						                   value.max,
-						                   value.avg,
-						                   value.min].join(",");
-					}
-				}
-			}
-			
-			ITAhM.util.download(new Blob([row.join("\n")], { type: "text/csv;charset=utf-8;"}), "chart.csv");
-		},
-		
-		showDetail: function (detail) {
-			var keys = Object.keys(detail);
-			
-			keys.sort(onSort);
-			
-			this.chart.draw({
-				stroke: "#fdd400",
-				width: 2,
-				keys: [keys],
-				get: function (key) {
-					var coords = {
-							x: (key - this.start) /this.tpp,
-							y: (detail[key] - this.low) * this.scale
-						};
-
-					return coords;
-				}.bind(this)
-			});
-		},
-		
-		resize: function () {
-			this.chart.resize();
-			
-			if (this.mode === "realtime") {
-			}
-			else {
-				this.resetTPP();
-			}
-			
-			this.invalidate();
-		},
-		
-		invalidate: function () {
-			if (this.mode === "realtime") {
-				invalidateRT(this);
-			}
-			else {
-				invalidateOL(this);
+				a.setAttribute("download", "chart.png");
+				a.setAttribute("href", this.canvas.toDataURL("image/png;base64"));
+				
+				fireEvent("click", a);
 			}
 		},
 		
-		on: function (event, func) {
-			this.chart.element.addEventListener(event, func, false);
-		},
-		
-		append: function (element) {
-			this.chart.element.appendChild(element);
-		},
-		
-		close: function () {
-			window.removeEventListener("resize", this.listener, false);
+		/**
+		 * @param {Manager} manager
+		 */
+		connect: function (manager) {
+			this.manager = manager;
 			
-			this.chart.element.parentNode.removeChild(this.chart.element);
-			this.chart = undefined;
+			manager.resize();
 		}
 		
 	};
 	
-})(this);	
+}) (window);

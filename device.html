@@ -5,7 +5,7 @@
 		<title>dialog</title>
 		
 		<style>
-td, input, label, h2, select {
+td, input, label, h2, select, li {
 	font-family: tahoma, arial, "맑은 고딕";
 }
 
@@ -22,39 +22,66 @@ body {
 	background-color: rgba(255, 255, 255, .9);
 }
 
-form {
+form.dialog {
+	width: 300px;
 	padding: 20px;
 	background-color: #fff;
 	box-shadow: 0px 0px 20px 10px #ddd;
 }
 
-input,
-select {
-	padding: .5em;
-}
-
-input[type="radio"] {
-	margin: .5em;
-}
-
-select {
-	box-sizing: border-box;
-	width: 100%;
-}
-
-table {
+.table {
 	margin-bottom: 5px;
 }
 
-ul {
+.table ul {
 	list-style: none;
-	padding: 0;
+	padding: 0; margin: 3px 0;
+	display: flex;
+	align-items: center;
 }
 
-li {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+.table li {
+	flex: 1;
+}
+
+.table li:first-child {
+	padding: .5em;
+	text-align: right;
+}
+
+.table li:last-child {
+	flex: 3;
+}
+
+.table li input[type="text"],
+.table li select {
+	padding: .5em;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+input[type="checkbox"] {
+	margin: .5em;
+	vertical-align: middle;
+}
+
+.snmp:not(:checked) ~span.on,
+.snmp:checked ~span.off {
+	display: none;
+}
+
+.snmp[disabled] ~span {
+	color: #aaa;
+}
+
+.address {
+	display: flex;
+	align-items: flex-end;
+}
+
+.address input {
+	flex: 1;
+	text-align: right;
 }
 
 .hide {
@@ -66,27 +93,6 @@ li {
 	text-decoration: underline;
 }
 
-div.advanced {
-	box-sizing: border-box;
-	max-height: 200px;
-	background-color: #fefefe;
-	overflow: auto;
-}
-
-#snmp_list li:nth-child(odd) {
-	background-color: #fafafa;
-}
-
-#snmp_list li input {
-	display: block;
-}
-
-body:not(.advanced) .advanced,
-body.snmp .advanced >*:not(.snmp),
-body:not(.snmp) .advanced >.snmp {
-	display: none;
-}
-
 footer {
 	margin-top: 5px;
 	display: flex;
@@ -94,6 +100,7 @@ footer {
 
 footer input {
 	flex: 1;
+	padding: .5em;
 }
 
 		</style>
@@ -102,52 +109,43 @@ footer input {
 	
 	<body>
 	
-		<form>
+		<form class="dialog">
 			<h2>device</h2>
-			<table>
-				<tbody>
-					<tr>
-						<td>name</td>
-						<td>
-							<input type="text" name="name" placeholder="device name" required autofocus>
-						</td>
-					</tr>
-					<tr>
-						<td>ip address</td>
-						<td>
-							<input type="text" name="ip" title="valid ip v4 address required" placeholder="device ip address"
-								pattern="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)">
-						</td>
-					</tr>
-					<tr>
-						<td>type</td>
-						<td>
-							<select name="type"></select>
-						</td>
-					</tr>
-					<tr>
-						<td>label</td>
-						<td>
-							<input type="text" name="label">
-						</td>
-					</tr>
-					<tr>
-						<td id="profile">snmpⓘ</td>
-						<td>
-							<input type="radio" name="snmp" value="true">on
-							<input type="radio" name="snmp" value="" checked>off
-						</td>
-					</tr>
-				</tbody>
-			</table>
-			<label><input type="checkbox" id="advanced">advanced</label>
-			<div class="advanced">
-				<div>
-					<input type="button" name="add" value="add" title = "add virtual interface">
-					<input type="button" name="remove" value="remove" title="remove interface">
-					 <ul id="custom_list"></ul>
-				</div>
-				 <ul id="snmp_list" class="snmp"></ul>
+			<div class="table">
+				<ul>
+					<li>ip address
+					<li class="address">
+						<input type="text" pattern="25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?" title="0 ~ 255" required id="ip1" autofocus>.
+						<input type="text" pattern="25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?" title="0 ~ 255" required id="ip2">.
+						<input type="text" pattern="25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?" title="0 ~ 255" required id="ip3">.
+						<input type="text" pattern="25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?" title="0 ~ 255" required id="ip4">
+				</ul>
+				<ul>
+					<li>name
+					<li>
+						<input type="text" name="name" placeholder="device name">
+				</ul>
+				<ul>
+					<li>type
+					<li>
+						<select name="type" required></select>
+					
+				</ul>
+				<ul>
+					<li>label
+					<li>
+						<input type="text" name="label" placeholder="separated by commas">
+					
+				</ul>
+				<ul>
+					<li>snmp
+					<li>
+						<label>
+							<input type="checkbox" name="snmp" class="snmp" disabled>
+							<span class="on">on</span><span class="off">off</span>
+						</label>
+					
+				</ul>
 			</div>
 			
 			<footer>
@@ -163,75 +161,11 @@ if (window === top) throw "";
 (function (window, undefined){
 	
 	var form = document.querySelector("form"),
-		device,
-		snmpList = document.getElementById("snmp_list"),
-		customList = document.getElementById("custom_list");
+		device;
 	
-	function setEvent() {
+	function initialize() {
 		form.addEventListener("submit", onApply, false);
 		form.addEventListener("reset", onCancel, false);
-		document.getElementById("advanced").addEventListener("click", onAdvanced, false);
-		form.elements["add"].addEventListener("click", onAdd, false);
-		form.elements.remove.addEventListener("click", onRemove, false);
-		
-		var snmp = form.elements.snmp;
-		
-		for (var i=0, length = snmp.length; i<length; i++) {
-			snmp[i].onchange = onSnmpChanged;
-		}
-	}
-	
-	function initCustomInterface() {
-		var entry = device.ifEntry,
-			li, speed, fragment = document.createDocumentFragment();
-		
-		for (var name in entry) {
-			li = createListElement();
-			
-			li.firstChild.value = name;
-			li.lastChild.value = name;
-			
-			fragment.appendChild(li);
-		}
-		
-		customList.appendChild(fragment);
-	}
-	
-	function initSnmpInterface(snmp) {
-		var entry = snmp.ifEntry,
-			ifData, li, speed, fragment = document.createDocumentFragment();
-		
-		for (var index in entry) {
-			ifData = entry[index];
-		
-			//TODO 어떻게 보여줄 것인가
-			li = document.createElement("li");
-			speed = document.createElement("input");
-			speed.value = ifData.ifSpeed;
-			//li.textContent = ifData.ifDescr;
-			li.textContent = ifData.ifName;
-			li.appendChild(speed);
-			
-			fragment.appendChild(li);
-		}
-		
-		snmpList.appendChild(fragment);
-	}
-	
-	function createListElement() {
-		var li = document.createElement("li"),
-			checkbox = document.createElement("input"),
-			input = document.createElement("input");
-		
-		checkbox.type = "checkbox";
-		checkbox.value = "";
-		
-		li.appendChild(checkbox);
-		li.appendChild(input);
-		
-		input.required = true;
-		
-		return li;
 	}
 	
 	/**
@@ -245,51 +179,30 @@ if (window === top) throw "";
 		}
 		
 		device.name = form.elements.name.value;
-		device.ip = form.elements.ip.value;
+		device.ip = [form.elements.ip1.value, form.elements.ip2.value, form.elements.ip3.value, form.elements.ip4.value].join(".");
 		device.type = form.elements.type.value;
 		device.label = form.elements.label.value.split(",").map(function (value) {
 			return value.trim();
 		}).join(",");
-		device.snmp = !!form.elements.snmp.value;
 		
-		if (device.snmp) {
-			// snmpList 수정사항 적용
-			var list = snmpList.getElementsByTagName("li"),
-				entry = device.ifEntry,
-				li, speed;
-		
-			for (var i=0, length=list.length; i<length; i++) {
-				li = list[i];
-				
-				speed = li.lastChild.value;
-				if (!isNaN(speed)) {
-					entry[li.textContent] = Number(speed);
-				}
+		//등록된 장비이면
+		if ("snmp" in device) {
+			// true인 것은 true나 false 모두 가능
+			if (device.snmp) {
+				device.snmp = form.elements.snmp.checked;
+			}
+			// false인 것은 변경하지 않거나 제거 가능 (true 불가)
+			else if (form.elements.snmp.checked){
+				delete device.snmp;
 			}
 		}
-		else {
-			// customList 수정사항 적용
-			var list = customList.getElementsByTagName("li"),
-				entry = device.ifEntry,
-				speed;
-		
-			if (!entry) {
-				entry = {};
-				
-				device.ifEntry = entry;
-			}
-			
-			for (var i=0, length=list.length; i<length; i++) {
-				speed = list[i].lastChild.value;
-				if (speed) {
-					entry[speed] = null;
-				}
-			}
-		}
+		//else 등록 전 장비이면 snmp 없음
 		
 		if (!device.id) {
 			top.createDevice(device);
 		}
+		
+		top.reload();
 		
 		form.reset();
 	}
@@ -298,55 +211,13 @@ if (window === top) throw "";
 		top.closeDialog();
 	}
 	
-	function onAdd() {
-		customList.appendChild(createListElement()).lastChild.focus();
-	}
-	
-	function onRemove() {
-		var checkedElements = [].slice.call(document.querySelectorAll("#custom_list input:checked"), 0),
-			length = checkedElements.length,
-			checked;
-		
-		if (!confirm("remove "+ length +"interface(s)?")) {
-			return;
-		}
-		
-		for (var i=0; i<length; i++) {
-			checked = checkedElements[i];
-			
-			delete device.ifEntry[checked.value];
-			
-			customList.removeChild(checked.parentNode);
-		}
-	}
-	
-	function onAdvanced(e) {
-		var checkbox = e.currentTarget;
-		
-		if (checkbox.checked) {
-			document.body.classList.add("advanced");
-		}
-		else {
-			document.body.classList.remove("advanced");
-		}
-	}
-	
-	function onSnmpChanged() {
-		if (form.elements.snmp.value) {
-			document.body.classList.add("snmp");
-		}
-		else {
-			document.body.classList.remove("snmp");
-		}
-	}
-	
-	window.initialize = function (iconData) {
-		var control = form.elements.type,
+	window.initialize = function (d) {
+		var typeElement = form.elements.type,
 			fragment = document.createDocumentFragment(),
 			group = {}, optgroup, groupName, option;
 		
-		for (var type in iconData) {
-			groupName = iconData[type].group;
+		top.forEachIcon(function (type, icon) {
+			groupName = icon.group;
 			optgroup = group[groupName];
 			if (!optgroup) {
 				optgroup = document.createElement("optgroup");
@@ -358,40 +229,38 @@ if (window === top) throw "";
 			}
 			
 			optgroup.appendChild(document.createElement("option")).text = type;
+		});
+		
+		typeElement.appendChild(fragment);
+
+		typeElement.value="unknown";
+		
+		if (d) {
+			device = d;
+			
+			form.elements.name.value = device.name;
+			
+			var ipArray = device.ip.split(".");
+			
+			form.elements.ip1.value = ipArray[0];
+			form.elements.ip2.value = ipArray[1];
+			form.elements.ip3.value = ipArray[2];
+			form.elements.ip4.value = ipArray[3];
+			
+			form.elements.type.value = device.type;
+			// 저장할때는 trim으로 다 붙여서 넣지만 보여줄때는 보기 좋게 한칸씩 띈다.
+			form.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
+			
+			if ("snmp" in device) {
+				form.elements.snmp.checked = device.snmp;
+				form.elements.snmp.disabled = false;
+			}
 		}
 		
-		control.appendChild(fragment);
-		
-		setEvent();
-	};
-	
-	window.setDevice = function (d, snmp) {
-		device = d;
-		
-		form.elements.name.value = device.name;
-		form.elements.ip.value = device.ip;
-		form.elements.type.value = device.type;
-		// 저장할때는 trim으로 다 붙여서 넣지만 보여줄때는 보기 좋게 한칸씩 띈다.
-		form.elements.label.value = device.label && (device.label.split(",")).join(", ") || "";
-		
-		if (device.ifEntry) {
-			initCustomInterface();
-		}
-		
-		document.getElementById("profile").title = "working profile:\n" + device.profile;
-		
-		if (snmp) {
-			form.elements.snmp.value = "true";
-			initSnmpInterface(snmp);
-		}
+		initialize();
 	};
 	
 }) (window);
-
-// public
-function initDevice() {
-	
-}
 
 		</script>
 	

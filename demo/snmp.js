@@ -3,35 +3,12 @@ var demoData = demoData || {};
 demoData.snmp = snmpData = {
 	    "hrProcessorIndex": {
 	        "5": 5,
-	        "6": 6,
-	        "7": 7,
-	        "8": 8
 	    },
 	    "ifIndex": {
 	        "11": 11,
-	        "16": 16,
-	        "17": 17,
-	        "18": 18,
-	        "19": 19,
-	        "1": 1,
-	        "5": 5,
-	        "6": 6,
-	        "7": 7,
-	        "8": 8,
-	        "9": 9,
-	        "20": 20,
-	        "10": 10,
-	        "21": 21
 	    },
 	    "hrStorageIndex": {
 	        "1": 1,
-	        "2": 2,
-	        "3": 3,
-	        "4": 4,
-	        "5": 5,
-	        "6": 6,
-	        "7": 7,
-	        "8": 8,
 	        "9": 9
 	    },
 	    "responseTime": 30,
@@ -214,55 +191,6 @@ demoData.snmp = snmpData = {
 	            "hrStorageDescr": "C:\\ Label:  Serial Number bec369ed",
 	            "hrStorageSize": 33554687
 	        },
-	        "2": {
-	            "hrStorageUsed": 26064,
-	            "hrStorageAllocationUnits": 4096,
-	            "hrStorageType": 4,
-	            "hrStorageDescr": "D:\\ Label:  Serial Number 76c4c56f",
-	            "hrStorageSize": 88515839
-	        },
-	        "3": {
-	            "hrStorageUsed": 0,
-	            "hrStorageAllocationUnits": 0,
-	            "hrStorageType": 7,
-	            "hrStorageDescr": "E:\\",
-	            "hrStorageSize": 0
-	        },
-	        "4": {
-	            "hrStorageUsed": 0,
-	            "hrStorageAllocationUnits": 0,
-	            "hrStorageType": 5,
-	            "hrStorageDescr": "F:\\",
-	            "hrStorageSize": 0
-	        },
-	        "5": {
-	            "hrStorageUsed": 0,
-	            "hrStorageAllocationUnits": 0,
-	            "hrStorageType": 5,
-	            "hrStorageDescr": "G:\\",
-	            "hrStorageSize": 0
-	        },
-	        "6": {
-	            "hrStorageUsed": 0,
-	            "hrStorageAllocationUnits": 0,
-	            "hrStorageType": 5,
-	            "hrStorageDescr": "H:\\",
-	            "hrStorageSize": 0
-	        },
-	        "7": {
-	            "hrStorageUsed": 0,
-	            "hrStorageAllocationUnits": 0,
-	            "hrStorageType": 5,
-	            "hrStorageDescr": "I:\\",
-	            "hrStorageSize": 0
-	        },
-	        "8": {
-	            "hrStorageUsed": 63536,
-	            "hrStorageAllocationUnits": 65536,
-	            "hrStorageType": 3,
-	            "hrStorageDescr": "Virtual Memory",
-	            "hrStorageSize": 80376
-	        },
 	        "9": {
 	            "hrStorageUsed": 24903,
 	            "hrStorageAllocationUnits": 65536,
@@ -270,13 +198,6 @@ demoData.snmp = snmpData = {
 	            "hrStorageDescr": "Physical Memory",
 	            "hrStorageSize": 31702
 	        },
-	        "10": {
-	            "hrStorageUsed": 29095,
-	            "hrStorageAllocationUnits": 65536,
-	            "hrStorageType": 2,
-	            "hrStorageDescr": "Physical Memory",
-	            "hrStorageSize": 31702
-	        }
 	    },
 	    "timeout": -1,
 	    "hrSystemUptime": 323809570,
@@ -284,10 +205,6 @@ demoData.snmp = snmpData = {
 	    "delay": 1447741963174,
 	    "hrProcessorEntry": {
 	        "4": 6,
-	        "5": 3,
-	        "6": 2,
-	        "7": 3,
-	        "8": 5
 	    },
 	    "sysName": "NO30",
 	    "lastResponse": 1454032609111
